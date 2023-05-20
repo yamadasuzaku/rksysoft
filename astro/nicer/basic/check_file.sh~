@@ -1,0 +1,46 @@
+#!/bin/sh 
+
+# set working directory
+cdir=`pwd` 
+
+xmin=0.5
+xmax=10
+ymin=1e-6
+ymax=10
+
+
+for dir in `cat dir.list`
+do
+
+cd ../$dir 
+pifile=`ls ../$dir/*tot_*.pi`
+if [ _${pifile} = _ ]; 
+then
+echo "pifile is not found : " $pifile 
+cd $cdir
+continue 
+fi
+
+
+
+xspec <<EOF
+
+data 1:1 $pifile 
+
+setplot e 
+
+pl ld 
+
+iplot 
+
+r x $xmin $xmax
+r y $ymin $ymax
+
+
+
+exit 
+
+EOF
+
+cd $dir 
+done 

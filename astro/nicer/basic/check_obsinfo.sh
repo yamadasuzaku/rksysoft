@@ -1,0 +1,26 @@
+#!/bin/sh 
+
+# set working directory
+cdir=`pwd` 
+
+for obsid in `cat obsid.list`
+do
+
+cd ../$obsid
+pifile=`ls ../$obsid/*tot_*.pi`
+if [ _${pifile} = _ ]; 
+then
+echo "pifile is not found : " $pifile 
+cd $cdir
+continue 
+fi
+
+echo $pifile 
+dateobs=`fkeyprint $pifile DATE-OBS | tail -1 | awk '{printf("%s",$2)}' | sed -e "s/\'//g" `
+dateend=`fkeyprint $pifile DATE-END | tail -1 | awk '{printf("%s",$2)}' | sed -e "s/\'//g" `
+exposure=`fkeyprint $pifile EXPOSURE | tail -1 | awk '{printf("%.1f",$2)}'`
+
+echo $dateobs $dateend $exposure "\n"
+
+cd $cdir 
+done 
