@@ -36,6 +36,7 @@ def get_arrays_from_qdp(qdpfilename):
 		ye_list.append(float(one[3]))
 
 	x_list  = np.array(x_list)
+	xe_list  = np.array(xe_list)
 	y_list  = np.array(y_list)
 	ye_list = np.array(ye_list)
 	qdpfile.close()		
