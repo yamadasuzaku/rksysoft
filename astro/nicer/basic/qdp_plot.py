@@ -62,6 +62,7 @@ for obsid in obsid_list:
 	plt.errorbar(x_list, y_list, xerr=xe_list, yerr=ye_list, fmt=".", label=obsid)
 	plt.legend()
 
-plt.show()
 plt.savefig(outfname)
 print(outfname + " is created. ")
+plt.show()
+
