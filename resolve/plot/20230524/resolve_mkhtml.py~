@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = 'serif'
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import glob
+import os
+import plotly.express as px
+
+flist=glob.glob("savenpz/*npz")
+print(flist)
+
+htmlname = "resolve_cd_test.html"
+data = []
+for fname in flist:
+    filename = os.path.basename(fname)
+    ldata = np.load(fname, allow_pickle=True)
+    time = ldata["time"]
+    col = ldata["data"]
+    trace = px.scatter(x=time, y=col, name=str(filename))
+#    trace = go.Scatter(x=time, y=col, name=str(filename))    
+    data.append(trace)
+
+layout = go.Layout(title="test",xaxis=dict(title="Time"),yaxis=dict(title="a.u.") )
+
+fig=go.Figure(layout=layout,data=data) 
+fig.update_yaxes(type="log")
+fig.update_yaxes(exponentformat='none')
+fig.update_xaxes(exponentformat='none')
+
+# Add dropdown
+fig.update_layout(
+    updatemenus=[
+        dict(
+            buttons=list([
+                dict(
+                    args=[{"yaxis.type": "log"}],
+                    label="log",
+                    method="relayout"
+                ),
+                dict(
+                    args=[{"yaxis.type": "linear"}],
+                    label="linear",
+                    method="relayout"
+                )
+            ]),
+            direction="down")
+    ])
+
+fig.write_html(htmlname)
+print("[Save]", "save as ", htmlname)
+print('.........................................................................................')
+
+
+    

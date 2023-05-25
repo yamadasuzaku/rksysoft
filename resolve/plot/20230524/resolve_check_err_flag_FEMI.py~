@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+from astropy.io import fits
+import glob
+import numpy as np
+
+colkeys=[]
+colnames=[]
+colfile=open("colinfo.txt")
+for one in colfile:
+    one = one.strip().split()
+    colkeys.append(one[1])
+    colnames.append(one[2])
+
+print(colkeys, colnames)    
+
+dirs=["2203_XRISM_PFT_TC6","2303_XRISM_PFT_TC10"]
+
+for dir in dirs:
+    dname="/data6/" + dir
+    flist = glob.glob(dname + "/fff/*/xa*rsl_a0.hk1.gz")
+    for fname in flist:
+        hdul = fits.open(fname)
+        for key, col in zip(colkeys, colnames):
+            hdul_hk = hdul[key]
+            data = hdul_hk_psp_ess.data[col]
+            unique_arr = np.unique(data, return_counts=True)
+            dateobs = hdul[0].header["DATE-OBS"]
+            dateend = hdul[0].header["DATE-END"]
+            if len(unique_arr[0]) == 2:
+                print("more than two", dateobs, dateend, fname, key, unique_arr)                        
+            hdul.close()

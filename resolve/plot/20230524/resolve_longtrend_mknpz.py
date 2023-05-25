@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+
+from astropy.io import fits
+from astropy.time import Time
+
+import glob
+import numpy as np
+import datetime
+
+colkeys=[]
+colnames=[]
+colfile=open("colinfo.txt")
+for one in colfile:
+    one = one.strip().split()
+    colkeys.append(one[1])
+    colnames.append(one[2])
+
+print(colkeys, colnames)    
+
+dirs=["2203_XRISM_PFT_TC6",
+      "2207_XRISM_PFT_TC7",
+      "2210_XRISM_PFT_TC8",
+      "2212_XRISM_PFT_TC9",
+      "2303_XRISM_PFT_TC10"]
+
+for i, (key, col) in enumerate(zip(colkeys, colnames)):
+    outfilename = key + "__" + col + ".npz"
+    tmptime = []
+    tmpdata = []
+
+    for dir in dirs:
+        dname="/data6/" + dir
+        flist = glob.glob(dname + "/fff/*/xa*rsl_a0.hk1.gz")
+        
+        for j, fname in enumerate(flist):
+            print("fname = ", fname)
+            hdul = fits.open(fname)
+            hdul_hk = hdul[key]
+            data = hdul_hk.data[col]
+            time = hdul_hk.data["TIME"]
+
+            if len(data) == 0:
+                print("Warning len(data) = 0 ", data)
+                hdul.close()                
+                continue
+            
+            mjdrefi = hdul_hk.header["MJDREFI"]
+            reftime = Time(mjdrefi, format='mjd')
+            
+            diffcut = [0] + list(np.where( (np.diff(data) > 0) | (np.diff(data) < 0) )[0] + 1) # add 0, then add changed points
+            cutdata = np.take(data,diffcut)
+            cuttime = np.take(time,diffcut)            
+            cutdatetime = [reftime.datetime + datetime.timedelta(seconds=float(cutt)) for cutt in cuttime]
+
+            tmpdata.extend(cutdata)
+            tmptime.extend(cutdatetime)            
+            
+            dateobs = hdul[0].header["DATE-OBS"]
+            dateend = hdul[0].header["DATE-END"]
+            print(fname, "len(cutdata) = ", len(cutdata), dateobs, dateend, key, cutdata, cutdatetime)            
+            hdul.close()
+#            if j > 10: break
+
+    np.savez('savenpz/' + outfilename, time=np.array(tmptime), data=np.array(tmpdata))
+    print("....." + outfilename + " is saved.\n")
+
+
