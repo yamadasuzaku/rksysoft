@@ -30,7 +30,7 @@ def plot_data(counts, pixel_fromdetxdety, fname, date_obs):
     fig.suptitle(f"{fname} DATE-OBS : {date_obs}")
 
     for ax, norm in zip(axs, [LogNorm(vmin=1, vmax=counts.max()), None]):
-        pcm = ax.pcolormesh(xbins, ybins, counts.T, norm=norm, cmap="plasma")
+        pcm = ax.pcolormesh(xbins, ybins, counts, norm=norm, cmap="plasma")
         plt.colorbar(pcm, ax=ax)
 
         for one_detx in np.arange(1, 7):
