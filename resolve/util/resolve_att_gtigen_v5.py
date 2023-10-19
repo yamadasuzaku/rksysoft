@@ -37,7 +37,8 @@ def zero_fill_preval(xlist):
 
 def find_gti_times(time2, ads_stt_sts_mod, ads_kf_up_mod, reftime2, is_start):
     gti_ids = np.where(np.diff(ads_kf_up_mod) == (1 if is_start else -1))[0]
-    gti_times = [(t + (240 if is_start else 600)) for i, t in enumerate(time2[gti_ids]) if not (is_start and i == 0)]
+    gti_times = [(t + (240 if is_start else 600)) for i, t in enumerate(time2[gti_ids])]
+#    gti_times = [(t + (240 if is_start else 600)) for i, t in enumerate(time2[gti_ids]) if not (is_start and i == 0)]
     gti_datetimes = [reftime2.datetime + datetime.timedelta(seconds=float(t)) for t in gti_times]
     return gti_times, gti_datetimes
 
