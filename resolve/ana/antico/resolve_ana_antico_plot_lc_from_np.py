@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from astropy.time import Time
+import datetime
+
+# Configurations and constants
+FILE_PATH = "savenpz/"
+FILES = {
+    'pha': "qlff__EVENTS__PHA.npz",
+    'acitype': "qlff__EVENTS__AC_ITYPE.npz",
+    'lat': "qlff__ORBIT__LAT.npz",
+    'lon': "qlff__ORBIT__LON.npz",
+    'psp_id': "qlff__EVENTS__PSP_ID.npz"
+}
+MJD_REFERENCE_DAY = 58484
+REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')
+TIMEBINSIZE = 100  # sec
+TIME_1010 = 150595200.0 - 10 * 86400
+TIME_1011 = 150681600.0 + 10 * 86400
+TIME_50MK = 150526800.0  # 2023-10-09 05:00:00
+PHA_CUTOFF = 75
+
+def load_data(filename):
+    """
+    Load data from a file and return sorted time and data arrays.
+
+    Parameters:
+    - filename: Path to the .npz file.
+
+    Returns:
+    - time, data: Sorted time and data arrays.
+    """
+    data = np.load(filename, allow_pickle=True)
+    sorted_indices = np.argsort(data["time"])
+    return data["time"][sorted_indices], data["data"][sorted_indices]
+
+def plot_histogram(pha_before, pha_after, x_scale, y_scale, bin_count, range_min, range_max, output_file):
+    """Plot a histogram of given data before and after a certain event (e.g., time50mK)."""
+    plt.xscale(x_scale)
+    plt.yscale(y_scale)
+    plt.xlabel("PHA")
+    plt.grid(alpha=0.8)
+    plt.hist(pha_before, bins=bin_count, range=(range_min, range_max), histtype='step', label=f"PHA >= {PHA_CUTOFF}")
+    plt.hist(pha_after, bins=bin_count, range=(range_min, range_max), histtype='step', label=f"PHA < {PHA_CUTOFF}")
+    plt.legend(loc="lower left")
+    plt.savefig(output_file)
+    plt.show()
+
+def fast_lc(tstart, tstop, binsize, x):
+    """Compute a fast light curve using a given time series."""
+    times = np.arange(tstart, tstop, binsize)[:-1]
+    n_bins = len(times)
+    
+    x_lc, y_lc = np.zeros(n_bins), np.zeros(n_bins)
+    x_err = np.full(n_bins, 0.5 * binsize)
+    y_err = np.zeros(n_bins)
+
+    x = np.sort(x)
+
+    for i, t in enumerate(times):
+        start, end = np.searchsorted(x, [t, t + binsize])
+        count = end - start
+        
+        x_lc[i] = t + 0.5 * binsize
+        y_lc[i] = count / binsize
+        y_err[i] = np.sqrt(count) / binsize
+
+    return x_lc, x_err, y_lc, y_err
+
+def plot_lc_two(xdatalc, xedatalc, ydatalc, yedatalc, xdatalc2, xedatalc2, ydatalc2, yedatalc2, title="test", label="antico", label2="antico"):
+    """Plot two light curves on the same figure for comparison."""
+    dtime = [REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in xdatalc]
+    dtime2 = [REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in xdatalc2]
+
+    plt.figure(figsize=(8, 7))
+    plt.xscale("linear")
+    plt.yscale("log")
+    plt.ylabel(f"Counts/s (binsize = {TIMEBINSIZE}s)")
+    plt.xlabel("TIME")
+    plt.grid(alpha=0.8)
+    plt.figtext(0.1, 0.95, title)
+    plt.errorbar(dtime, ydatalc, yerr=yedatalc, fmt='.', label=label)
+    plt.errorbar(dtime2, ydatalc2, yerr=yedatalc2, fmt='.', label=label2)
+    plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
+    plt.savefig("comp_two.png")
+    plt.show()
+
+def main():
+    """Main processing function."""
+    # Load the data
+    time_pha, pha = load_data(FILE_PATH + FILES['pha'])
+    _, acitype = load_data(FILE_PATH + FILES['acitype'])
+    _, acpspid = load_data(FILE_PATH + FILES['psp_id'])
+
+    TSTART = time_pha[0]
+    TSTOP = time_pha[-1]
+
+    # Filter the data based on given criteria
+    valid_indices_up = (acpspid == 1) & (acitype == 0) & (time_pha > 0) & (pha >= PHA_CUTOFF) & (time_pha > TSTART) & (time_pha < TSTOP)
+    valid_indices_down = (acpspid == 1) & (acitype == 0) & (time_pha > 0) & (pha < PHA_CUTOFF) & (time_pha > TSTART) & (time_pha < TSTOP)
+
+    pha_up = pha[valid_indices_up]
+    pha_down = pha[valid_indices_down]
+
+    time_pha_up = time_pha[valid_indices_up]
+    time_pha_down = time_pha[valid_indices_down]
+
+    # Plot the data
+    plot_histogram(pha_before=pha_up, pha_after=pha_down, x_scale="linear", y_scale="linear", bin_count=100, range_min=1, range_max=1000, output_file="antico_spec_linlin.png")
+
+    xdatalc_up, xedatalc_up, ydatalc_up, yedatalc_up = fast_lc(TSTART, TSTOP, TIMEBINSIZE, time_pha_up)
+    xdatalc_down, xedatalc_down, ydatalc_down, yedatalc_down = fast_lc(TSTART, TSTOP, TIMEBINSIZE, time_pha_down)
+
+    plot_lc_two(xdatalc_up, xedatalc_up, ydatalc_up, yedatalc_up, xdatalc_down, xedatalc_down, ydatalc_down, yedatalc_down, title="Light curves of antico", label=f"PHA >= {PHA_CUTOFF}", label2=f"PHA < {PHA_CUTOFF}")
+
+if __name__ == "__main__":
+    main()

@@ -23,8 +23,7 @@ def plot_dt(dt, pha, target_fname, xscale="linear", yscale="linear", bin_count=1
     ax1.set_title("created from " + target_fname + " using all pixels")
     ax1.hist(dt[pha>phacut], bins=bin_count, range=(range_min, range_max), \
                   histtype='step', label="PHA > " + str(phacut) + " (event num = " + str(len(dt[pha>phacut]))+ ")")
-    ax1.legend()
-#    ax1.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
+    ax1.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
     
     ax2.set_xscale(xscale)
     ax2.set_yscale(yscale)
@@ -36,8 +35,7 @@ def plot_dt(dt, pha, target_fname, xscale="linear", yscale="linear", bin_count=1
     ax2.grid(alpha=0.8)
     ax2.hist(dt[pha<=phacut], bins=bin_count, range=(range_min, range_max), \
                      histtype='step', label="PHA <= " + str(phacut) + " (event num = " + str(len(dt[pha<=phacut]))+ ")")
-    ax2.legend()
-#    ax2.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
+    ax2.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
     
     plt.tight_layout()
     plt.savefig(outfname)
