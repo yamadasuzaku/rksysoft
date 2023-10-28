@@ -2,9 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
 from astropy.time import Time
 import datetime
 
@@ -84,8 +81,8 @@ def plot_lc_two(xdatalc, xedatalc, ydatalc, yedatalc, xdatalc2, xedatalc2, ydata
     plt.xlabel("TIME")
     plt.grid(alpha=0.8)
     plt.figtext(0.1, 0.95, title)
-    plt.errorbar(dtime, ydatalc, yerr=yedatalc, fmt='.', label=label)
-    plt.errorbar(dtime2, ydatalc2, yerr=yedatalc2, fmt='.', label=label2)
+    plt.errorbar(dtime, ydatalc, yerr=yedatalc, fmt='-', label=label)
+    plt.errorbar(dtime2, ydatalc2, yerr=yedatalc2, fmt='-', label=label2)
     plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
     plt.savefig("comp_two.png")
     plt.show()

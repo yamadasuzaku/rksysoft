@@ -16,7 +16,7 @@ FILES = {
 }
 MJD_REFERENCE_DAY = 58484
 REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')
-TIMEBINSIZE = 100  # sec
+TIMEBINSIZE = 300  # sec
 TIME_1010 = 150595200.0 - 10 * 86400
 TIME_1011 = 150681600.0 + 10 * 86400
 TIME_50MK = 150526800.0  # 2023-10-09 05:00:00
@@ -81,8 +81,8 @@ def plot_lc_two(xdatalc, xedatalc, ydatalc, yedatalc, xdatalc2, xedatalc2, ydata
     plt.xlabel("TIME")
     plt.grid(alpha=0.8)
     plt.figtext(0.1, 0.95, title)
-    plt.errorbar(dtime, ydatalc, yerr=yedatalc, fmt='.', label=label)
-    plt.errorbar(dtime2, ydatalc2, yerr=yedatalc2, fmt='.', label=label2)
+    plt.errorbar(dtime, ydatalc, yerr=yedatalc, fmt='-', label=label)
+    plt.errorbar(dtime2, ydatalc2, yerr=yedatalc2, fmt='-', label=label2)
     plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left', ncol=10, borderaxespad=0., fontsize=8)
     plt.savefig("comp_two.png")
     plt.show()
