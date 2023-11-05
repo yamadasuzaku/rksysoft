@@ -13,6 +13,11 @@ parser.add_argument('index_b', type=int, help='The index of the second pulse to 
 parser.add_argument('filter_size', type=int, help='The size of the uniform filter')
 args = parser.parse_args()
 
+args_dict = vars(args)
+print("Command-line arguments:")
+for arg, value in args_dict.items():
+    print(f"{arg}: {value}")
+
 fname = args.filename
 index_a = args.index_a
 index_b = args.index_b
