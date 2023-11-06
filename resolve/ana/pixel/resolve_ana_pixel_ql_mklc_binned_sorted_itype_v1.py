@@ -7,6 +7,7 @@ from astropy.io import fits
 from astropy.time import Time
 import datetime
 import argparse
+import sys
 
 # Define global variables
 MJD_REFERENCE_DAY = 58484
@@ -44,6 +45,10 @@ def process_data(fname, TRIGTIME_FLAG=False, AC_FLAG=False):
 
     # Select appropriate time column based on flag
     time = data["TRIGTIME"] if TRIGTIME_FLAG else data["TIME"]
+
+    if len(time) == 0:
+        print("ERROR: data is empty", time)
+        sys.exit()
 
     # Select appropriate type column based on flag
     itype = data["AC_ITYPE"] if AC_FLAG else data["ITYPE"]
@@ -110,6 +115,11 @@ def plot_lc(time, itype, outfname="mklc_binened.png", title="test"):
     for itype_ in itypename:
         typecut = itype == itype_
         time_ = time[typecut]
+
+        if len(time_) == 0:
+            print("ERROR: data is empty", time_)
+            continue
+
         x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_)
         dtime_lc = [REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in x_lc]
 
