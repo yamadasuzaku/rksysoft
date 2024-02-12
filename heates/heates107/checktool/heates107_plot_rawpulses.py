@@ -58,11 +58,23 @@ for i, data in enumerate(arr):
 	abs_pulse = rawpulse - np.min(rawpulse) + 5 * ch
 
 	print("ch=",ch,"time=",time,"dtime=",dtime)
+	print("step0")
 
 	if i == 0: counter = time
+
 	if time == counter:
+		print("step1")
+
+		ppeaks.append(peak_value)
+		pchans.append(ch)
+		print("ppeaks", ppeaks)
+		print("pchans", pchans)
+
+		# plot time vs. pulses
 		ax = axs[0]
 		plt.figtext(0.1,0.9, fname + " : " + str(dtime))
+		chan_str = ",".join(map(str, pchans))
+		plt.figtext(0.1,0.97, "ch : " + chan_str)
 
 		ax.plot(xtime, abs_pulse, alpha=0.8, lw=1)
 		ax.set_ylim(ymin1, ymax1)		
@@ -74,16 +86,17 @@ for i, data in enumerate(arr):
 		ax.set_ylim(ymin2, ymax2)		
 		ax.set_xlabel("Time(s) from " + str(time))
 		ax.set_ylabel("nomalized pulse")
-		ppeaks.append(peak_value)
-		pchans.append(ch)
 
 	else:
+
+		print("step2")		
 		plt.show()
 		plt.close()
 
 		ppeaks = np.array(ppeaks)
 		pchans = np.array(pchans)
 
+		# cut peak values 
 		pcut = np.where(ppeaks > 1000)
 		high_chan = pchans[pcut]
 		high_chan_str = ",".join(map(str, high_chan))
@@ -92,6 +105,7 @@ for i, data in enumerate(arr):
 		low_chan = pchans[pcut]
 		low_chan_str = ",".join(map(str, low_chan))
 
+		# plot chan vs. peak 
 		plt.figure(figsize=(10, 6))
 		plt.figtext(0.1,0.95, fname + " : " + str(dtime))
 		plt.figtext(0.1,0.92, "high ch (>1e3) : " + high_chan_str)
@@ -104,13 +118,23 @@ for i, data in enumerate(arr):
 		plt.xlabel("ch")
 		plt.show()
 		plt.close()
+
+
+		# clear buffers 
+		print("(clear) ppeaks", ppeaks)
+		print("(clear) pchans", pchans)		
 		ppeaks = []
 		pchans = []
-
 		counter = time
+		ppeaks.append(peak_value)
+		pchans.append(ch)
+
+		# update files (plot time vs. pulse) b/c time is updated. 
 		fig, axs = plt.subplots(grid1, grid2, figsize=(xfigsize, yfigsize), sharex=True, sharey=False)
 		ax = axs[0]
 		plt.figtext(0.1,0.9, fname + " : " + str(dtime))
+		chan_str = ",".join(map(str, pchans))
+		plt.figtext(0.1,0.97, "ch : " + chan_str)
 
 		ax.plot(xtime, abs_pulse, alpha=0.8, lw=1)
 		ax.set_ylim(ymin1, ymax1)		
@@ -122,6 +146,4 @@ for i, data in enumerate(arr):
 		dtime = datetime.fromtimestamp(time)
 		ax.set_xlabel("Time(s) from " + str(time))
 		ax.set_ylabel("nomalized pulse")
-
-
 
