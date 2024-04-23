@@ -27,6 +27,19 @@ typename = ["Hp", "Mp", "Ms", "Lp", "Ls"]
 icol = ["r", "b", "c", "m", "y"]
 ishape = [".", "s", "D", "*", "x"]
 
+def ev_to_pi(ev):
+    """Convert energy in eV to PI units."""
+    return (ev - 0.5) * 2
+
+def pi_to_ev(pi):
+    """Convert PI units to energy in eV."""
+    return pi * 0.5 + 0.5
+
+# Define the energy range
+emin, emax = 0, 20000  # Energy range in eV
+pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
+rebin = 10
+binnum = int((pimax - pimin) / rebin)
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot spectra from a FITS file.')
     parser.add_argument('filename', help='The name of the FITS file to process.')
@@ -54,9 +67,6 @@ def process_data(data, TRIGTIME_FLAG=False, AC_FLAG=False):
     return [column[:-1] for column in sorted_columns], dt
 
 def plot_pi(pi, itype, pixel, outfname="mkpi.png", title="test"):
-    binnum = 1000
-    xmin = 0
-    xmax = 20000
     
     for itype_ in itypename:
         plt.figure(figsize=(11, 7))
@@ -73,7 +83,7 @@ def plot_pi(pi, itype, pixel, outfname="mkpi.png", title="test"):
         pi_filtered = pi[typecut]
 
         # Compute histogram for all pixels of current itype
-        hist, binedges = np.histogram(pi_filtered, bins=binnum, range=(xmin, xmax))
+        hist, binedges = np.histogram(pi_filtered, bins=binnum, range=(pimin, pimax))
         bincenters = 0.5 * (binedges[1:] + binedges[0:-1])
         ene = bincenters * 0.5 + 0.5
         event_number = len(pi_filtered)
@@ -88,14 +98,14 @@ def plot_pi(pi, itype, pixel, outfname="mkpi.png", title="test"):
                 print("warning: data is empty for pixel =", pixel_)
                 continue
 
-            hist, binedges = np.histogram(pi_pixel_filtered, bins=binnum, range=(xmin, xmax))
+            hist, binedges = np.histogram(pi_pixel_filtered, bins=binnum, range=(pimin, pimax))
             ene = 0.5 * (binedges[1:] + binedges[:-1]) * 0.5 + 0.5
             color = scalarMap.to_rgba(pixel_)
             event_number = len(pi_pixel_filtered)
             plt.errorbar(ene, hist, yerr=np.sqrt(hist), color=color, fmt='-', label=f"P{pixel_}" + "("+str(event_number)+ "c)")
 
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
-        plt.xlim(0, 10000)
+        plt.xlim(emin, emax)
         ofname = f"fig_{typename[itype_]}_{outfname}"
         plt.savefig(ofname)
         plt.show()
