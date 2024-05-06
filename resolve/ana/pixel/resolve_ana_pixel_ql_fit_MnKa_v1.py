@@ -50,8 +50,19 @@ def open_fits_data(filename):
 
 def parse_arguments():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Analyze MnKa spectra from a FITS file.')
+    parser = argparse.ArgumentParser(description='Analyze MnKa spectra from a FITS file.',
+    	usage='''
+    python resolve_ana_pixel_ql_fit_MnKa_v1.py xa900001010rsl_p0px5000_cl.evt
+    python resolve_ana_pixel_ql_fit_MnKa_v1.py xa900001010rsl_p0px5000_cl.evt  -s 161805543 --name after 
+    python resolve_ana_pixel_ql_fit_MnKa_v1.py xa900001010rsl_p0px5000_cl.evt  -e 161801172 --name before
+    ''')
+    	
     parser.add_argument('filename', help='The filename of the FITS file to process.')
+    parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('-s','--start', type=float, help='starttime', default=-1)
+    parser.add_argument('-e','--end', type=float, help='endtime', default=9e9)
+    parser.add_argument('-n', '--name',type=str, help='file key name', default="cl")
+
     return parser.parse_args()
 
 def calcchi(params,consts,model_func,xvalues,yvalues,yerrors, debug=False):
@@ -159,7 +170,7 @@ def process_data(data, TRIGTIME_FLAG=False, AC_FLAG=False):
     dtime = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in sorted_columns[0]])
     print(f"data from {dtime[0]} --> {dtime[-1]}")
     dt = np.diff(sorted_columns[0])
-    return [column[:-1] for column in sorted_columns], dt
+    return [column[:-1] for column in sorted_columns], dt, dtime[:-1]
 
 def plot_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9):
 
@@ -188,7 +199,7 @@ def plot_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9
     plt.close()
     print(f"..... {ofname} is created.")
 
-def fit_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9):
+def fit_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9, debug = False):
 
     outfname=f"ql_plotspec_fitMnK_{filename.replace('.evt', '').replace('.gz', '')}.png"    
 
@@ -218,7 +229,8 @@ def fit_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9)
     plt.legend(numpoints=1, frameon=False, loc="upper left")
     plt.grid(linestyle='dotted',alpha=0.5)
     plt.savefig("fit_MnKalpha_init.png")
-    plt.show()
+    if debug:
+	    plt.show()
 
     # do fit
     result, error, chi2, dof = solve_least_squares(ene, hist, np.sqrt(hist), init_params, consts, mymodel)
@@ -234,7 +246,13 @@ def fit_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9)
     label1 = "N = " + str("%4.2f(+/-%4.2f)" % (norm,norme)) + " g = " + str("%4.5f(+/-%4.5f)" % (gain,gaine)) + " dE = " + str("%4.2f(+/-%4.2f)" % (fwhm,fwhme) + " (FWHM)")
     label2 = "chi/dof = " + str("%4.2f"%chi2) + "/" + str(dof) + " = " + str("%4.2f"%  (chi2/dof))
     label3 = "bkg1 = " + str("%4.2f(+/-%4.2f)" % (bkg1,bkg1e)) + " bkg2 = " + str("%4.2f(+/-%4.2f)" % (bkg2,bkg2e))
+
+    strlog = "N," + str("%4.4f,%4.4f" % (norm,norme)) + ",g," + str("%4.5f,%4.5f" % (gain,gaine)) + ",dE," + str("%4.4f,%4.4f" % (fwhm,fwhme) + ",") \
+            + ",chidof," + str("%4.4f"%chi2) + "," + str(dof) \
+            + ",bkg1," + str("%4.4f,%4.4f)" % (bkg1,bkg1e)) + ",bkg2," + str("%4.4f,%4.4f" % (bkg2,bkg2e))
+
     print(label1, label2, label3)
+    print(strlog)
 
     fitmodel = mymodel(ene,result,consts)
     plt.figure(figsize=(10,7))
@@ -263,11 +281,20 @@ def fit_histogram(pi_filtered, color, itype_, filename, label_suffix, alpha=0.9)
 
     ofname = f"fig_{typename[itype_]}_{label_suffix}_{outfname}"
     plt.savefig(ofname)
-    plt.show()
+    if debug: 
+        plt.show()
 
-def plot_MnKa(pi, itype, pixel, filename, fit=True):
+    return fwhm, fwhme, gain, gaine, strlog
+
+def plot_MnKa(pi, itype, pixel, filename, debug, name, fit=True):
     for itype_ in itypename[:1]: # loop for Hp only
+#    for itype_ in itypename[1:2]: # loop for Mp
 #    for itype_ in itypename[:2]: # loop for Hp, Mp only 
+        csvfilename = "fit_summary_" + typename[itype_] + "_" + str(name) + ".csv"
+        csvf = open(csvfilename, 'w')
+
+        xfwhm, xfwhme, xgain, xgaine = [],[],[],[]
+        fit_pixels = []
 
         # Filter data by itype
         typecut = (itype == itype_) & (pi >= pimin) & (pi < pimax) 
@@ -276,7 +303,14 @@ def plot_MnKa(pi, itype, pixel, filename, fit=True):
         print("\n ===== all pixels ===== ")
         # Compute and plot histogram for all pixels of current itype
         if fit:
-            fit_histogram(pi_filtered, "k", itype_, filename, "all", alpha=0.9)
+            fwhm, fwhme, gain, gaine, strlog = fit_histogram(pi_filtered, "k", itype_, filename, f"all_{name}", alpha=0.9, debug = debug)
+            xfwhm.append(fwhm)
+            xfwhme.append(fwhme)
+            xgain.append(gain)
+            xgaine.append(gaine)
+            fit_pixels.append(-1) # -1 means all pixels 
+            csvf.write("-1," + strlog+"\n")
+
         else:
             plot_histogram(pi_filtered, "k", itype_, filename, "all", alpha=0.9)
 
@@ -292,16 +326,56 @@ def plot_MnKa(pi, itype, pixel, filename, fit=True):
 
             color = scalarMap.to_rgba(pixel_)
             if fit:
-                fit_histogram(pi_pixel_filtered, color, itype_, filename, f"P{pixel_}", alpha=0.9)
+                fwhm, fwhme, gain, gaine, strlog = fit_histogram(pi_pixel_filtered, color, itype_, filename, f"P{pixel_}_{name}", alpha=0.9, debug = debug)
+                xfwhm.append(fwhm)
+                xfwhme.append(fwhme)
+                xgain.append(gain)
+                xgaine.append(gaine)
+                fit_pixels.append(pixel_)
+                csvf.write(str(pixel_) + "," + strlog+"\n")
+
             else:
-                plot_histogram(pi_pixel_filtered, color, itype_, filename, f"P{pixel_}", alpha=0.9)
+                plot_histogram(pi_pixel_filtered, color, itype_, filename, f"P{pixel_}_{name}", alpha=0.9)
+
+        csvf.close()
+        plt.figure(figsize=(12,8))
+        plt.title("Results of Mn Kalpha fit")
+
+        plt.subplot(211)
+        plt.ylabel("Energy resolution (eV)")
+        plt.xlabel("Pixels")
+        plt.errorbar(fit_pixels, xfwhm, yerr=xfwhme, fmt='ko', label = typename[itype_])
+        plt.legend(numpoints=1, frameon=False, loc="upper left")	   
+        plt.grid(linestyle='dotted',alpha=0.1)
+
+        plt.subplot(212)
+        plt.ylabel("Energy Scale")
+        plt.xlabel("Pixels")
+        plt.errorbar(fit_pixels, xgain, yerr=xgaine, fmt='ko', label = typename[itype_])
+        plt.legend(numpoints=1, frameon=False, loc="upper left")	   
+        plt.grid(linestyle='dotted',alpha=0.1)
+        plt.savefig("fit_summary_" + typename[itype_] + "_" + str(name) + ".png")
+        plt.show()
 
 def main():
     args = parse_arguments()
+    # print out all arguments 
+    args_dict = vars(args)
+    for arg in args_dict:
+        print(f"{arg}: {args_dict[arg]}")
     data = open_fits_data(args.filename)
-    processed_data, dt = process_data(data)
+    processed_data, dt, dtime, = process_data(data)
     time, itype, pi, rise_time, deriv_max, pixel = processed_data  # data unpack
-    plot_MnKa(pi, itype, pixel, args.filename)
+    cutid = np.where((time > args.start) & (time < args.end))[0]
+    time = time[cutid]
+    itype = itype[cutid]
+    pi = pi[cutid]
+    rise_time = rise_time[cutid]
+    deriv_max = deriv_max[cutid]
+    pixel = pixel[cutid]
+    dtime = dtime[cutid]
+    print(f"UPDATED : data from {dtime[0]} --> {dtime[-1]}")
+    plot_MnKa(pi, itype, pixel, args.filename, args.debug, args.name)
 
 if __name__ == "__main__":
     main()
