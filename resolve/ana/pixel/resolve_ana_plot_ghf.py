@@ -25,7 +25,7 @@ scalarMap = cm.ScalarMappable(norm=cNorm, cmap=usercmap)
 itypename = [0, 1, 2, 3, 4]
 typename = ["Hp", "Mp", "Ms", "Lp", "Ls"]
 icol = ["r", "b", "c", "m", "y"]
-ishape = [".", "s", "D", "*", "x"]
+ishape = [".", "s", "o", "*", "x"]
 
 def ev_to_pi(ev):
     """Convert energy in eV to PI units."""
