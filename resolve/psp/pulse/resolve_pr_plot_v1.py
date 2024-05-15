@@ -2,19 +2,22 @@
 
 import os
 import astropy.io.fits
+from astropy.time import Time
 import matplotlib.pylab as plt 
 import argparse
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+import datetime
+
+# Define global variables
+MJD_REFERENCE_DAY = 58484
+REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')  # Reference time in Modified Julian Day
 
 def plot_fits(fname, target_pixel, target_itype, target_pulserec_mode, plot_flag):
-    fnametag = fname.replace(".evt", "").replace(".gz", "")
 
-    # Create directory
-    output_directory = fnametag + "_plots"
-    if not os.path.exists(output_directory):
-        os.mkdir(output_directory)
+    fnametag = fname.replace(".evt", "").replace(".gz", "").replace(".fits", "") +  "_pixel" + str("%02d" %target_pixel) \
+             + "_itype" + str(target_itype) + "_pmode" + str(target_pulserec_mode)
 
     hdu = astropy.io.fits.open(fname)[1]
     data = hdu.data
@@ -22,6 +25,7 @@ def plot_fits(fname, target_pixel, target_itype, target_pulserec_mode, plot_flag
     itypename = [0, 1, 2, 3, 4, 5, 6, 7]
     typename = ["Hp", "Mp", "Ms", "Lp", "Ls", "BL", "EL", "-"]
     time, itype, pixel, pha = data["TIME"], data["ITYPE"], data["PIXEL"], data["PHA"]
+    dtime = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in time])
     pulserec_mode, pulserec = data["PULSEREC_MODE"], data["PULSEREC"]
 
     date_obs = hdu.header['DATE-OBS']
@@ -35,6 +39,17 @@ def plot_fits(fname, target_pixel, target_itype, target_pulserec_mode, plot_flag
     cutid = np.where( (pixel == target_pixel) & (itype == target_itype) &  (pulserec_mode == target_pulserec_mode))[0]
 
     Nevent = len(cutid)
+
+    print("Nevent =", Nevent, " from ", fname, " pixel=", target_pixel, " itype=", target_itype, " pmode=", target_pulserec_mode)
+    if Nevent==0:
+        print("finish due to no counts")
+        return 0
+
+    # Create directory
+    output_directory = "prfig/" + fnametag + "_plots"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
     jet = plt.get_cmap('jet')
     cNorm  = colors.Normalize(vmin=0, vmax=Nevent)
     scalarMap = cm.ScalarMappable(norm=cNorm, cmap=jet)
@@ -52,12 +67,12 @@ def plot_fits(fname, target_pixel, target_itype, target_pulserec_mode, plot_flag
     plt.savefig(os.path.join(output_directory, fnametag + "_all.png"))
     if plot_flag: plt.show()
 
-    for i, onepulse in enumerate(pulserec[cutid]):
+    for i, (onepulse, dtime) in enumerate(zip(pulserec[cutid],dtime[cutid])):
         c = scalarMap.to_rgba(i)
         F = plt.figure(figsize=(8,6))
         ax = plt.subplot(1,1,1)
         plt.title(fname + " pixel = " + str(target_pixel) + " ITYPE = " + str(typename[target_itype]) + " pulserec_mode = " + str(target_pulserec_mode))
-        plt.figtext(0.1,0.94, date_obs + " to " + date_end + "  # Total Number of events = " + str(Nevent) + "  No. " + str(i))
+        plt.figtext(0.1,0.94, str(dtime) +  "  # Total Number of events = " + str(Nevent) + "  No. " + str(i))
         plt.errorbar(xadc, onepulse, fmt='-', color = "r", label="PIXEL " + str(pixel))
         plt.ylabel('ADC ' + '(pulse)')
         plt.xlabel('Time in unit of 1 tick (80 us nominal)')
