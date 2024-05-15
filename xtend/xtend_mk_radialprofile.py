@@ -77,7 +77,8 @@ class Fits():
 
         #extract header information 
         if os.path.isfile(eventfile):
-            self.filename = get_pkg_data_filename(eventfile)
+#            self.filename = get_pkg_data_filename(eventfile)
+            self.filename = eventfile
             self.hdu = fits.open(self.filename)[0]
 
 #            self.dateobs = self.hdu.header['DATE-OBS']            
