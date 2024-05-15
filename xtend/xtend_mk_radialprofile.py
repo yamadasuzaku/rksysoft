@@ -52,6 +52,18 @@ params = {'xtick.labelsize': 10, # x ticks
 plt.rcParams['font.family'] = 'serif' 
 plt.rcParams.update(params)
 
+def calculate_centroid(image_data):
+    # Create a grid of X, Y coordinates
+    y, x = np.indices(image_data.shape)
+    
+    # Sum of pixel values
+    total = image_data.sum()
+    
+    # Calculate the centroid coordinates
+    x_center = (x * image_data).sum() / total
+    y_center = (y * image_data).sum() / total
+    
+    return x_center, y_center
 
 # Fits I.O class
 class Fits():
@@ -176,8 +188,6 @@ class Fits():
         if not manual:
             vmin = np.amin(self.hdu.data) + 1e-10
             vmax = np.amax(self.hdu.data) 
-
-
 
         self.detx = detx
         self.dety = dety
@@ -361,13 +371,14 @@ def main():
     version = __version__
     parser = optparse.OptionParser(usage=usage, version=version)
 
+    parser.add_option('-o', '--auto', action='store_true', help='The flag to automatically calc center', metavar='AUTO', default=False)     
     parser.add_option('-d', '--debug', action='store_true', help='The flag to show detailed information', metavar='DEBUG', default=False)     
     parser.add_option('-m', '--manual', action='store_true', help='The flag to use vmax, vmin', metavar='MANUAL', default=False)         
     parser.add_option('-x', '--detx', action='store', type='int', help='det x', metavar='DETX', default=61)
     parser.add_option('-y', '--dety', action='store', type='int', help='det y', metavar='DETY', default=45)
     parser.add_option('-a', '--vmax', action='store', type='float', help='VMAX', metavar='VMAX', default=4e-6)
     parser.add_option('-i', '--vmin', action='store', type='float', help='VMIN', metavar='VMIN', default=1e-10)
-    parser.add_option('-s', '--dataExtractSize', action='store', type='int', help='data size to be extracted from image', metavar='DS', default=40)
+    parser.add_option('-s', '--dataExtractSize', action='store', type='int', help='data size to be extracted from image', metavar='DS', default=80)
     parser.add_option('-n', '--numberOfDivision', action='store', type='int', help='number of division of annulus', metavar='NDIV', default=20)
 
     options, args = parser.parse_args()
@@ -375,10 +386,12 @@ def main():
     print("---------------------------------------------")
     print("| START  :  " + __file__)
 
+    auto =  options.auto
     debug =  options.debug
     manual =  options.manual
     detx =  options.detx
     dety =  options.dety
+
     vmax =  options.vmax
     vmin =  options.vmin
 
@@ -394,7 +407,6 @@ def main():
     print("..... vmax ", vmax)
     print("..... vmin ", vmin)
 
-    
     argc = len(args)
 
     if (argc < 1):
@@ -408,6 +420,13 @@ def main():
 
     print("START : ", filename)
     eve = Fits(filename, debug)
+    if auto:
+        # Calculate the centroid coordinates
+        detx, dety = calculate_centroid(eve.data)
+        detx, dety = int(detx), int(dety) # convert interger to get pixel data
+        print(f"Centroid coordinates: (X: {detx}, Y: {dety})")
+
+
     eve.plotwcs(vmax = vmax, vmin = vmin, manual = manual) # plot the entire  image
     eve.plotwcs_ps(detx, dety, ds = ds, vmax = vmax, vmin = vmin, manual = manual) # plot the enlarged image around (detx,dety).  
     eve.mk_radialprofile(detx, dety, ds = ds, ndiv = ndiv, vmax = vmax, vmin = vmin, manual = manual) # create detailed plots and radial profiles 
