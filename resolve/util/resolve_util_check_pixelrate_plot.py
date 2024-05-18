@@ -37,12 +37,13 @@ def plot_data(counts, pixels, itypes, pngfile, evtfile, debug=False):
     plt.xlabel('ITYPE')
     plt.ylabel('PIXEL')
     plt.title('Counts per Pixel and ITYPE : ' + evtfile)    
-    plt.savefig(pngfile)
 
     # 各セルに counts の値を表示
     for i in range(heatmap_data.shape[0]):
         for j in range(heatmap_data.shape[1]):
             plt.text(j, i, f'{int(heatmap_data[i, j])}', ha='center', va='center', color='white', fontsize=8)
+
+    plt.savefig(pngfile)
 
     if debug:    
         plt.show()
