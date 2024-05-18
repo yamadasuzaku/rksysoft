@@ -26,7 +26,7 @@ if [ $# -eq 2 ]; then
     flag="--plot_flag"
 fi
 
-shfile=./resolve_pr_plot_v1.py
+shfile=resolve_pr_plot_v1.py
 
 for pixel in `seq 0 35`
 do
