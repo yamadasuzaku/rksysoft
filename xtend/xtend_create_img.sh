@@ -9,7 +9,7 @@ exit
 fi
 
 evt_file=$1
-new_filename="${evt_file%.evt}_img.fits"
+new_filename="${evt_file%.evt}.img"
 
 tmp=tmp.log
 rm -f $tmp
