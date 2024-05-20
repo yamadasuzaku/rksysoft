@@ -20,14 +20,6 @@ params = {'xtick.labelsize': 10, 'ytick.labelsize': 10, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
-def calculate_centroid(image_data):
-    """Calculate the centroid of the image data."""
-    y, x = np.indices(image_data.shape)
-    total = image_data.sum()
-    x_center = (x * image_data).sum() / total
-    y_center = (y * image_data).sum() / total
-    return x_center, y_center
-
 class Fits:
     """Class for handling FITS files and plotting radial profiles."""
     
@@ -172,10 +164,10 @@ class Fits:
         self._plot_image(ax4, self.data, "(4) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, search_radius, wcs=self.wcs)
 
         ax5 = fig.add_subplot(3, 2, 5)
-        self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c s$^{-1}$ deg$^{-2}$')
+        self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c pixel$^{-2}$')
 
         ax6 = fig.add_subplot(3, 2, 6)
-        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c s$^{-1}$ deg$^{-2}$')
+        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c pixel$^{-2}$')
 
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
         plt.savefig(outputfigname)
