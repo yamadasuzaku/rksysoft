@@ -23,7 +23,7 @@ EOF
 fi
 
 # Function to check if a file exists
-function check_file_exists() {
+check_file_exists() {
   local file=$1
   if [ ! -f "$file" ]; then
     echo "Error: File '$file' not found."
@@ -32,7 +32,7 @@ function check_file_exists() {
 }
 
 # Function to check if a command exists in PATH
-function check_command_exists() {
+check_command_exists() {
   local cmd=$1
   if ! command -v $cmd >/dev/null 2>&1; then
     echo "Error: Command '$cmd' not found in PATH."
