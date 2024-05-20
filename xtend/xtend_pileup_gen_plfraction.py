@@ -106,6 +106,8 @@ class Fits:
         print("vmin",vmin, "vmax",vmax)
         plt.figure(figsize=(12, 8))
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
+        plt.figtext(0.05, 0.025, f"fname={self.filename}")
+
         img = plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))        
         plt.scatter(x_center, y_center, c="k", s=300, marker="x", alpha=0.3)
 
@@ -139,6 +141,7 @@ class Fits:
 
         plt.figure(figsize=(12, 8))
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
+        plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         ax = plt.subplot(111, projection=self.wcs)
         img = plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
@@ -184,6 +187,7 @@ class Fits:
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.87, wspace=0.5, hspace=0.4)
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
         plt.figtext(0.1, 0.93, f"Input center [deg] (x, y, ra, dec) = ({x_center:.4f}, {y_center:.4f}, {ra:.4f}, {dec:.4f}) cellsize for pileup = {cellsize}")
+        plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         ax1 = fig.add_subplot(2, 3, 1)
         self._plot_image(ax1, self.data, "(1) SKY image", x_center, y_center, vmin, vmax)

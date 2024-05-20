@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser(
   description='This program is used to perform selection on an event file using the ftselect command.',
   epilog='''
 Example:
-  python xtend_util_checkpileup.py xa300041010xtd_p0300000a0_uf.evt xa300041010xtd_p0300000a0_cl.evt
+  python xtend_pileup_genevt_v0.py xa300041010xtd_p0300000a0_uf.evt xa300041010xtd_p0300000a0_cl.evt
   ''',
   formatter_class=argparse.RawDescriptionHelpFormatter)
 
