@@ -51,11 +51,11 @@ clbase=$(basename "$cl" | sed -e 's/\.evt\.gz$//' -e 's/\.evt$//')
 climg=${clbase}.img
 echo "clevt : $cl  climg : $climg"
 echo "(1) create image from cl event"
-#xtend_create_img.sh $cl
+xtend_create_img.sh $cl
 
 echo "\n(2) check pileup"
 check_file_exists $climg
-#xtend_pileup_gen_plfraction.py $climg
+xtend_pileup_gen_plfraction.py $climg
 
 # detailed analysis using uf.evt
 uf=$2
