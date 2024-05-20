@@ -76,15 +76,21 @@ class Fits:
     def plotwcs(self, x_center, y_center, vmin=1e-1, vmax=20, manual=False):
         """Plot the entire image with WCS."""
         print("\n[def plotwcs]")
-        if not manual:
-            vmin = np.amin(self.hdu.data) + 1e-10
-            vmax = np.amax(self.hdu.data)
 
+        if not manual:
+            vmin = np.amin(self.hdu.data[self.hdu.data > 0]) + 0.1  # Avoid vmin being too close to 0 for LogNorm
+            vmax = np.amax(self.hdu.data)
+        print("     vmin = ", vmin, "vmax = ", vmax)
+    
         plt.figure(figsize=(12, 8))
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
-        plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
-        plt.scatter(x_center, y_center, c="k", s=300, marker="x")
-        plt.colorbar()
+        plt.figtext(0.1, 0.91, f"Input center [deg] (x, y) = ({x_center:.4f}, {y_center:.4f})")
+
+        img = plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
+        cbar = plt.colorbar(img)
+        cbar.set_label('Intensity (c/bin)', rotation=270, labelpad=15)
+
+        plt.scatter(x_center, y_center, c="k", s=300, marker="x", alpha=0.3)
         plt.xlabel('RA')
         plt.ylabel('Dec')
 
@@ -96,8 +102,9 @@ class Fits:
         """Plot the enlarged image around the given center."""
         print("\n[def plotwcs_ps]")
         if not manual:
-            vmin = np.amin(self.hdu.data) + 1e-10
+            vmin = np.amin(self.hdu.data[self.hdu.data > 0]) + 0.1  # Avoid vmin being too close to 0 for LogNorm
             vmax = np.amax(self.hdu.data)
+        print("     vmin = ", vmin, "vmax = ", vmax)
 
         pix_coords = np.array([[x_center, y_center]], np.float_)
         world_coords = self.wcs.all_pix2world(pix_coords, 1)
@@ -111,15 +118,17 @@ class Fits:
 
         plt.figure(figsize=(12, 8))
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
-
+        plt.figtext(0.1, 0.91, f"Input center [deg] (x, y, ra, dec) = ({x_center:.4f}, {y_center:.4f}, {ra:.4f}, {dec:.4f})")
         ax = plt.subplot(111, projection=self.wcs)
-        plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
-        ax.scatter(x_center, y_center, c="k", s=300, marker="x")
+        img = plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
+        ax.scatter(x_center, y_center, c="k", s=300, marker="x", alpha=0.3)
         print(f"self.hdu.data[x_center][y_center] = {self.hdu.data[x_center][y_center]} (x_center, y_center) = ({x_center}, {y_center})")
 
         ax.set_xlim(x_center - search_radius, x_center + search_radius)
         ax.set_ylim(y_center - search_radius, y_center + search_radius)
-        plt.colorbar()
+        cbar = plt.colorbar(img)
+        cbar.set_label('Intensity (c/bin)', rotation=270, labelpad=15)
+
         plt.xlabel('RA')
         plt.ylabel('Dec')
 
@@ -131,8 +140,9 @@ class Fits:
         """Create the radial profiles."""
         print("\n[def mk_radialprofile]")
         if not manual:
-            vmin = np.amin(self.hdu.data) + 1e-10
+            vmin = np.amin(self.hdu.data[self.hdu.data > 0]) + 0.1  # Avoid vmin being too close to 0 for LogNorm
             vmax = np.amax(self.hdu.data)
+        print("     vmin = ", vmin, "vmax = ", vmax)
 
         pix_coords = np.array([[x_center, y_center]], np.float_)
         world_coords = self.wcs.all_pix2world(pix_coords, 1)
@@ -146,28 +156,32 @@ class Fits:
         rc, rp = calc_radial_profile(self.data, x_center, y_center, search_radius=search_radius, ndiv=ndiv)
 
         # Plot images and radial profiles
-        fig = plt.figure(figsize=(10, 12))
+        fig = plt.figure(figsize=(12, 8))
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.87, wspace=0.3, hspace=0.3)
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
         plt.figtext(0.1, 0.93, f"Input center [deg] (x, y, ra, dec) = ({x_center:.4f}, {y_center:.4f}, {ra:.4f}, {dec:.4f})")
 
-        ax1 = fig.add_subplot(3, 2, 1)
+        ax1 = fig.add_subplot(2, 3, 1)
         self._plot_image(ax1, self.data, "(1) SKY image", x_center, y_center, vmin, vmax)
+        ax1.set_aspect('equal', adjustable='box')
 
-        ax2 = fig.add_subplot(3, 2, 2, projection=self.wcs)
+        ax2 = fig.add_subplot(2, 3, 4, projection=self.wcs)
         self._plot_image(ax2, self.data, "(2) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, wcs=self.wcs)
+        ax2.set_aspect('equal', adjustable='box')
 
-        ax3 = fig.add_subplot(3, 2, 3)
+        ax3 = fig.add_subplot(2, 3, 2)
         self._plot_image(ax3, self.data, "(3) SKY image", x_center, y_center, vmin, vmax, search_radius)
+        ax3.set_aspect('equal', adjustable='box')
 
-        ax4 = fig.add_subplot(3, 2, 4, projection=self.wcs)
+        ax4 = fig.add_subplot(2, 3, 5, projection=self.wcs)
         self._plot_image(ax4, self.data, "(4) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, search_radius, wcs=self.wcs)
+        ax4.set_aspect('equal', adjustable='box')
 
-        ax5 = fig.add_subplot(3, 2, 5)
-        self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c pixel$^{-2}$')
+        ax5 = fig.add_subplot(2, 3, 3)
+        self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c s$^{-1}$ pixel$^{-2}$')
 
-        ax6 = fig.add_subplot(3, 2, 6)
-        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c pixel$^{-2}$')
+        ax6 = fig.add_subplot(2, 3, 6)
+        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c s$^{-1}$ pixel$^{-2}$')
 
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
         plt.savefig(outputfigname)
@@ -176,7 +190,7 @@ class Fits:
         self._save_radial_profile(rc, rp, f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.txt")
 
     def _plot_image(self, ax, data, title, x_center, y_center, vmin, vmax, search_radius=None, wcs=None):
-        ax.set_title(title)
+        ax.set_title(title)        
         im = ax.imshow(data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax), aspect='auto', extent=[0, data.shape[1], 0, data.shape[0]])
         plt.colorbar(im, ax=ax)
         ax.scatter(x_center, y_center, c="k", s=300, marker="x")
@@ -190,7 +204,7 @@ class Fits:
 
     def _plot_radial_profile(self, ax, rc, rp, title, xlabel, ylabel):
         ax.set_title(title)
-        ax.errorbar(rc, rp, fmt="ko-", label="input center")
+        ax.errorbar(rc, rp, fmt="ko-", label="data")
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.grid(True)
@@ -202,7 +216,7 @@ class Fits:
                 fout.write(f"{onex},{oney}\n")
         print(f"..... {outputcsv} is created.")
 
-def calc_radial_profile(data, x_center, y_center, search_radius=10, ndiv=10, debug=False):
+def calc_radial_profile(data, x_center, y_center, search_radius=10, ndiv=10, exposure=1e4, debug=False):
     """
     Calculate the radial profile of the data around a given center.
 
@@ -212,6 +226,7 @@ def calc_radial_profile(data, x_center, y_center, search_radius=10, ndiv=10, deb
     y_center (int): The y-coordinate of the center.
     search_radius (int): The radius around the center to search for the profile. Default is 10.
     ndiv (int): The number of divisions in the radial profile. Default is 10.
+    exposure (float): The exposure time to calculate pileup fraction. Default is 1e4.    
     debug (bool): If True, print debug information. Default is False.
 
     Returns:
@@ -235,7 +250,7 @@ def calc_radial_profile(data, x_center, y_center, search_radius=10, ndiv=10, deb
 
     # Normalize the radial profile
     areas = np.pi * (radial_bins[1:]**2 - radial_bins[:-1]**2)
-    normalized_radial_profile = radial_profile / areas
+    normalized_radial_profile = radial_profile / (areas*exposure)
 
     if debug:
         for m in range(len(radial_bins) - 1):
@@ -301,8 +316,8 @@ def main():
     parser.add_argument('-m', '--manual', action='store_true', help='Flag to use vmax, vmin', default=False)
     parser.add_argument('-x', '--x_center', type=int, help='x coordinate of center', default=1215)
     parser.add_argument('-y', '--y_center', type=int, help='y coordinate of center', default=1215)
-    parser.add_argument('-a', '--vmax', type=float, help='VMAX', default=4e-6)
-    parser.add_argument('-i', '--vmin', type=float, help='VMIN', default=1e-10)
+    parser.add_argument('-a', '--vmax', type=float, help='VMAX', default=400)
+    parser.add_argument('-i', '--vmin', type=float, help='VMIN', default=0.9)
     parser.add_argument('-s', '--search_radius', type=int, help='Search radius for data extraction', default=80)
     parser.add_argument('-n', '--numberOfDivision', type=int, help='Number of divisions for annulus', default=20)
     parser.add_argument('filename', help='Input FITS file')
