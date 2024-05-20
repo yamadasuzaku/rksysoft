@@ -246,7 +246,7 @@ class Fits:
         print(f"..... {outputcsv} is created.")
 
     def _save_pileup_oneline(self, pileup_result, outputcsv):
-        rough_rate = self.data/self.exposure
+        rough_rate = np.sum(self.data)/self.exposure
         with open(outputcsv, "w") as fout:
             fout.write(f"{self.obsid},{pileup_result[0]},{pileup_result[1]},{self.object},{self.datamode},{self.exposure},{rough_rate}\n")
         print(f"..... {outputcsv} is created.")
