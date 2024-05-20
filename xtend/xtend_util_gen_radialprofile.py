@@ -163,19 +163,15 @@ class Fits:
 
         ax1 = fig.add_subplot(2, 3, 1)
         self._plot_image(ax1, self.data, "(1) SKY image", x_center, y_center, vmin, vmax)
-        ax1.set_aspect('equal', adjustable='box')
 
         ax2 = fig.add_subplot(2, 3, 4, projection=self.wcs)
         self._plot_image(ax2, self.data, "(2) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, wcs=self.wcs)
-        ax2.set_aspect('equal', adjustable='box')
 
         ax3 = fig.add_subplot(2, 3, 2)
         self._plot_image(ax3, self.data, "(3) SKY image", x_center, y_center, vmin, vmax, search_radius)
-        ax3.set_aspect('equal', adjustable='box')
 
         ax4 = fig.add_subplot(2, 3, 5, projection=self.wcs)
         self._plot_image(ax4, self.data, "(4) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, search_radius, wcs=self.wcs)
-        ax4.set_aspect('equal', adjustable='box')
 
         ax5 = fig.add_subplot(2, 3, 3)
         self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c s$^{-1}$ pixel$^{-2}$')
@@ -201,6 +197,7 @@ class Fits:
             ax.set_ylim(y_center - search_radius, y_center + search_radius)
         if wcs is not None:
             ax.coords.grid(True, color='white', ls='solid')
+        ax.set_aspect('equal', adjustable='box')
 
     def _plot_radial_profile(self, ax, rc, rp, title, xlabel, ylabel):
         ax.set_title(title)
