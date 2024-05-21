@@ -5,7 +5,7 @@ import subprocess
 
 def e2ch(ene):
     """Convert energy to channel."""
-    return int(ene * 1000 / 3.65 + 1)
+    return int(ene/6.0)
 
 def select_event(eventfile, expr, output_suffix=None):
     """
@@ -55,10 +55,10 @@ ufevt = args.ufevt
 clevt = args.clevt
 
 # Energy cuts
-e1 = 137   # 0.5 keV
-e2 = 822   # 3   keV
-e3 = 1918  # 7   keV
-e4 = 2740  # 10  keV
+e1 = e2ch(500.)   # 0.5 keV
+e2 = e2ch(3000.)   # 3   keV
+e3 = e2ch(7000.)  # 7   keV
+e4 = e2ch(10000.)  # 10  keV
 pi_filters = {
     "ene1": f"PI>={e1}&&PI<{e2}",
     "ene2": f"PI>={e2}&&PI<{e3}",
