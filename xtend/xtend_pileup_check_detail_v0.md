@@ -4,7 +4,7 @@ This script is used to check pileup of Xtend using an unscreened event file, usi
 
 ## Usage
 
-Run [xtend_pileup_check_detail_v0.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_pileup_check_detail_v0.sh) with a cleaned event file. 
+Run [xtend_pileup_check_detail_v0.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_pileup_check_detail_v0.sh) with a cleaned event file and an unscreened event. 
 
 ```sh
 xtend_pileup_check_detail_v0.sh cl.evt uf.evt
