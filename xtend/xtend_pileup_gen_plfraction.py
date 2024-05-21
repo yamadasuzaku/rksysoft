@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as cr
 from astropy.io import fits
 from astropy.wcs import WCS
+from scipy.signal import convolve
+
 
 params = {'xtick.labelsize': 10, 'ytick.labelsize': 10, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
@@ -179,32 +181,33 @@ class Fits:
 
         rc, rp = calc_radial_profile(self.data, x_center, y_center, search_radius=search_radius, ndiv=ndiv, exposure=self.exposure)
         radial_centers, radial_pileupfraction = calc_radial_pileupfraction(self.data, x_center, y_center, exposure=self.exposure, search_radius=search_radius, ndiv=ndiv, cellsize=cellsize)
-
+        pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize)
+        
         target_values = [0.03, 0.01] # pileup fraction 3%, 1%
         pileup_result = interpolate_centers(radial_centers, radial_pileupfraction, target_values = target_values) 
         # Plot images and radial profiles
-        fig = plt.figure(figsize=(12, 8))
+        fig = plt.figure(figsize=(16, 8))
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.87, wspace=0.5, hspace=0.4)
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
         plt.figtext(0.1, 0.93, f"Input center [deg] (x, y, ra, dec) = ({x_center:.4f}, {y_center:.4f}, {ra:.4f}, {dec:.4f}) cellsize for pileup = {cellsize}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
-        ax1 = fig.add_subplot(2, 3, 1)
+        ax1 = fig.add_subplot(2, 4, 1)
         self._plot_image(ax1, self.data, "(1) SKY image", x_center, y_center, vmin, vmax)
 
-        ax2 = fig.add_subplot(2, 3, 4, projection=self.wcs)
+        ax2 = fig.add_subplot(2, 4, 5, projection=self.wcs)
         self._plot_image(ax2, self.data, "(2) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, wcs=self.wcs)
 
-        ax3 = fig.add_subplot(2, 3, 2)
+        ax3 = fig.add_subplot(2, 4, 2)
         self._plot_image(ax3, self.data, "(3) SKY image", x_center, y_center, vmin, vmax, search_radius)
 
-        ax4 = fig.add_subplot(2, 3, 5, projection=self.wcs)
+        ax4 = fig.add_subplot(2, 4, 6, projection=self.wcs)
         self._plot_image(ax4, self.data, "(4) Ra Dec image (FK5)", x_center, y_center, vmin, vmax, search_radius, wcs=self.wcs)
 
-        ax5 = fig.add_subplot(2, 3, 3)
+        ax5 = fig.add_subplot(2, 4, 3)
         self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c s$^{-1}$ pixel$^{-2}$')
 
-        ax6 = fig.add_subplot(2, 3, 6)
+        ax6 = fig.add_subplot(2, 4, 7)
         self._plot_radial_profile(ax6, radial_centers, radial_pileupfraction, "(6) Pileup Fraction", 'radial distance (pixel)', 'fraction')
         for _target, _r in zip(target_values,pileup_result):
             if _r > 0:
@@ -214,17 +217,26 @@ class Fits:
 #        ax6 = fig.add_subplot(3, 2, 6)
 #        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c s$^{-1}$ deg$^{-2}$')
 
+        ax7 = fig.add_subplot(2, 4, 4)
+        self._plot_image(ax7, pileupfraction_img, "(7) Pileup Fraction image", x_center, y_center, 1e-4, np.nanmax(pileupfraction_img), search_radius, label='fraction')
+
+        ax8 = fig.add_subplot(2, 4, 8)
+        self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, 1e-2, np.nanmax(pileupfraction_img), int(search_radius/6), label='fraction')
+
+
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
         plt.savefig(outputfigname)
         print(f"..... {outputfigname} is created.")
 
         self._save_radial_profile(rc, rp, f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.txt")
         self._save_radial_profile(radial_centers, radial_pileupfraction, f"{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.txt")
-        self._save_pileup_oneline(pileup_result, f"plresult_{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.csv")
-    def _plot_image(self, ax, data, title, x_center, y_center, vmin, vmax, search_radius=None, wcs=None):
+        self._save_pileup_oneline(pileup_result, f"{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.csv")
+        
+    def _plot_image(self, ax, data, title, x_center, y_center, vmin, vmax, search_radius=None, wcs=None, label=None):
         ax.set_title(title)
         im = ax.imshow(data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax), aspect='auto', extent=[0, data.shape[1], 0, data.shape[0]])
-        plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        cbar.set_label(label, rotation=270, labelpad=15)
         ax.scatter(x_center, y_center, c="k", s=300, marker="x",alpha=0.3)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
@@ -299,6 +311,27 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
 
     return radial_centers, radial_pileupfraction
 
+def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False):
+    """
+    Calculate the pileup from image information.
+
+    Parameters:
+    data (2D array): The input data array.
+    exposure (float): The exposure time to calculate pileup fraction. Default is 1e4.
+    cellsize (float): The cell size for single phtoon. Default is 3x3, though need to check. 
+    debug (bool): If True, print debug information. Default is False.
+
+    Returns:
+    2D array: The pileup 2d image.
+    """
+    cellsize_kernel = np.ones((3,3), dtype=data.dtype)
+    cellsize_per_exposure = convolve(data, cellsize_kernel, mode='same') / exposure
+    pileupfraction_img = calc_pileupfraction(cellsize_per_exposure)
+
+    if debug:
+        print("vmin = ", np.max(pileupfraction_img), "vmax = ", np.max(pileupfraction_img), "mean = ", np.mean(pileupfraction_img))
+
+    return pileupfraction_img
 
 def calc_radial_profile(data, x_center, y_center, search_radius=10, ndiv=10, exposure = 1e4, debug=False):
     """
