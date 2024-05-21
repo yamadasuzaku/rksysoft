@@ -17,7 +17,8 @@ xtend_pileup_check_detail_v0.sh cl.evt uf.evt
 The script verifies that the following commands are available in the system's PATH:
 - [xtend_create_img.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_create_img.sh)
 - [xtend_pileup_gen_plfraction.py](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_pileup_gen_plfraction.py)
-- [xtend_pileup_genevt_v0.py](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_pileup_genevt_v0.py)
+- [xtend_pileup_genimg_uf.py](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_pileup_genimg_uf.py)
+- [xtend_util_ftmgtime.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/xtend_util_ftmgtime.sh)
 - xselect
 
 ### Flow
@@ -34,21 +35,18 @@ xtend_create_img.sh $cl
 xtend_pileup_gen_plfraction.py $climg
 ```
 
-
-- (3) extract events from the input uf event with several filters
+- echo (3) create GTI from the cl.evt
 
 ``` bash:
-xtend_pileup_genevt_v0.py $uf $cl
+xtend_util_ftmgtime.sh $cl
+clgti=${clbase}.gti
+check_file_exists $clgti
 ```
 
-- (4) generate images from the events
+- echo (4) generate images from the events
 
 ``` bash:
-for ev in `ls *clgti.evt`
-do
-echo $ev
-xtend_create_img_nocut.sh $ev
-done
+xtend_pileup_genimg_uf.py $uf $cl $clgti 
 ```
  
 - (5) check pileup from several uf events
