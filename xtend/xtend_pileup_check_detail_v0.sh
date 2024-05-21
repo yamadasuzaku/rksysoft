@@ -62,15 +62,23 @@ uf=$2
 check_file_exists $uf
 ufbase=$(basename "$uf" | sed -e 's/\.evt\.gz$//' -e 's/\.evt$//')
 
-echo "(3) extract events from the input uf event with several filters"
-xtend_pileup_genevt_v0.py $uf $cl
+echo "(3) create GTI from the cl.evt"
+xtend_util_ftmgtime.sh $cl
+clgti=${clbase}.gti
+check_file_exists $clgti
 
 echo "(4) generate images from the events"
-for ev in `ls *clgti.evt`
-do
-echo $ev
-xtend_create_img_nocut.sh $ev
-done
+xtend_pileup_genimg_uf.py $uf $cl $clgti 
+
+# echo "(3) extract events from the input uf event with several filters"
+# xtend_pileup_genevt_v0.py $uf $cl
+
+# echo "(4) generate images from the events"
+# for ev in `ls *clgti.evt`
+# do
+# echo $ev
+# xtend_create_img_nocut.sh $ev
+# done
  
 echo "(5) check pileup from several uf events"
 for ev in `ls *clgti.img`
