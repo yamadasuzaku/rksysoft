@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-""" xtend_pileup_mk_radialprofile.py
+""" xtend_pileup_gen_plfraction.py
 
-This is a python script to plot the radial profile of the image.
+This is a python script to plot the radial profile and pileup fraction of the image.
 History: 
-2024-05-20 ; ver 1; S.Yamada
+2024-05-20 ; ver 1.0; S.Yamada, 
+2024-05-21 ; ver 1.1; Y.Sakai, implement pileup fraction image 
 """
 
 import os
@@ -214,9 +215,7 @@ class Fits:
                 print(f"***** pileup fraction ={_target*100:.2f} % at {_r:.2f} pixel *****")
                 ax6.axhline(y=_target, color='r', ls="--", alpha=0.3, label=f"plfrac={_target*100:.2f} % at {_r:.2f} pixel")
                 plt.legend(numpoints=1, frameon=True)
-#        ax6 = fig.add_subplot(3, 2, 6)
-#        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c s$^{-1}$ deg$^{-2}$')
-
+                
         ax7 = fig.add_subplot(2, 4, 4)
         self._plot_image(ax7, pileupfraction_img, "(7) Pileup Fraction image", x_center, y_center, 1e-4, np.nanmax(pileupfraction_img), search_radius, label='fraction')
 
