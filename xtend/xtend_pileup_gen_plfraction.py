@@ -2,10 +2,10 @@
 
 """ xtend_pileup_gen_plfraction.py
 
-This is a python script to plot the radial profile and pileup fraction of the image.
+This is a python script to plot the radial profile of the image.
 History: 
-2024-05-20 ; ver 1.0; S.Yamada, 
-2024-05-21 ; ver 1.1; Y.Sakai, implement pileup fraction image 
+2024-05-20 ; ver 1; S.Yamada
+2024-05-21 ; ver 1.1; Y.Sakai, update pileup fraction image
 """
 
 import os
@@ -111,7 +111,7 @@ class Fits:
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
-        img = plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))        
+        img = plt.imshow(self.data, origin='lower', cmap=plt.cm.CMRmap, norm=cr.LogNorm(vmin=vmin, vmax=vmax))        
         plt.scatter(x_center, y_center, c="k", s=300, marker="x", alpha=0.3)
 
         cbar = plt.colorbar(img)
@@ -147,7 +147,7 @@ class Fits:
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         ax = plt.subplot(111, projection=self.wcs)
-        img = plt.imshow(self.data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
+        img = plt.imshow(self.data, origin='lower', cmap=plt.cm.CMRmap, norm=cr.LogNorm(vmin=vmin, vmax=vmax))
         ax.scatter(x_center, y_center, c="k", s=300, marker="x", alpha=0.3)
         print(f"self.hdu.data[x_center][y_center] = {self.hdu.data[x_center][y_center]} (x_center, y_center) = ({x_center}, {y_center})")
 
@@ -185,6 +185,7 @@ class Fits:
         pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize)
         
         target_values = [0.03, 0.01] # pileup fraction 3%, 1%
+        target_lss = ["-", "--"] # pileup linestyle
         pileup_result = interpolate_centers(radial_centers, radial_pileupfraction, target_values = target_values) 
         # Plot images and radial profiles
         fig = plt.figure(figsize=(16, 8))
@@ -210,17 +211,24 @@ class Fits:
 
         ax6 = fig.add_subplot(2, 4, 7)
         self._plot_radial_profile(ax6, radial_centers, radial_pileupfraction, "(6) Pileup Fraction", 'radial distance (pixel)', 'fraction')
-        for _target, _r in zip(target_values,pileup_result):
+        for _target, _r, _ls in zip(target_values,pileup_result, target_lss):
             if _r > 0:
                 print(f"***** pileup fraction ={_target*100:.2f} % at {_r:.2f} pixel *****")
-                ax6.axhline(y=_target, color='r', ls="--", alpha=0.3, label=f"plfrac={_target*100:.2f} % at {_r:.2f} pixel")
+                ax6.axhline(y=_target, color='g', ls=_ls, alpha=0.5, label=f"plfrac={_target*100:.2f} % at {_r:.2f} pixel")
                 plt.legend(numpoints=1, frameon=True)
-                
+#        ax6 = fig.add_subplot(3, 2, 6)
+#        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c s$^{-1}$ deg$^{-2}$')
+
         ax7 = fig.add_subplot(2, 4, 4)
-        self._plot_image(ax7, pileupfraction_img, "(7) Pileup Fraction image", x_center, y_center, 1e-4, np.nanmax(pileupfraction_img), search_radius, label='fraction')
+        pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, search_radius)
+        self._plot_image(ax7, pileupfraction_img, "(7) Pileup Fraction image", x_center, y_center, pileup_vmin, pileup_vmax, search_radius, label='fraction')
+        self._plot_contour(ax7, pileupfraction_img, x_center, y_center, search_radius, target_values, target_lss)
 
         ax8 = fig.add_subplot(2, 4, 8)
-        self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, 1e-2, np.nanmax(pileupfraction_img), int(search_radius/6), label='fraction')
+        zoom_in_range = int(search_radius/5)
+        pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, zoom_in_range)
+        self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, pileup_vmin, pileup_vmax, zoom_in_range, label='fraction')
+        self._plot_contour(ax8, pileupfraction_img, x_center, y_center, zoom_in_range, target_values, target_lss)
 
 
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
@@ -230,10 +238,24 @@ class Fits:
         self._save_radial_profile(rc, rp, f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.txt")
         self._save_radial_profile(radial_centers, radial_pileupfraction, f"{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.txt")
         self._save_pileup_oneline(pileup_result, f"{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.csv")
+
+    def _pileup_image_vmin_vmax(self, data, x_center, y_center, search_radius=None):
+        if search_radius is None:
+            data_copy = data.copy()
+        else:
+            data_copy = data[y_center-search_radius:y_center+search_radius+1, x_center-search_radius:x_center+search_radius+1].copy()
         
+        clean_data = data_copy[~np.isnan(data_copy)]
+        finite_data = clean_data[np.isfinite(clean_data)]
+        positive_data = finite_data[finite_data > 0]
+        vmin = np.min(positive_data)
+        vmax = np.max(positive_data)
+
+        return vmin, vmax
+
     def _plot_image(self, ax, data, title, x_center, y_center, vmin, vmax, search_radius=None, wcs=None, label=None):
         ax.set_title(title)
-        im = ax.imshow(data, origin='lower', cmap=plt.cm.jet, norm=cr.LogNorm(vmin=vmin, vmax=vmax), aspect='auto', extent=[0, data.shape[1], 0, data.shape[0]])
+        im = ax.imshow(data, origin='lower', cmap=plt.cm.CMRmap, norm=cr.LogNorm(vmin=vmin, vmax=vmax), aspect='auto', extent=[0, data.shape[1], 0, data.shape[0]])
         cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         cbar.set_label(label, rotation=270, labelpad=15)
         ax.scatter(x_center, y_center, c="k", s=300, marker="x",alpha=0.3)
@@ -243,7 +265,19 @@ class Fits:
             ax.set_xlim(x_center - search_radius, x_center + search_radius)
             ax.set_ylim(y_center - search_radius, y_center + search_radius)
         if wcs is not None:
-            ax.coords.grid(True, color='white', ls='solid')
+            ax.coords.grid(True, color='gray', ls='solid')
+        ax.set_aspect('equal', adjustable='box')
+
+    def _plot_contour(self, ax, data, x_center, y_center, search_radius=None, levels=None, linestyles=None):
+        sorted_indices = np.argsort(levels)
+        sorted_levels = np.array(levels)[sorted_indices]
+        sorted_linestyles = np.array(linestyles)[sorted_indices]
+
+        cs = ax.contour(data, levels=sorted_levels, colors='g', origin='lower', linestyles=sorted_linestyles, extent=[0, data.shape[1], 0, data.shape[0]])
+
+        if search_radius is not None:
+            ax.set_xlim(x_center - search_radius, x_center + search_radius)
+            ax.set_ylim(y_center - search_radius, y_center + search_radius)
         ax.set_aspect('equal', adjustable='box')
 
     def _plot_radial_profile(self, ax, rc, rp, title, xlabel, ylabel):
@@ -328,7 +362,7 @@ def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False):
     pileupfraction_img = calc_pileupfraction(cellsize_per_exposure)
 
     if debug:
-        print("vmin = ", np.max(pileupfraction_img), "vmax = ", np.max(pileupfraction_img), "mean = ", np.mean(pileupfraction_img))
+        print("vmin = ", np.min(pileupfraction_img), "vmax = ", np.max(pileupfraction_img), "mean = ", np.mean(pileupfraction_img))
 
     return pileupfraction_img
 
