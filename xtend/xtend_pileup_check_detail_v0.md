@@ -35,7 +35,7 @@ xtend_create_img.sh $cl
 xtend_pileup_gen_plfraction.py $climg
 ```
 
-- echo (3) create GTI from the cl.evt
+- (3) create GTI from the cl.evt
 
 ``` bash:
 xtend_util_ftmgtime.sh $cl
@@ -43,7 +43,7 @@ clgti=${clbase}.gti
 check_file_exists $clgti
 ```
 
-- echo (4) generate images from the events
+- (4) generate images from the events
 
 ``` bash:
 xtend_pileup_genimg_uf.py $uf $cl $clgti 
