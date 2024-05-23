@@ -10,7 +10,7 @@ def read_data(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
     
-    # COUNTS PIXEL ITYPEの行をスキップするためのフィルター
+    # skip lines of COUNTS PIXEL ITYPE
     lines = [line.strip() for line in lines if line.strip() and not line.startswith('OBJECT') and not line.startswith('COUNTS')]
     
     counts = []
@@ -38,7 +38,7 @@ def plot_data(counts, pixels, itypes, pngfile, evtfile, debug=False):
     plt.ylabel('PIXEL')
     plt.title('Counts per Pixel and ITYPE : ' + evtfile)    
 
-    # 各セルに counts の値を表示
+    # plot counts in the celles 
     for i in range(heatmap_data.shape[0]):
         for j in range(heatmap_data.shape[1]):
             plt.text(j, i, f'{int(heatmap_data[i, j])}', ha='center', va='center', color='white', fontsize=8)
