@@ -135,7 +135,8 @@ def main(target_fname, xscale, yscale, PLOT_FLAG, TRIGTIME_FLAG):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some pixel data')
-    parser.add_argument('--fname', type=str, required=True, help='Target fits file name')
+    parser.add_argument('fname', help='The name of the FITS file to process.')    
+#    parser.add_argument('--fname', type=str, required=True, help='Target fits file name')
     parser.add_argument('--xscale', type=str, choices=['log', 'linear'], default='linear', help='X-axis scale: log or linear')
     parser.add_argument('--yscale', type=str, choices=['log', 'linear'], default='linear', help='Y-axis scale: log or linear')
     parser.add_argument('--plot', action='store_true', default=False, help='Flag to display plot')
