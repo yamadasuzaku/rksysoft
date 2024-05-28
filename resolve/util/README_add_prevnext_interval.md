@@ -16,6 +16,8 @@ It calculates the trigger time based on the input parameters and updates the spe
 
 ## Usage
 
+### add `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt
+
 [resolve_tool_addcol_prev_next_interval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py) is used as follows. 
 
 ``` bash:
@@ -24,6 +26,19 @@ resolve_tool_addcol_prev_next_interval.py xa000114000rsl_p0px1000_uf.evt
 
 #Example 2) Create a new file:
 resolve_tool_addcol_prev_next_interval.py xa000114000rsl_p0px1000_uf.evt -o xa000114000rsl_p0px1000_uf_prevnext.evt
+``` 
+
+### map `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt onto pr.evt
+
+[resolve_tool_addcol_prev_next_interval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py) is used as follows. 
+
+
+``` bash:
+# Example 1) Overwrite the original target FITS file:
+resolve_tool_map_interval_quick.py xa000114000rsl_p0px1000_uf_prevnext.evt xa000114000rsl_a0pxpr_uf.evt 
+
+# Example 2) Create a new target FITS file:
+resolve_tool_map_interval_quick.py xa000114000rsl_p0px1000_uf_prevnext.evt xa000114000rsl_a0pxpr_uf.evt -o xa000114000rsl_a0pxpr_uf_fillprenext.evt
 ``` 
 
 ## Requirements
