@@ -30,7 +30,7 @@ resolve_tool_addcol_prev_next_interval.py xa000114000rsl_p0px1000_uf.evt -o xa00
 
 ### map `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt onto pr.evt
 
-[resolve_tool_addcol_prev_next_interval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py) is used as follows. 
+[resolve_tool_map_prevnextinterval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_map_prevnextinterval.py) is used as follows. 
 
 
 ``` bash:
