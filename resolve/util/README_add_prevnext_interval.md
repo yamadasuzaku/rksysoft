@@ -1,7 +1,11 @@
 # Script to add `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt 
 
-This program adds `PREV_INTERVAL` and `NEXT_INTERVAL` columns to a uf.evt file. 
+The python script, (resolve_tool_addcol_prev_next_interval.py)[https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py] adds `PREV_INTERVAL` and `NEXT_INTERVAL` columns to a uf.evt file. 
 It calculates the trigger time based on the input parameters and updates the specified columns accordingly.
+
+## History
+
+- 2024.5.28, v1, S.Y.
 
 ## Features
 
@@ -11,6 +15,8 @@ It calculates the trigger time based on the input parameters and updates the spe
 - Option to overwrite the original FITS file or create a new file with the updated data.
 
 ## Usage
+
+(resolve_tool_addcol_prev_next_interval.py)[https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py] is used as follows. 
 
 ``` bash:
 #Example 1) Overwrite the original FITS file:
