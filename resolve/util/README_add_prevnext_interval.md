@@ -1,4 +1,4 @@
-# Script to add `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt 
+# Script to add `PREV_INTERVAL` and `NEXT_INTERVAL` 
 
 The python script, [resolve_tool_addcol_prev_next_interval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py) adds `PREV_INTERVAL` and `NEXT_INTERVAL` columns to a uf.evt file. 
 It calculates the trigger time based on the input parameters and updates the specified columns accordingly.
@@ -15,10 +15,11 @@ It calculates the trigger time based on the input parameters and updates the spe
 - Computes the differences between consecutive elements in the counter list, considering 24-bit overflow.
 - Updates the `PREV_INTERVAL` and `NEXT_INTERVAL` columns in the FITS file.
 - Option to overwrite the original FITS file or create a new file with the updated data.
+- Map `PREV_INTERVAL` and `NEXT_INTERVAL` columns onto pr.evt. 
 
 ## Usage
 
-### add `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt
+### Add `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt
 
 [resolve_tool_addcol_prev_next_interval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py) is used as follows. 
 
@@ -30,7 +31,7 @@ resolve_tool_addcol_prev_next_interval.py xa000114000rsl_p0px1000_uf.evt
 resolve_tool_addcol_prev_next_interval.py xa000114000rsl_p0px1000_uf.evt -o xa000114000rsl_p0px1000_uf_prevnext.evt
 ``` 
 
-### map `PREV_INTERVAL` and `NEXT_INTERVAL` into uf.evt onto pr.evt
+### Map `PREV_INTERVAL` and `NEXT_INTERVAL` in uf.evt onto pr.evt
 
 [resolve_tool_map_prevnextinterval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_map_prevnextinterval.py) is used as follows. 
 
