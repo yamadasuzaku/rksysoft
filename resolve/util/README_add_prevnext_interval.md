@@ -3,6 +3,8 @@
 The python script, [resolve_tool_addcol_prev_next_interval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py) adds `PREV_INTERVAL` and `NEXT_INTERVAL` columns to a uf.evt file. 
 It calculates the trigger time based on the input parameters and updates the specified columns accordingly.
 
+[resolve_tool_map_prevnextinterval.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_map_prevnextinterval.py) will map `PREV_INTERVAL` and `NEXT_INTERVAL` columns in a uf.evt file onto pr.evt. 
+
 ## History
 
 - 2024.5.28, v1, S.Y.
