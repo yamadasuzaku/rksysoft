@@ -23,7 +23,7 @@ def apply_filters(data, filters):
         mask &= (data[col] == value)
     return data[mask]
 
-def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None, plotflag = False):
+def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None, plotflag = False, markers = "o"):
     # Open the FITS file
     with fits.open(file_name) as hdul:
         data = hdul[hdu].data  # Access the data from HDU 2
@@ -45,7 +45,7 @@ def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None,
             axs = [axs]  # Ensure axs is always a list for consistency
 
         for ax, y_col in zip(axs, y_cols):
-            ax.plot(x_data, y_data[y_col], "o", label=y_col)
+            ax.plot(x_data, y_data[y_col], markers, label=y_col)
 #            ax.set_xlabel(x_col)
             ax.set_ylabel(y_col)
             ax.legend()
@@ -73,6 +73,7 @@ if __name__ == "__main__":
     parser.add_argument('--hdu', '-n', type=int, default=1, help='Number of FITS HDUe')
     parser.add_argument("--filters", '-f', type=str, help="Comma-separated filter conditions in the format 'COLUMN==VALUE'", default="")
     parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
+    parser.add_argument("--markers", '-m', type=str, help="marker type", default="o")
 
     args = parser.parse_args()
 
@@ -80,4 +81,4 @@ if __name__ == "__main__":
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_name} : filtered with {args.filters}"
     outfname = "fplot_" + args.file_name.split(".")[0] + ".png"
-    plot_fits_data(args.file_name, args.x_col, y_cols_list, args.hdu, title, outfname, filter_conditions, args.plot)
+    plot_fits_data(args.file_name, args.x_col, y_cols_list, args.hdu, title, outfname, filter_conditions, args.plot, args.markers)
