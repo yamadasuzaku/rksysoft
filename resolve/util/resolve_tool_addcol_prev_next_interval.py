@@ -14,14 +14,17 @@ def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
     SAMPLECNTTRIG_WO_VERNIER = ((WFRB_SAMPLE_CNT - deltalap * 0x40000) + (TRIG_LP & 0x3ffff)) & 0xffffffff
     return SAMPLECNTTRIG_WO_VERNIER
 
-def compute_diff_with_overflow(counter_list, bit_width):
+def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
     """
     Compute the differences between consecutive elements in counter_list, considering overflow.
     """
     max_value = (1 << bit_width) - 1
     diffs = []
     for i in range(1, len(counter_list)):
-        diff = counter_list[i] - counter_list[i - 1]
+        if reverse:
+            diff = -1 * (counter_list[i] - counter_list[i - 1])
+        else:
+            diff = counter_list[i] - counter_list[i - 1]
         if diff < 0:
             diff += max_value + 1
         diffs.append(diff)
@@ -47,11 +50,13 @@ def update_intervals(fits_file, output_file=None):
 
             # Compute previous and next intervals considering overflow
             prev_intervals = compute_diff_with_overflow(SAMPLECNTTRIG_WO_VERNIER, 24)
-            next_intervals = compute_diff_with_overflow(SAMPLECNTTRIG_WO_VERNIER[::-1], 24)[::-1]
+            next_intervals = compute_diff_with_overflow(SAMPLECNTTRIG_WO_VERNIER[::-1], 24, reverse=True)[::-1]
 
             # Debug print to check intervals
-            print(f"Pixel: {pixel}, PREV_INTERVAL: {prev_intervals}")
-            print(f"Pixel: {pixel}, NEXT_INTERVAL: {next_intervals}")
+            print(f"Pixel: {pixel}, PREV_INTERVAL: {prev_intervals[:10]}")
+            print(prev_intervals[:3])
+            print(next_intervals[:3])
+            print(f"Pixel: {pixel}, NEXT_INTERVAL: {next_intervals[:10]}")
 
             # Update data arrays using direct indexing
             if len(prev_intervals) > 0:
