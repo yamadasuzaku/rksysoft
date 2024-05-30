@@ -136,8 +136,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_name} : filtered with {args.filters}"
-    outfname = "subset_" + args.file_name.split(".")[0] + ".png"
-    
+    print(filter_conditions)
+    ftag = args.file_name.split(".")[0]
+    if args.filters:
+        outfname = f"subset_{ftag}_{filter_conditions[0][0]}{int(filter_conditions[0][1]):02d}.png"
+    else:
+        outfname = f"subset_{ftag}.png"
+
     print("Starting plot generation...")
     plot_fits_data(args.file_name, args.x_col, args.y_col, args.hdu, title, outfname, args.tolerance, filter_conditions, args.plot, args.markers)
     print("Plot generation complete.")
