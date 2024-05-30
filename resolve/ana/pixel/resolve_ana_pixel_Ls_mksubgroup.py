@@ -121,7 +121,7 @@ if __name__ == "__main__":
         description='This program is used to check more than two-something groups for each pixel',
         epilog='''
         Example:
-        resolve_ana_pixel_Ls_mksubgroup.py xa000114000rsl_p0px1000_cl.evt TIME TRIG_LP -f "PIXEL==9" -p
+        resolve_ana_pixel_Ls_mksubgroup.py xa000114000rsl_p0px1000_uf_prevnext_cutclgti.fits TIME PREV_INTERVAL -f "PIXEL==14" -p
     ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("file_name", type=str, help="Path to the FITS file")
