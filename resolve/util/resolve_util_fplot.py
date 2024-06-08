@@ -23,9 +23,12 @@ def apply_filters(data, filters):
         mask &= (data[col] == value)
     return data[mask]
 
-def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None, plotflag = False, markers = "o"):
+def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None, plotflag = False, markers = "o", debug=True):
     # Open the FITS file
     with fits.open(file_name) as hdul:
+        if debug:
+            print("..... debug")
+            print(hdul[hdu].columns)
         data = hdul[hdu].data  # Access the data from HDU 2
 
         # Apply filters if any

@@ -54,13 +54,15 @@ def plot_fits_data(file_name, x_col, y_col, hdu, title, outfname, tolerance, fil
 
         # Visualization
         print("Creating plots...")
-        fig, axs = plt.subplots(2, 1, figsize=(12, 8))
+        fig, axs = plt.subplots(3, 1, figsize=(10, 8))
         plt.suptitle(title)
 
         # Top plot: Visualizing the continuous segments
         axs[0].plot(x_data, y_data, markers, label=y_col)
 
+        all_segment = []
         for j, (indexes, segment) in enumerate(split_sequences):
+            all_segment.extend(segment)
             if j == 0:
                 axs[0].plot(x_data[indexes], y_data[indexes], "ro", alpha=0.2, label="meet condition")
                 axs[0].legend()
@@ -73,16 +75,27 @@ def plot_fits_data(file_name, x_col, y_col, hdu, title, outfname, tolerance, fil
         axs[0].set_title(f'Continuous Segments Where {y_col}[i] < {tolerance} continues more than once.')
         axs[0].set_ylim(-10, 150)
 
-        # Bottom plot: Histogram of segment lengths
+        # Middle plot: Histogram of segment lengths
         segment_lengths = [len(segment) for _, segment in split_sequences]
         bins = np.arange(0.5, max(segment_lengths) + 0.5, 1)
         axs[1].hist(segment_lengths, bins=bins, edgecolor='black', label="Length in a subset of " + y_col)
-        axs[1].set_xticks(np.arange(2, max(segment_lengths) + 1))
+ #       axs[1].set_xticks(np.arange(2, max(segment_lengths) + 1))
         axs[1].set_xlabel('Length of the continuous Segments more than one')
         axs[1].set_ylabel('Frequency')
+        axs[1].set_xlim(0,10)
         axs[1].set_yscale("log")
         axs[1].set_title('Histogram of Segment Lengths')
         axs[1].legend()
+
+        # Bottom plot: Histogram of segment (e.g., PREV_INTERVAL) 
+        bins = np.arange(0.5, 80 + 0.5, 1)
+        axs[2].hist(all_segment, bins=bins, edgecolor='black', label="Countents of " + y_col)
+#        axs[2].set_xticks(np.arange(2, max(segment_lengths) + 1))
+        axs[2].set_xlabel('Countents of ' + y_col)
+        axs[2].set_ylabel('Frequency')
+        axs[2].set_yscale("log")
+        axs[2].set_title('Histogram of Segment contents')
+        axs[2].legend()
 
         plt.tight_layout()
         plt.savefig(outfname)
