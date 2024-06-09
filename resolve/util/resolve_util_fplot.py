@@ -27,12 +27,13 @@ def apply_filters(data, filters):
 def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, filters=None,\
                       plotflag = False, markers = "o", debug=True, markersize = 1, gtifiles = None):
     # Open the FITS file
+
+    num_plots = len(y_cols)
+    fig_ysize = 8
+    fig, axs = plt.subplots(num_plots, 1, figsize=(12, fig_ysize), sharex=True)
+
     for file_name in file_names:
         # Create subplots
-        num_plots = len(y_cols)
-        fig_ysize = 8
-        fig, axs = plt.subplots(num_plots, 1, figsize=(12, fig_ysize), sharex=True)
-
         with fits.open(file_name) as hdul:
             print(f"..... {file_name} is opened.")
             # Apply filters if any
@@ -69,11 +70,11 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
             axs[-1].set_xlabel(x_col)  # Set x-axis label only on the bottom plot
             plt.suptitle(title)
 
-        plt.tight_layout()
-        plt.savefig(outfname)
-        print(f".....{outfname} is saved.")
-        if plotflag:
-            plt.show()
+    plt.tight_layout()
+    plt.savefig(outfname)
+    print(f".....{outfname} is saved.")
+    if plotflag:
+        plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -117,6 +118,6 @@ if __name__ == "__main__":
 
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_names} : filtered with {args.filters}"
-    outfname = "fplot_" + args.file_names.replace(",","_").replace(".","p") + ".png"
+    outfname = "fplot_" + args.file_names.replace(",","_").replace(".","_p_") + ".png"
     plot_fits_data(file_names, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, \
         filters = filter_conditions, plotflag = args.plot, markers = args.markers, markersize = args.markersize, gtifiles = args.gtifiles)
