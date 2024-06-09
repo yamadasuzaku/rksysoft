@@ -2,7 +2,8 @@
 
 if [ _$1 = _ ];
 then
-echo "usage : xtend_ftmgtime.sh"
+    echo "usage : resolve_util_ftmgtime.sh obs.evt"
+    echo "create GTI file using inputfile"
 exit
 fi
 
