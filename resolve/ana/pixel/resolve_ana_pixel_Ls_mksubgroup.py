@@ -82,7 +82,7 @@ def plot_fits_data(file_name, x_col, y_col, hdu, title, outfname, tolerance, fil
  #       axs[1].set_xticks(np.arange(2, max(segment_lengths) + 1))
         axs[1].set_xlabel('Length of the continuous Segments more than one')
         axs[1].set_ylabel('Frequency')
-        axs[1].set_xlim(0,10)
+        axs[1].set_xlim(0,20)
         axs[1].set_yscale("log")
         axs[1].set_title('Histogram of Segment Lengths')
         axs[1].legend()

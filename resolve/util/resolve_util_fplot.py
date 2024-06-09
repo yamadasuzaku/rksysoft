@@ -2,6 +2,7 @@
 
 import argparse
 import matplotlib.pyplot as plt
+import sys
 
 params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
@@ -23,21 +24,32 @@ def apply_filters(data, filters):
         mask &= (data[col] == value)
     return data[mask]
 
-def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None, plotflag = False, markers = "o", debug=True):
+def plot_fits_data(file_name, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, filters=None,\
+                      plotflag = False, markers = "o", debug=True, markersize = 1, gtifiles = None):
     # Open the FITS file
     with fits.open(file_name) as hdul:
-        if debug:
-            print("..... debug")
-            print(hdul[hdu].columns)
-        data = hdul[hdu].data  # Access the data from HDU 2
-
+        print(f"..... {file_name} is opened.")
         # Apply filters if any
-        if filters:
-            data = apply_filters(data, filters)
 
-        # Convert columns to numpy arrays for easier plotting
-        x_data = data[x_col]
-        y_data = {col: data[col] for col in y_cols}
+        # Get X data
+        x_data = {}
+        for ycol, xhdu in zip(y_cols,x_hdus):
+            print(f"..... {x_col} is opened from HDU={xhdu}")
+            data = hdul[xhdu].data
+            if filters:
+                print("..... filters applied")
+                data = apply_filters(data, filters)
+            x_data[ycol] = data[x_col]
+
+        # Get Y data
+        y_data = {}
+        for ycol, yhdu in zip( y_cols, y_hdus):
+            print(f"..... {ycol} is opened from HDU={yhdu}")
+            data = hdul[yhdu].data
+            if filters:
+                print("..... filters applied")
+                data = apply_filters(data, filters)
+            y_data[ycol] = data[ycol]
 
         # Create subplots
         num_plots = len(y_cols)
@@ -47,10 +59,10 @@ def plot_fits_data(file_name, x_col, y_cols, hdu, title, outfname, filters=None,
         if num_plots == 1:
             axs = [axs]  # Ensure axs is always a list for consistency
 
-        for ax, y_col in zip(axs, y_cols):
-            ax.plot(x_data, y_data[y_col], markers, label=y_col)
-#            ax.set_xlabel(x_col)
+        for ax, y_col, yscale in zip(axs, y_cols, y_scales):
+            ax.plot(x_data[y_col], y_data[y_col], markers, label=y_col, markersize = markersize)
             ax.set_ylabel(y_col)
+            ax.set_yscale(yscale)
             ax.legend()
 
         axs[-1].set_xlabel(x_col)  # Set x-axis label only on the bottom plot
@@ -72,16 +84,35 @@ if __name__ == "__main__":
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument("file_name", type=str, help="Path to the FITS file")
     parser.add_argument("x_col", type=str, help="Column name for the x-axis")
+    parser.add_argument('x_hdus', type=str, help='List of Number of FITS HDU for X')
     parser.add_argument("y_cols", type=str, help="Comma-separated column names for the y-axis")
-    parser.add_argument('--hdu', '-n', type=int, default=1, help='Number of FITS HDUe')
+    parser.add_argument('y_hdus', type=str, help='List of Number of FITS HDU for Y')
     parser.add_argument("--filters", '-f', type=str, help="Comma-separated filter conditions in the format 'COLUMN==VALUE'", default="")
     parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
     parser.add_argument("--markers", '-m', type=str, help="marker type", default="o")
+    parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
+    parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis",default=None)
+    parser.add_argument("--gtifiles", type=str, help="Comma-separated column names for gtifiles",default=None)
 
     args = parser.parse_args()
+    x_hdus = [int(_) for _ in args.x_hdus.split(",")]
+    print(f'x_hdus = {x_hdus}')
+    y_hdus = [int(_) for _ in args.y_hdus.split(",")]
+    print(f'y_hdus = {y_hdus}')
 
-    y_cols_list = args.y_cols.split(",")
+    y_cols = args.y_cols.split(",")
+    if args.y_cols_scale:
+        y_scales = args.y_cols_scale.split(",")
+    else:
+        y_scales = ["linear" for _ in range(len(y_cols))]       
+
+    print(f'x_col = {args.x_col}')
+    print(f'y_cols = {y_cols}')
+    print(f'y_scales = {y_scales}')
+    print(f'y_hdus = {y_hdus}')
+
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_name} : filtered with {args.filters}"
     outfname = "fplot_" + args.file_name.split(".")[0] + ".png"
-    plot_fits_data(args.file_name, args.x_col, y_cols_list, args.hdu, title, outfname, filter_conditions, args.plot, args.markers)
+    plot_fits_data(args.file_name, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, \
+        filters = filter_conditions, plotflag = args.plot, markers = args.markers, markersize = args.markersize, gtifiles = args.gtifiles)
