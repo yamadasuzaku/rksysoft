@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument("--gtifiles", type=str, help="Comma-separated column names for gtifiles",default=None)
 
     args = parser.parse_args()
-    file_names = [int(_) for _ in args.file_names.split(",")]
+    file_names = [_ for _ in args.file_names.split(",")]
     print(f'file_names = {file_names}')
 
     x_hdus = [int(_) for _ in args.x_hdus.split(",")]
@@ -118,5 +118,5 @@ if __name__ == "__main__":
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_names} : filtered with {args.filters}"
     outfname = "fplot_" + args.file_names.replace(",","_").replace(".","p") + ".png"
-    plot_fits_data(file, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, \
+    plot_fits_data(file_names, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, \
         filters = filter_conditions, plotflag = args.plot, markers = args.markers, markersize = args.markersize, gtifiles = args.gtifiles)
