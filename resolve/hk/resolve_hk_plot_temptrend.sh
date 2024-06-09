@@ -5,7 +5,9 @@ input_file="$1"
 
 # 引数が渡されているか確認
 if [ -z "$input_file" ]; then
-  echo "Usage: $0 <input_file>"
+  echo "(sigle file) Usage: $0 <input_file>"
+  echo "(more than two file) input comma-separeted way"
+  echo "resolve_hk_plot_temptrend.sh xa300049010rsl_a0.hk1,xa300041010rsl_a0.hk1"    
   exit 1
 fi
 
