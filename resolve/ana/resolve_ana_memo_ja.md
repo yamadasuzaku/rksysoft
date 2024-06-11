@@ -55,3 +55,19 @@ resolve_util_check_pixelrate.sh xa000138000rsl_p0px1000_cl.evt
 resolve_plot_detxdety_v1_alltypes.py xa300049010rsl_p0px3000_cl.evt
 ```
 
+# cal用のツール
+
+## prev/next interval をつけて、Ls の分類
+
+cl.evt と uf.evt の２つが同じディレクトリにある状態、例えば、
+
+- xa300049010rsl_p0px3000_cl.evt
+- xa300049010rsl_p0px3000_cl.evt
+
+の２つのファイルがある状態で、
+
+``` bash:
+resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
+``` 
+
+と実行すると、prev/next interval をつけて、Ls の quick check をしてくれる。
