@@ -48,7 +48,7 @@ def plot_data(file_path, show_ratio):
         ax1.errorbar(x, model, fmt='-', label='model vs x', capsize=0, color='red',alpha=0.9)
         ax1.set_ylabel('Counts/s/keV')
         ax1.legend()
-        ax1.grid(True)
+        ax1.grid(True,alpha=0.3)
 
         ratio = y / model
         ratio_err = np.sqrt((yerr[0] / model) ** 2 + (y * model_err / model ** 2) ** 2)
@@ -57,6 +57,7 @@ def plot_data(file_path, show_ratio):
         ax2.set_ylabel('data/model')
         ax2.legend()
         ax2.grid(True,alpha=0.3)
+        ax2.axhline(1.0, color='black', linestyle='--', linewidth=2, label='ratio = 1.0')
         plt.tight_layout()
     else:
         plt.figure(figsize=(10, 6))
