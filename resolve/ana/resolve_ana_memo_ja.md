@@ -22,6 +22,16 @@ resolve_ana_pixel_ql_plotspec_v1.py xa000138000rsl_p0px1000_cl.evt
 
 このコマンドは、pixel ごと、itype ごとにスペクトルをプロットします。オプションはありません。
 
+
+別のファイルですが、試験的に、
+
+```sh
+resolve_ana_pixel_ql_plotspec.py xa000138000rsl_p0px1000_cl.evt --rebin 250
+```
+
+のように、energy の bin 幅を変えることができるのもあります。
+
+
 ## delta T 分布のチェック
 
 [resolve_ana_pixel_deltat_distribution.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_deltat_distribution.py) のコマンドを使用して、delta T 分布をチェックします：
