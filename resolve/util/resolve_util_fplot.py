@@ -82,6 +82,7 @@ if __name__ == "__main__":
       epilog='''
         Example:
         resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME TRIG_LP,WFRB_WRITE_LP,WFRB_SAMPLE_CNT -f "PIXEL==9" -p
+        resolve_util_fplot.py xa300049010rsl_p0px3000_uf_prevnext_cutclgti.fits PHA 1,1 PI,EPI 1,1 --plot --filters itype==0
     ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument("file_names", type=str, help="List of Path to the FITS file")
