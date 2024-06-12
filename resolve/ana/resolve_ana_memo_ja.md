@@ -71,3 +71,14 @@ resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 ``` 
 
 と実行すると、prev/next interval をつけて、Ls の quick check をしてくれる。
+
+
+### itype 毎、pixel 毎のライトカーブを event list のファイルから生成する
+
+eve.list に、ファイル名を1行ずつ書いておき、-y で itype, -p で pixel を指定してライトカーブを生成する。
+時間ビンや出力するファイル名もオプションで指定できる。
+
+``` bash:
+resolve_ana_pixel_ql_mklc_binned_sorted_grade_itypes.py eve.list -y 0 -p 0,17,18,35,5,11,23,30
+```
+
