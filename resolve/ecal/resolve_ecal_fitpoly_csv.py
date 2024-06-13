@@ -9,18 +9,18 @@ plt.rcParams.update(params)
 
 from numpy.polynomial import Polynomial
 
-# CSVファイルの読み込み
+# Read CSV file
 def read_csv(filename):
     print(f"Reading CSV file: {filename}")
     data = pd.read_csv(filename)
     print(f"Data read successfully. Columns: {data.columns}")
     return data
 
-# 境界点boundaryで2つの多項式フィッティングを行う
+# Perform piecewise polynomial fitting with boundary
 def fit_piecewise_polynomial(x, y, boundary, degree1, degree2):
     print(f"Performing piecewise polynomial fit with boundary: {boundary}")
     
-    # 境界点boundaryでデータを分割
+    # Split data at boundary
     mask1 = x < boundary
     mask2 = x > boundary
     
@@ -30,7 +30,7 @@ def fit_piecewise_polynomial(x, y, boundary, degree1, degree2):
     print(f"Data points for x < {boundary}: {len(x1)}")
     print(f"Data points for x > {boundary}: {len(x2)}")
     
-    # 境界点boundaryでの値を追加
+    # Add value at boundary
     if np.any(x == boundary):
         boundary_value = np.mean(y[x == boundary])
         print(f"Boundary value found: {boundary_value}")
@@ -43,7 +43,7 @@ def fit_piecewise_polynomial(x, y, boundary, degree1, degree2):
     x2 = np.insert(x2, 0, boundary)
     y2 = np.insert(y2, 0, boundary_value)
     
-    # 各部分に対して多項式フィッティング
+    # Polynomial fitting for each segment
     print("Fitting polynomial for x < boundary")
     p1 = Polynomial.fit(x1, y1, degree1)
     
@@ -52,22 +52,22 @@ def fit_piecewise_polynomial(x, y, boundary, degree1, degree2):
     
     return p1, p2
 
-# プロット
-def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, degree1, degree2, output_filename, xmin, xmax, plotflag = False):
+# Plot data and model
+def plot_data_and_model(csvfile, data, model1, model2, boundary, x_col, y_col, t_col, degree1, degree2, output_filename, xmin, xmax, plotflag=False):
     x = data[x_col]
     y = data[y_col]
     time = data[t_col]
     
-    # モデルによる予測値
+    # Generate model predictions
     print("Generating model predictions")
     y_model1 = model1(x)
     y_model2 = model2(x)
     y_model = np.where(x < boundary, y_model1, y_model2)
     
-    # データとモデルの比
+    # Ratio of data to model
     ratio = y / y_model
     
-    # フィット範囲の制限
+    # Limit fitting range
     fit_mask = (x >= xmin) & (x <= xmax)
     x_fit = x[fit_mask]
     y_fit = y[fit_mask]
@@ -75,22 +75,22 @@ def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, deg
     ratio_fit = ratio[fit_mask]
     time_fit = time[fit_mask]
     
-    # プロットの設定
-    print("Creating plots"), 
+    # Create plots
+    print("Creating plots")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), gridspec_kw={'height_ratios': [2, 1]}, sharex=True)
     
-    # 上のパネル：データとモデル
+    # Upper panel: data and model
     ax1.plot(x_fit, y_fit, 'bo', label='Data')
     ax1.plot(x_fit, y_model_fit, 'r-', label=f'Piecewise Polynomial fit (degrees {degree1}, {degree2})')
     ax1.set_ylabel(y_col)
-    ax1.set_xlim(xmin,xmax)
+    ax1.set_xlim(xmin, xmax)
     ax1.legend()
-    ax1.set_title('Data and Piecewise Polynomial Fit')
+    ax1.set_title('Data and Piecewise Polynomial Fit : ' + csvfile)
     
-    # 下のパネル：データとモデルの比
+    # Lower panel: data to model ratio
     ax2.plot(x_fit, ratio_fit, 'go', label='Data / Model')
     ax2.set_xlabel(x_col)
-    ax2.set_xlim(xmin,xmax)
+    ax2.set_xlim(xmin, xmax)
     ax2.set_ylabel('Data / Model')
     ax2.legend()
     ax2.set_title('Data / Model Ratio')
@@ -101,12 +101,11 @@ def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, deg
     if plotflag:
         plt.show()
 
-
-    # プロットの設定
-    print("Creating plots for TIME vs. Residuals"), 
+    # Create plots for TIME vs. Residuals
+    print("Creating plots for TIME vs. Residuals : " + csvfile)
     fig, ax1 = plt.subplots(1, 1, figsize=(10, 8))
     
-    # 上のパネル：データとモデル
+    # Upper panel: data and model
     ax1.plot(time_fit, ratio_fit, 'bo', label='Ratio')
     ax1.set_ylabel(y_col)
     ax1.legend()
@@ -117,7 +116,7 @@ def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, deg
     if plotflag:
         plt.show()
     
-    # CSVファイルにダンプ
+    # Dump data to CSV file
     csv_filename = output_filename.replace(".png", ".csv")
     print(f"Dumping time_fit and ratio_fit to CSV file: {csv_filename}")
     df_fit = pd.DataFrame({t_col: time_fit, 'Ratio': ratio_fit})
@@ -127,7 +126,7 @@ def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, deg
 if __name__ == "__main__":
     import argparse
 
-    # コマンドライン引数の解析
+    # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Fit a piecewise polynomial to CSV data and plot the results.')
     parser.add_argument('csvfile', type=str, help='Path to the CSV file')
     parser.add_argument('x_col', type=str, help='Column name for x data')
@@ -142,29 +141,29 @@ if __name__ == "__main__":
     parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
     args = parser.parse_args()
     
-    # CSVファイルの読み込み
+    # Read CSV file
     data = read_csv(args.csvfile)
     
-    # データのソート
+    # Sort data
     data = data.sort_values(by=args.x_col)
     print(f"Data sorted by {args.x_col}")
     
-    # フィット範囲の設定
+    # Set fitting range
     xmin = args.xmin if args.xmin is not None else data[args.x_col].min()
     xmax = args.xmax if args.xmax is not None else data[args.x_col].max()
     print(f"Fitting range: {xmin} to {xmax}")
     
-    # フィット範囲内のデータを抽出
+    # Extract data within fitting range
     fit_mask = (data[args.x_col] >= xmin) & (data[args.x_col] <= xmax)
     data_fit = data[fit_mask]
     
-    # 境界点boundaryで2つの多項式フィッティング
+    # Perform piecewise polynomial fitting with boundary
     x = data_fit[args.x_col].values
     y = data_fit[args.y_col].values
     time = data_fit[args.t_col].values
 
     model1, model2 = fit_piecewise_polynomial(x, y, args.boundary, args.degree1, args.degree2)
     
-    # プロット
-    plot_data_and_model(data, model1, model2, args.boundary, args.x_col, args.y_col, \
-                  args.t_col, args.degree1, args.degree2, args.outputfile, xmin, xmax, plotflag = args.plot)
+    # Plot data and model
+    plot_data_and_model(args.csvfile, data, model1, model2, args.boundary, args.x_col, args.y_col, \
+                  args.t_col, args.degree1, args.degree2, args.outputfile, xmin, xmax, plotflag=args.plot)
