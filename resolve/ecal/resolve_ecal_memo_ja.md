@@ -1,21 +1,33 @@
-# Resolve データの energy cal の fine tuming 方法
+# Method for the Energy Calibration using the residuals in PHA vs. PI plane
 
-## ピクセル毎、Hp only の TIME, PHA, PI を csv ファイルに保存する
+For each pixel and itype in the event file, temporarily save the data as a CSV file along with the TIME column. Use the entire observation time to fit two polynomials, and save the residuals in a CSV file.
+
+Usage:
+
+``` bash:
+resolve_ecal_run_fitpoly.sh xa000126000rsl_p0px1000_cl.evt
+```
+
+Specify the event file to run the following two programs for all pixels and Hp in one go.
+
+
+## Save TIME, PHA, and PI as a CSV file for each pixel and Hp only
+
 
 ``` bash:
 ./resolve_ecal_pha_pi.py xa000126000rsl_p0px1000_cl.evt TIME 1,1 PHA,PI 1,1 --filters PIXEL==0,ITYPE==0 -o 00
 ```
 
-- `TIME 1,1` TIMEコラムを FITS の EXTENSION 1 から取得する。`1,1`  は次の引数で別々の extention の場合に適用できるようにしたため。
-- `PHA,PI 1,1`  PHA, PI をFITS の EXTENSION 1 から取得する
-- `--filters PIXEL==0,ITYPE==0` PIXEL 0 と Hp だけから取得する。
-- `-o 00`  ファイル名に、00 をつける。pixel 0 なので 00 をつけるようにしただけ。
+- `TIME 1,1`: Obtain the TIME column from FITS EXTENSION 1. 1,1 is set to allow for different extensions in the following arguments.
+- `PHA,PI 1,1`: Obtain PHA and PI from FITS EXTENSION 1.
+- `--filters PIXEL==0,ITYPE==0`: Obtain data only from PIXEL 0 and Hp.
+- `-o 00`: Append 00 to the filename. Since it is pixel 0, 00 is appended.
 
-## 多項式でフィットして、残差の時間変化を調べる
+
+## Fit with polynomials and examine the time variation of residuals
 
 ``` bash:
 python resolve_ecal_fitpoly_csv.py fplot_xa000126000rsl_p0px1000_cl_p00.csv PHA PI 10000 4 4 fitpoly_p00.png
 ```
 
-- `PHA PI 10000 4 4 fitpoly_p00.png` PHA と PI を csv ファイルから抜き出し、PHA=10000の前後で２つの多項式に分けて、それぞれ４次で近似する。
-
+- `PHA PI 10000 4 4 fitpoly_p00.png`: Extract PHA and PI from the CSV file, divide them into two polynomials around PHA=10000, and approximate each with a 4th-degree polynomial.

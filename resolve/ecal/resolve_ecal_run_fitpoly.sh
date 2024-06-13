@@ -37,8 +37,7 @@ echo "boundary: $boundary"
 echo "order: $order"
 echo "File tag: $ftag"
 
-#for pixel in $(seq 0 35); do
-for pixel in $(seq 0 1); do
+for pixel in $(seq 0 35); do
 pixstr=$(printf "%02d" "$pixel")
 echo "Processing pixel: $pixel (formatted as $pixstr)"
   

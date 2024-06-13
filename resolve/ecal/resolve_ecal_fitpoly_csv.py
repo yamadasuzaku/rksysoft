@@ -53,7 +53,7 @@ def fit_piecewise_polynomial(x, y, boundary, degree1, degree2):
     return p1, p2
 
 # プロット
-def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, degree1, degree2, output_filename, xmin, xmax):
+def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, degree1, degree2, output_filename, xmin, xmax, plotflag = False):
     x = data[x_col]
     y = data[y_col]
     time = data[t_col]
@@ -98,7 +98,8 @@ def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, deg
     plt.tight_layout()
     plt.savefig(output_filename)
     print(f"Plot saved to {output_filename}")
-    plt.show()
+    if plotflag:
+        plt.show()
 
 
     # プロットの設定
@@ -113,7 +114,8 @@ def plot_data_and_model(data, model1, model2, boundary, x_col, y_col, t_col, deg
     plt.tight_layout()
     plt.savefig("resi_" + output_filename)
     print(f"Plot saved to resi_{output_filename}")
-    plt.show()
+    if plotflag:
+        plt.show()
     
     # CSVファイルにダンプ
     csv_filename = output_filename.replace(".png", ".csv")
@@ -137,6 +139,7 @@ if __name__ == "__main__":
     parser.add_argument('--xmin', type=float, help='Minimum x value for fitting', default=2000)
     parser.add_argument('--xmax', type=float, help='Maximum x value for fitting', default=40000)
     parser.add_argument('--t_col', type=str, help='Column name for TIME', default="TIME")
+    parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
     args = parser.parse_args()
     
     # CSVファイルの読み込み
@@ -163,4 +166,5 @@ if __name__ == "__main__":
     model1, model2 = fit_piecewise_polynomial(x, y, args.boundary, args.degree1, args.degree2)
     
     # プロット
-    plot_data_and_model(data, model1, model2, args.boundary, args.x_col, args.y_col, args.t_col, args.degree1, args.degree2, args.outputfile, xmin, xmax)
+    plot_data_and_model(data, model1, model2, args.boundary, args.x_col, args.y_col, \
+                  args.t_col, args.degree1, args.degree2, args.outputfile, xmin, xmax, plotflag = args.plot)
