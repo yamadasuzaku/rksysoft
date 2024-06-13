@@ -16,6 +16,8 @@ Specify the event file to run the following two programs for all pixels and Hp i
 ## Save TIME, PHA, and PI as a CSV file for each pixel and Hp only
 
 
+[resolve_ecal_pha_pi.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_pha_pi.py)
+
 ``` bash:
 ./resolve_ecal_pha_pi.py xa000126000rsl_p0px1000_cl.evt TIME 1,1 PHA,PI 1,1 --filters PIXEL==0,ITYPE==0 -o 00
 ```
@@ -27,6 +29,8 @@ Specify the event file to run the following two programs for all pixels and Hp i
 
 
 ## Fit with polynomials and examine the time variation of residuals
+
+[resolve_ecal_run_fitpoly.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_run_fitpoly.sh)
 
 ``` bash:
 python resolve_ecal_fitpoly_csv.py fplot_xa000126000rsl_p0px1000_cl_p00.csv PHA PI 10000 4 4 fitpoly_p00.png
