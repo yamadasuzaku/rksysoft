@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import sys
 import csv
 
-params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
+params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 11}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 

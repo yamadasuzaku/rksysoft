@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
+params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 11}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
@@ -105,9 +105,9 @@ def plot_data_and_model(csvfile, data, model1, model2, boundary, x_col, y_col, t
     print("Creating plots for TIME vs. Residuals : " + csvfile)
     fig, ax1 = plt.subplots(1, 1, figsize=(10, 8))
     
-    # Upper panel: data and model
     ax1.plot(time_fit, ratio_fit, 'bo', label='Ratio')
-    ax1.set_ylabel(y_col)
+    ax1.set_ylabel("Ratio to the model")
+    ax1.set_xlabel("Time (s)")
     ax1.legend()
     ax1.set_title('Time history of residuals : ' + csvfile)
     plt.tight_layout()
