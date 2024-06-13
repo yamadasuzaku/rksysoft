@@ -2,6 +2,8 @@
 
 For each pixel and itype in the event file, temporarily save the data as a CSV file along with the TIME column. Use the entire observation time to fit two polynomials, and save the residuals in a CSV file.
 
+[resolve_ecal_fitpoly_csv.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_fitpoly_csv.py)
+
 Usage:
 
 ``` bash:
