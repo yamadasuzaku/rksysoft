@@ -47,7 +47,7 @@ echo "..... resolve_ecal_pha_pi.py completed for pixel $pixstr."
     
 echo "..... Running resolve_ecal_fitpoly_csv.py for pixel $pixstr..."
 resolve_ecal_fitpoly_csv.py fplot_${ftag}_p${pixstr}.csv PHA PI ${boundary} $order $order fitpoly_p${pixstr}.png
-echo "..... resolve_ecal_fitpoly_csv.py completed for pixel $pixstr."
+echo "..... resolve_ecal_fitpoly_csv.py completed for pixel $pixstr.\n"
 done
 
-echo "----- All processes completed.\n"
+echo "----- All processes completed."

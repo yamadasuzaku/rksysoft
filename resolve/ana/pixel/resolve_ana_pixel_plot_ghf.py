@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from astropy.io import fits
 from astropy.time import Time
 import datetime
@@ -9,6 +10,7 @@ import argparse
 import sys
 from matplotlib.colors import LogNorm, Normalize
 import matplotlib.cm as cm
+import os
 
 # Constants
 MJD_REFERENCE_DAY = 58484
@@ -40,6 +42,7 @@ emin, emax = 0, 20000  # Energy range in eV
 pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
 rebin = 10
 binnum = int((pimax - pimin) / rebin)
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot gain history from a FITS file.')
     parser.add_argument('filename', help='The name of the FITS file to process.')
@@ -61,10 +64,32 @@ def process_data(data):
     print(f"data from {dtime[0]} --> {dtime[-1]}")
     return sorted_columns, dtime
 
+def save_pixel_data_to_csv(pixel, time, temp_fit):
+    # Create output directory if it doesn't exist
+    output_dir = "ghf_check"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Save data for each pixel
+    for pixel_ in np.arange(36):
+        pixelcut = (pixel == pixel_)
+        px_time = time[pixelcut]
+        px_temp_fit = temp_fit[pixelcut]
+        if len(px_time) == 0:
+            print("warning: data is empty for pixel =", pixel_)
+            continue
+
+        df = pd.DataFrame({
+            'px_time': px_time,
+            'px_temp_fit': px_temp_fit
+        })
+        csv_filename = os.path.join(output_dir, f"pixel_{pixel_}.csv")
+        df.to_csv(csv_filename, index=False)
+        print(f"Data for pixel {pixel_} saved to {csv_filename}")
+
 def plot_ghf(time, dtime, pixel, temp_fit, outfname="mkpi.png", title="test"):
     
     plt.figure(figsize=(11, 7))
-    plt.subplots_adjust(right=0.8) # make the right space bigger
+    plt.subplots_adjust(right=0.8)  # make the right space bigger
     plt.xscale("linear")
     plt.yscale("linear")
     plt.ylabel("TEMP_FIT : Effective Temperature (mK)")
@@ -96,6 +121,10 @@ def main():
     data = open_fits_data(args.filename)
     processed_data, dtime = process_data(data)
     time, pixel, temp_fit, chisq, nevent = processed_data  # data unpack
+
+    # Save pixel data to CSV
+    save_pixel_data_to_csv(pixel, time, temp_fit)
+
     plot_ghf(time, dtime, pixel, temp_fit, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}")
 
 if __name__ == "__main__":
