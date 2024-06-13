@@ -30,7 +30,7 @@ Specify the event file to run the following two programs for all pixels and Hp i
 
 ## Fit with polynomials and examine the time variation of residuals
 
-[resolve_ecal_run_fitpoly.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_run_fitpoly.sh)
+[resolve_ecal_fitpoly_csv.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_fitpoly_csv.py)
 
 ``` bash:
 python resolve_ecal_fitpoly_csv.py fplot_xa000126000rsl_p0px1000_cl_p00.csv PHA PI 10000 4 4 fitpoly_p00.png
