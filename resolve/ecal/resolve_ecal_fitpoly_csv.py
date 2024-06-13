@@ -109,7 +109,7 @@ def plot_data_and_model(csvfile, data, model1, model2, boundary, x_col, y_col, t
     ax1.plot(time_fit, ratio_fit, 'bo', label='Ratio')
     ax1.set_ylabel(y_col)
     ax1.legend()
-    ax1.set_title('Time history of residuals')
+    ax1.set_title('Time history of residuals : ' + csvfile)
     plt.tight_layout()
     plt.savefig("resi_" + output_filename)
     print(f"Plot saved to resi_{output_filename}")

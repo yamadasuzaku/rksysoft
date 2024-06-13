@@ -82,7 +82,7 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
             'px_time': px_time,
             'px_temp_fit': px_temp_fit
         })
-        csv_filename = os.path.join(output_dir, f"pixel_{pixel_}.csv")
+        csv_filename = os.path.join(output_dir, f"pixel_{pixel_:02d}.csv")
         df.to_csv(csv_filename, index=False)
         print(f"Data for pixel {pixel_} saved to {csv_filename}")
 
