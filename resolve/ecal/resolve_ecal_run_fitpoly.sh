@@ -50,4 +50,4 @@ resolve_ecal_fitpoly_csv.py fplot_${ftag}_p${pixstr}.csv PHA PI ${boundary} $ord
 echo "..... resolve_ecal_fitpoly_csv.py completed for pixel $pixstr."
 done
 
-echo "----- All processes completed."
+echo "----- All processes completed.\n"
