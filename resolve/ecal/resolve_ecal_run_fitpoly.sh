@@ -30,7 +30,7 @@ done
 # Generate file tag
 ftag="${fname%.evt}"
 
-echo "Starting the process with the following settings:"
+echo "----- Starting the process with the following settings:"
 echo "Filename: $fname"
 echo "itype: $itype"
 echo "boundary: $boundary"
@@ -39,15 +39,15 @@ echo "File tag: $ftag"
 
 for pixel in $(seq 0 35); do
 pixstr=$(printf "%02d" "$pixel")
-echo "Processing pixel: $pixel (formatted as $pixstr)"
+echo "..... Processing pixel: $pixel (formatted as $pixstr)"
   
-echo "Running resolve_ecal_pha_pi.py for pixel $pixstr..."
+echo "..... Running resolve_ecal_pha_pi.py for pixel $pixstr..."
 resolve_ecal_pha_pi.py $fname TIME 1,1 PHA,PI 1,1 --filters PIXEL==$pixel,ITYPE==$itype -o $pixstr
-echo "resolve_ecal_pha_pi.py completed for pixel $pixstr."
+echo "..... resolve_ecal_pha_pi.py completed for pixel $pixstr."
     
-echo "Running resolve_ecal_fitpoly_csv.py for pixel $pixstr..."
+echo "..... Running resolve_ecal_fitpoly_csv.py for pixel $pixstr..."
 resolve_ecal_fitpoly_csv.py fplot_${ftag}_p${pixstr}.csv PHA PI ${boundary} $order $order fitpoly_p${pixstr}.png
-echo "resolve_ecal_fitpoly_csv.py completed for pixel $pixstr."
+echo "..... resolve_ecal_fitpoly_csv.py completed for pixel $pixstr."
 done
 
-echo "All processes completed."
+echo "----- All processes completed."
