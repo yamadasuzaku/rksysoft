@@ -92,3 +92,20 @@ eve.list に、ファイル名を1行ずつ書いておき、-y で itype, -p �
 resolve_ana_pixel_ql_mklc_binned_sorted_grade_itypes.py eve.list -y 0 -p 0,17,18,35,5,11,23,30
 ```
 
+### 温度のプロット
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/hk/resolve_hk_plot_temptrend.sh
+
+``` bash:
+resolve_hk_plot_temptrend.sh xa300065010rsl_a0.hk1
+```
+
+これで、XBOXA_TEMP3_CAL,HE_TANK2,JT_SHLD2,CAMC_CT1,ADRC_CT_MON_FLUC のプロットを生成する。
+
+中身は、
+
+``` bash:
+resolve_util_fplot.py $input_file TIME 7,6,6,6,6 XBOXA_TEMP3_CAL,HE_TANK2,JT_SHLD2,CAMC_CT1,ADRC_CT_MON_FLUC 7,6,6,6,6  -p -m . -s linear,linear,linear,log,log
+```
+
+を動かしているだけです。
