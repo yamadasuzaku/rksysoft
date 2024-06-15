@@ -75,13 +75,13 @@ def plot_pi_time(pi, time, itype, pixel, outfname="mkpi.png", title="test", tbin
         for pixel_ in np.arange(36):
             print(f"..... pixel={pixel_}")
             plt.figure(figsize=(11, 7))
-            plt.subplots_adjust(right=0.8)
+            plt.subplots_adjust(right=0.7)
             plt.xscale("linear")
             plt.yscale("log")
             plt.ylabel("Counts/bin")
             plt.xlabel("PI (eV)")
             plt.grid(alpha=0.8)
-            plt.title(title + " TYPE = " + typename[itype_])
+            plt.title(title + " TYPE = " + typename[itype_] + f" pixel = {pixel_}")
             numspec = 0
             specave = []
             spectime = []

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt
-params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
+params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 10}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 import numpy as np
@@ -12,6 +12,7 @@ import sys
 parser = argparse.ArgumentParser(description='Plot spectra from a QDP file.')
 parser.add_argument('qdpfile', help='The name of the QDP file to process.')
 parser.add_argument('-r', '--ratio', action='store_true', help='Display the ratio subplot.')
+parser.add_argument('-l', '--ylin', action='store_true', help='Plot yscale in linear scale (log in default)')
 parser.add_argument('--output', type=str, help='Output file name', default='spex_fit.png')
 args = parser.parse_args()
 
@@ -28,6 +29,7 @@ for arg, value in args_dict.items():
 # Extract arguments
 qdpfile = args.qdpfile
 show_ratio = args.ratio
+ylin = args.ylin
 
 def read_data(file_path):
     data = np.loadtxt(file_path, skiprows=1)
@@ -44,10 +46,14 @@ def plot_data(file_path, show_ratio):
 
     if show_ratio:
         fig, (ax1, ax2) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [2, 1]}, figsize=(10, 8), sharex=True)
-        ax1.errorbar(x, y, yerr=yerr, fmt='.', label='y vs x', capsize=0)
-        ax1.errorbar(x, model, fmt='-', label='model vs x', capsize=0, color='red',alpha=0.9)
+        ax1.errorbar(x, y, yerr=yerr, fmt='.', label='data', capsize=0)
+        ax1.errorbar(x, model, fmt='-', label='model', capsize=0, color='red',alpha=0.9)
         ax1.set_ylabel('Counts/s/keV')
         ax1.legend()
+        if ylin:
+            ax1.set_yscale('linear')
+        else:
+            ax1.set_yscale('log')			        
         ax1.grid(True,alpha=0.3)
 
         ratio = y / model
@@ -61,8 +67,12 @@ def plot_data(file_path, show_ratio):
         plt.tight_layout()
     else:
         plt.figure(figsize=(10, 6))
+        if ylin:
+            plt.yscale('linear')
+        else:
+            plt.yscale('log')			        
         plt.errorbar(x, y, yerr=yerr, fmt='.', label='data', capsize=0)
-        plt.errorbar(x, model, fmt='-', label='model vs x', capsize=0, color='red',alpha=0.9)
+        plt.errorbar(x, model, fmt='-', label='model', capsize=0, color='red',alpha=0.9)
         plt.xlabel('Energy (keV)')
         plt.ylabel('Counts/s/keV')
         plt.title(qdpfile)
