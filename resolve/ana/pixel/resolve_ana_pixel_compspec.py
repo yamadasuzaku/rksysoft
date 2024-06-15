@@ -48,7 +48,7 @@ def apply_filters(data, filters):
     return data[mask]
 
 def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, rebin, binnum, \
-                  plotflag=False, debug=True, filters=False):
+                  plotflag=False, debug=True, filters=False, ylin=False):
 
     # Create the figure and subplots
     fig, axs = plt.subplots(2, 1, figsize=(10, 8))
@@ -86,6 +86,11 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     
     axs[0].set_xlabel("PI (eV)")
     axs[0].set_ylabel("Counts/bin")
+    if ylin:
+        axs[0].set_yscale("linear")
+    else:
+        axs[0].set_yscale("log")
+
     axs[0].axvline(1739.98, color='r', linestyle='-', label=r"Si K$\alpha$1", alpha=0.6, lw=0.5)
     axs[0].axvline(1839., color='r', linestyle='--', label="Si Kedge", alpha=0.6, lw=0.5)
     axs[0].axvline(2145.5, color='g', linestyle='--', label="P Kedge", alpha=0.6, lw=0.5)
@@ -98,8 +103,13 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
 
     xval = 0.5 * (binedges[1:] + binedges[:-1]) * 0.5 + 0.5 if x_col == "PI" else 0.5 * (binedges[1:] + binedges[:-1])
     axs[1].errorbar(xval, total_hist, yerr=np.sqrt(total_hist), fmt='.', color='black', label="Total")
+    axs[1].legend()
     axs[1].set_xlabel("PI (eV)")
     axs[1].set_ylabel("Counts/bin")
+    if ylin:
+        axs[1].set_yscale("linear")
+    else:
+        axs[1].set_yscale("log")
     axs[1].axvline(1739.98, color='r', linestyle='-', label=r"Si K$\alpha$1", alpha=0.6, lw=0.5)
     axs[1].axvline(1839., color='r', linestyle='--', label="Si Kedge", alpha=0.6, lw=0.5)
     axs[1].axvline(2145.5, color='g', linestyle='--', label="P Kedge", alpha=0.6, lw=0.5)
@@ -107,7 +117,6 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     axs[1].axvline(2122.9, color='c', linestyle='-', label=r"Au M$\alpha$1", alpha=0.6, lw=0.5)
     axs[1].axvline(2195.3, color='m', linestyle='-', label=r"Hg M$\alpha$1", alpha=0.6, lw=0.5)
     axs[1].grid(alpha=0.1)
-    axs[1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
     axs[1].set_xlim(emin, emax)
 
     ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}.png"
@@ -143,7 +152,7 @@ def main():
     parser.add_argument('--emin', type=float, help='emin', default=1700)
     parser.add_argument('--emax', type=float, help='emin', default=2400)
     parser.add_argument('--rebin', type=int, help='rebin', default=2)
-
+    parser.add_argument('--ylin', action='store_true', default=False, help='Flag to ylinear')
 
     args = parser.parse_args()
     file_names = [ _.strip() for _ in open(args.file_names)]
@@ -163,7 +172,7 @@ def main():
     outfname = "compspec_" + args.file_names.replace(",","_").replace(".","_p_")
     plot_xhist(file_names, args.x_col, args.x_hdu, outfname,\
         pimin, pimax, emin, emax, rebin, binnum, \
-    plotflag=args.plot, debug=True, filters=filter_conditions)
+    plotflag=args.plot, debug=True, filters=filter_conditions, ylin=args.ylin)
 
 if __name__ == "__main__":
     main()
