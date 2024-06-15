@@ -7,6 +7,7 @@ from astropy.time import Time
 import datetime
 import argparse
 import sys
+import os 
 from matplotlib.colors import LogNorm, Normalize
 import matplotlib.cm as cm
 import csv
@@ -82,7 +83,8 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
                 xval = 0.5 * (binedges[1:] + binedges[:-1])
             event_number = len(xcolval)
             log_data.append([file_name, obsid, target, ontime, event_number])            
-            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', color=colors[i], label=f"{file_name} {target}" + f"({event_number/1e6:0.2f}Mcnt)")
+            short_filename=os.path.basename(file_name)
+            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', color=colors[i], label=f"{short_filename} {target}" + f"({event_number/1e6:0.2f}Mcnt)")
     
     axs[0].set_xlabel("PI (eV)")
     axs[0].set_ylabel("Counts/bin")
