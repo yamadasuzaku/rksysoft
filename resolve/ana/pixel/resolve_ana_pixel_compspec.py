@@ -84,7 +84,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
             event_number = len(xcolval)
             log_data.append([file_name, obsid, target, ontime, event_number])            
             short_filename=os.path.basename(file_name)
-            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', color=colors[i], label=f"{short_filename} {target}" + f"({event_number/1e6:0.2f}Mcnt)")
+            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', ms=1, alpha=0.9, color=colors[i], label=f"{short_filename} {target}" + f"({event_number/1e6:0.2f}Mcnt)")
     
     axs[0].set_xlabel("PI (eV)")
     axs[0].set_ylabel("Counts/bin")
@@ -106,7 +106,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     axs[0].set_xlim(emin, emax)
 
     xval = 0.5 * (binedges[1:] + binedges[:-1]) * 0.5 + 0.5 if x_col == "PI" else 0.5 * (binedges[1:] + binedges[:-1])
-    axs[1].errorbar(xval, total_hist, yerr=np.sqrt(total_hist), fmt='.', color='black', label="Total")
+    axs[1].errorbar(xval, total_hist, yerr=np.sqrt(total_hist), fmt='.', color='black', label="Total", ms=1, alpha=1.0)
     axs[1].legend()
     axs[1].set_xlabel("PI (eV)")
     axs[1].set_ylabel("Counts/bin")
