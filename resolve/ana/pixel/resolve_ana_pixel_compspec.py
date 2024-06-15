@@ -82,7 +82,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
                 xval = 0.5 * (binedges[1:] + binedges[:-1])
             event_number = len(xcolval)
             log_data.append([file_name, obsid, target, ontime, event_number])            
-            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', color=colors[i], label=f"{obsid} {target}" + "("+str(event_number)+ "c)")
+            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', color=colors[i], label=f"{file_name} {target}" + f"({event_number/1e6:0.2f}Mcnt)")
     
     axs[0].set_xlabel("PI (eV)")
     axs[0].set_ylabel("Counts/bin")
@@ -92,13 +92,15 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
         axs[0].set_yscale("log")
 
     axs[0].axvline(1739.98, color='r', linestyle='-', label=r"Si K$\alpha$1", alpha=0.6, lw=0.5)
+    axs[0].axvline(1835.94, color='r', linestyle='-', label=r"Si K$\beta$", alpha=0.6, lw=0.5)
     axs[0].axvline(1839., color='r', linestyle='--', label="Si Kedge", alpha=0.6, lw=0.5)
     axs[0].axvline(2145.5, color='g', linestyle='--', label="P Kedge", alpha=0.6, lw=0.5)
     axs[0].axvline(2013.7, color='b', linestyle='-', label=r"P K$\alpha$1", alpha=0.6, lw=0.5)
     axs[0].axvline(2122.9, color='c', linestyle='-', label=r"Au M$\alpha$1", alpha=0.6, lw=0.5)
     axs[0].axvline(2195.3, color='m', linestyle='-', label=r"Hg M$\alpha$1", alpha=0.6, lw=0.5)
+    axs[0].axvline(2206., color='c', linestyle='--', label=r"Au M5", alpha=0.6, lw=0.5)
     axs[0].grid(alpha=0.1)
-    axs[0].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
+    axs[0].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=5)
     axs[0].set_xlim(emin, emax)
 
     xval = 0.5 * (binedges[1:] + binedges[:-1]) * 0.5 + 0.5 if x_col == "PI" else 0.5 * (binedges[1:] + binedges[:-1])
@@ -111,11 +113,13 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     else:
         axs[1].set_yscale("log")
     axs[1].axvline(1739.98, color='r', linestyle='-', label=r"Si K$\alpha$1", alpha=0.6, lw=0.5)
+    axs[1].axvline(1835.94, color='r', linestyle='-', label=r"Si K$\beta$", alpha=0.6, lw=0.5)
     axs[1].axvline(1839., color='r', linestyle='--', label="Si Kedge", alpha=0.6, lw=0.5)
     axs[1].axvline(2145.5, color='g', linestyle='--', label="P Kedge", alpha=0.6, lw=0.5)
     axs[1].axvline(2013.7, color='b', linestyle='-', label=r"P K$\alpha$1", alpha=0.6, lw=0.5)
     axs[1].axvline(2122.9, color='c', linestyle='-', label=r"Au M$\alpha$1", alpha=0.6, lw=0.5)
     axs[1].axvline(2195.3, color='m', linestyle='-', label=r"Hg M$\alpha$1", alpha=0.6, lw=0.5)
+    axs[1].axvline(2206., color='c', linestyle='--', label=r"Au M5", alpha=0.6, lw=0.5)
     axs[1].grid(alpha=0.1)
     axs[1].set_xlim(emin, emax)
 
