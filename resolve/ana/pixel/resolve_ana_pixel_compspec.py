@@ -9,7 +9,7 @@ import argparse
 import sys
 from matplotlib.colors import LogNorm, Normalize
 import matplotlib.cm as cm
-
+import csv
 # Constants
 MJD_REFERENCE_DAY = 58484
 REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')
@@ -34,12 +34,6 @@ def pi_to_ev(pi):
     """Convert PI units to energy in eV."""
     return pi * 0.5 + 0.5
 
-# Define the energy range
-emin, emax = 1700, 2400  # Energy range in eV
-pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
-rebin = 2
-binnum = int((pimax - pimin) / rebin)
-
 def parse_filter_conditions(conditions):
     filters = []
     for condition in conditions.split(","):
@@ -53,13 +47,17 @@ def apply_filters(data, filters):
         mask &= (data[col] == value)
     return data[mask]
 
-def plot_xhist(file_names, x_col, x_hdu, outfname, plotflag=False, debug=True, filters=False):
+def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, rebin, binnum, \
+                  plotflag=False, debug=True, filters=False):
+
     # Create the figure and subplots
     fig, axs = plt.subplots(2, 1, figsize=(10, 8))
     plt.subplots_adjust(right=0.7)  # make the right space bigger
     colors = plt.cm.viridis(np.linspace(0, 1, len(file_names)))    
     
     total_hist = np.zeros(binnum)
+
+    log_data = []
 
     for i, file_name in enumerate(file_names):
         print(f"..... {file_name} is opened.")
@@ -83,6 +81,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, plotflag=False, debug=True, f
             else:
                 xval = 0.5 * (binedges[1:] + binedges[:-1])
             event_number = len(xcolval)
+            log_data.append([file_name, obsid, target, ontime, event_number])            
             axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', color=colors[i], label=f"{obsid} {target}" + "("+str(event_number)+ "c)")
     
     axs[0].set_xlabel("PI (eV)")
@@ -111,10 +110,18 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, plotflag=False, debug=True, f
     axs[1].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
     axs[1].set_xlim(emin, emax)
 
-    ofname = f"{outfname}.png"
+    ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}.png"
     plt.savefig(ofname)
     plt.show()
     print(f"..... {ofname} is created.")
+
+    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}.csv"
+    with open(log_fname, 'w', newline='') as csvfile:
+        log_writer = csv.writer(csvfile)
+        log_writer.writerow(['file_name', 'obsid', 'target', 'ontime', 'event_number'])
+        log_writer.writerows(log_data)
+    print(f"..... {log_fname} is created.")    
+
 
 def main():
 
@@ -133,6 +140,10 @@ def main():
     parser.add_argument('--x_hdu', type=int, help='Number of FITS HDU for X', default=1)
     parser.add_argument("--filters", '-f', type=str, help="Comma-separated filter conditions in the format 'COLUMN==VALUE'", default="")
     parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
+    parser.add_argument('--emin', type=float, help='emin', default=1700)
+    parser.add_argument('--emax', type=float, help='emin', default=2400)
+    parser.add_argument('--rebin', type=int, help='rebin', default=2)
+
 
     args = parser.parse_args()
     file_names = [ _.strip() for _ in open(args.file_names)]
@@ -141,10 +152,18 @@ def main():
     print(f'x_hdu = {args.x_hdu}')
     print(f'x_col = {args.x_col}')
 
+    # Define the energy range
+    emin, emax = args.emin, args.emax  # Energy range in eV
+    pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
+    rebin = args.rebin
+    binnum = int((pimax - pimin) / rebin)
+
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_names} : filtered with {args.filters}"
     outfname = "compspec_" + args.file_names.replace(",","_").replace(".","_p_")
-    plot_xhist(file_names, args.x_col, args.x_hdu, outfname, plotflag=args.plot, debug=True, filters=filter_conditions)
+    plot_xhist(file_names, args.x_col, args.x_hdu, outfname,\
+        pimin, pimax, emin, emax, rebin, binnum, \
+    plotflag=args.plot, debug=True, filters=filter_conditions)
 
 if __name__ == "__main__":
     main()
