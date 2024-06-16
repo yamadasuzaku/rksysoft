@@ -6,6 +6,7 @@ This is a python script to plot the radial profile of the image.
 History: 
 2024-05-20 ; ver 1; S.Yamada
 2024-05-21 ; ver 1.1; Y.Sakai, update pileup fraction image
+2024-06-16 ; ver 2; S.Yamada, found a bug in pfrac thanks to Nobukawa-kun 
 """
 
 import os
@@ -24,7 +25,7 @@ plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
 def calc_pileupfraction(r):
-    r = np.asarray(r)  # rをnumpy配列に変換（既に配列の場合はそのまま）
+    r = np.asarray(r)  # convert numpy.array
     result = np.where(r < 0, 0.0, (1. - (1. + r) * np.exp(-r)) / (1. - np.exp(-r)))
     return result
 
@@ -74,9 +75,9 @@ class Fits:
         self.object = self.hdu.header["OBJECT"]
         self.datamode = self.hdu.header["DATAMODE"]
         self.exposure = self.hdu.header["EXPOSURE"]
-
+        self.lastdel = self.hdu.header["LASTDEL"]
         print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}")
-        print(f"[init] ... exposure={self.exposure}, ....")
+        print(f"[init] ... exposure={self.exposure}, lastdel={self.lastdel} ....")
 
         self._process_data()
 
@@ -108,7 +109,7 @@ class Fits:
 
         print("vmin",vmin, "vmax",vmax)
         plt.figure(figsize=(12, 8))
-        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
+        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         img = plt.imshow(self.data, origin='lower', cmap=plt.cm.CMRmap, norm=cr.LogNorm(vmin=vmin, vmax=vmax))        
@@ -143,7 +144,7 @@ class Fits:
         print(f"ra, dec    = {ra}, {dec}")
 
         plt.figure(figsize=(12, 8))
-        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
+        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         ax = plt.subplot(111, projection=self.wcs)
@@ -181,8 +182,9 @@ class Fits:
         print(f"ra, dec    = {ra}, {dec}")
 
         rc, rp = calc_radial_profile(self.data, x_center, y_center, search_radius=search_radius, ndiv=ndiv, exposure=self.exposure)
-        radial_centers, radial_pileupfraction = calc_radial_pileupfraction(self.data, x_center, y_center, exposure=self.exposure, search_radius=search_radius, ndiv=ndiv, cellsize=cellsize)
-        pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize)
+        radial_centers, radial_pileupfraction = calc_radial_pileupfraction(self.data, x_center, y_center, \
+                           exposure=self.exposure, search_radius=search_radius, ndiv=ndiv, cellsize=cellsize, lastdel = self.lastdel)
+        pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize, lastdel = self.lastdel)
         
         target_values = [0.03, 0.01] # pileup fraction 3%, 1%
         target_lss = ["-", "--"] # pileup linestyle
@@ -190,7 +192,7 @@ class Fits:
         # Plot images and radial profiles
         fig = plt.figure(figsize=(16, 8))
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.87, wspace=0.5, hspace=0.4)
-        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] ")
+        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
         plt.figtext(0.1, 0.93, f"Input center [deg] (x, y, ra, dec) = ({x_center:.4f}, {y_center:.4f}, {ra:.4f}, {dec:.4f}) cellsize for pileup = {cellsize}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
@@ -216,8 +218,6 @@ class Fits:
                 print(f"***** pileup fraction ={_target*100:.2f} % at {_r:.2f} pixel *****")
                 ax6.axhline(y=_target, color='g', ls=_ls, alpha=0.5, label=f"plfrac={_target*100:.2f} % at {_r:.2f} pixel")
                 plt.legend(numpoints=1, frameon=True)
-#        ax6 = fig.add_subplot(3, 2, 6)
-#        self._plot_radial_profile(ax6, rc * self.p2arcsec, rp, "(6) Radial profile (arcsec)", 'radial distance (arcsec)', 'c s$^{-1}$ deg$^{-2}$')
 
         ax7 = fig.add_subplot(2, 4, 4)
         pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, search_radius)
@@ -297,10 +297,10 @@ class Fits:
     def _save_pileup_oneline(self, pileup_result, outputcsv):
         rough_rate = np.sum(self.data)/self.exposure
         with open(outputcsv, "w") as fout:
-            fout.write(f"{self.obsid},{pileup_result[0]},{pileup_result[1]},{self.object},{self.datamode},{self.exposure},{rough_rate}\n")
+            fout.write(f"{self.obsid},{pileup_result[0]},{pileup_result[1]},{self.object},{self.datamode},{self.exposure},{self.lastdel},{rough_rate}\n")
         print(f"..... {outputcsv} is created.")
 
-def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=10, exposure = 1e4, cellsize=3*3, debug=False):
+def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=10, exposure = 1e4, cellsize=3*3, debug=False, lastdel=4.0):
     """
     Calculate the radial pileup fraction around a given center.
 
@@ -313,6 +313,7 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
     exposure (float): The exposure time to calculate pileup fraction. Default is 1e4.
     cellsize (float): The cell size for single phtoon. Default is 3x3, though need to check. 
     debug (bool): If True, print debug information. Default is False.
+    lastdel (float): readout time for a given count rate
 
     Returns:
     tuple: The radial coordinates and the normalized radial profile.
@@ -335,7 +336,8 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
 
     # Normalize the radial profile and calculate pileup fraction 
     areas = np.pi * (radial_bins[1:]**2 - radial_bins[:-1]**2)
-    radial_profile_per_areas_exposure = radial_profile * cellsize / (areas * exposure)
+    # pile fraction is c/s/cellsize x lastdel ~ counts/1 readout. 
+    radial_profile_per_areas_exposure = radial_profile * cellsize * lastdel / (areas * exposure) 
     radial_pileupfraction = calc_pileupfraction(radial_profile_per_areas_exposure)
 
     if debug:
@@ -344,7 +346,7 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
 
     return radial_centers, radial_pileupfraction
 
-def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False):
+def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False, lastdel = 4.0):
     """
     Calculate the pileup from image information.
 
@@ -353,12 +355,13 @@ def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False):
     exposure (float): The exposure time to calculate pileup fraction. Default is 1e4.
     cellsize (float): The cell size for single phtoon. Default is 3x3, though need to check. 
     debug (bool): If True, print debug information. Default is False.
+    lastdel (float): readout time for a given count rate
 
     Returns:
     2D array: The pileup 2d image.
     """
     cellsize_kernel = np.ones((3,3), dtype=data.dtype)
-    cellsize_per_exposure = convolve(data, cellsize_kernel, mode='same') / exposure
+    cellsize_per_exposure = convolve(data, cellsize_kernel, mode='same') * lastdel / exposure
     pileupfraction_img = calc_pileupfraction(cellsize_per_exposure)
 
     if debug:
@@ -465,7 +468,8 @@ def main():
     parser.add_argument('-m', '--manual', action='store_true', help='Flag to use vmax, vmin', default=False)
     parser.add_argument('-x', '--x_center', type=int, help='x coordinate of center', default=1215)
     parser.add_argument('-y', '--y_center', type=int, help='y coordinate of center', default=1215)
-    parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=3*3)
+#   parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=3*3)
+    parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=1 + 4 )
     parser.add_argument('-a', '--vmax', type=float, help='VMAX', default=3e3)
     parser.add_argument('-i', '--vmin', type=float, help='VMIN', default=1)
     parser.add_argument('-s', '--search_radius', type=int, help='Search radius for data extraction', default=80)
