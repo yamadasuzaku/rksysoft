@@ -230,7 +230,6 @@ class Fits:
         self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, pileup_vmin, pileup_vmax, zoom_in_range, label='fraction')
         self._plot_contour(ax8, pileupfraction_img, x_center, y_center, zoom_in_range, target_values, target_lss)
 
-
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
         plt.savefig(outputfigname)
         print(f"..... {outputfigname} is created.")
@@ -337,8 +336,8 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
     # Normalize the radial profile and calculate pileup fraction 
     areas = np.pi * (radial_bins[1:]**2 - radial_bins[:-1]**2)
     # pile fraction is c/s/cellsize x lastdel ~ counts/1 readout. 
-    radial_profile_per_areas_exposure = radial_profile * cellsize * lastdel / (areas * exposure) 
-    radial_pileupfraction = calc_pileupfraction(radial_profile_per_areas_exposure)
+    counts_per_cellsize_lastdel = radial_profile * cellsize * lastdel / (areas * exposure) 
+    radial_pileupfraction = calc_pileupfraction(counts_per_cellsize_lastdel)
 
     if debug:
         for m in range(len(radial_bins) - 1):
