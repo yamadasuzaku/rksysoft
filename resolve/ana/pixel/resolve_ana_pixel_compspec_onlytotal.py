@@ -80,8 +80,8 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
 
     # Check if CSV file exists
     if os.path.exists(csv_filename):
+        print(f"Data loading from {csv_filename}")        
         xval, total_hist = load_from_csv(csv_filename)
-        print(f"Data loaded from {csv_filename}")
     else:
         total_hist = np.zeros(binnum)
         for i, file_name in enumerate(file_names):
