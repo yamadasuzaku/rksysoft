@@ -76,7 +76,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
         cutp="cut12"
 
     # CSV filename for saving/loading xval and total_hist
-    csv_filename = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}.csv"
+    csv_filename = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_data.csv"
 
     # Check if CSV file exists
     if os.path.exists(csv_filename):
@@ -165,7 +165,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     plt.show()
     print(f"..... {ofname} is created.")
 
-    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}.csv"
+    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_log.csv"
     with open(log_fname, 'w', newline='') as csvfile:
         log_writer = csv.writer(csvfile)
         log_writer.writerow(['file_name', 'obsid', 'target', 'ontime', 'event_number'])
