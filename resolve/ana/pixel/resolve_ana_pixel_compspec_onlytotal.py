@@ -70,13 +70,13 @@ def load_from_csv(filename):
 def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, rebin, binnum, \
                   plotflag=False, debug=True, filters=False, ylin=False, calout=True):
 
-    # CSV filename for saving/loading xval and total_hist
-    csv_filename = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_data.csv"
-
     if calout:
         cutp="only12"
     else:
         cutp="cut12"
+
+    # CSV filename for saving/loading xval and total_hist
+    csv_filename = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}.csv"
 
     # Check if CSV file exists
     if os.path.exists(csv_filename):
