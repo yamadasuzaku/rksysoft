@@ -49,7 +49,7 @@ def apply_filters(data, filters):
     return data[mask]
 
 def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, rebin, binnum, \
-                  plotflag=False, debug=True, filters=False, ylin=False, calout=True):
+                  plotflag=False, debug=True, filters=False, ylin=False, calout=True, itype_cut=0):
 
     # Create the figure and subplots
     fig, axs = plt.subplots(2, 1, figsize=(10, 8))
@@ -66,16 +66,17 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
             print(f"..... {x_col} is opened from HDU={x_hdu}")
             data = hdul[x_hdu].data
             pixel = data["PIXEL"] 
+            itype = data["ITYPE"] 
             len_pre = len(pixel)
             if calout:
                 print("only cal pixels")
-                cutid = np.where(pixel==12)[0]
+                cutid = np.where( (pixel==12) & (itype==itype_cut))[0]
                 data = data[cutid]
                 pixel = pixel[cutid]
                 cutp="only12"
             else:
                 print("except for cal pixels")
-                cutid = np.where( (pixel < 12) | (pixel > 12))[0]
+                cutid = np.where( ((pixel < 12) | (pixel > 12)) & (itype==itype_cut))[0]
                 data = data[cutid]
                 pixel = pixel[cutid]
                 cutp="cut12"
@@ -111,6 +112,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     else:
         axs[0].set_yscale("log")
 
+    axs[0].set_title(f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}")
     axs[0].axvline(1739.98, color='r', linestyle='-', label=r"Si K$\alpha$1", alpha=0.6, lw=0.5)
     axs[0].axvline(1835.94, color='r', linestyle='-', label=r"Si K$\beta$", alpha=0.6, lw=0.5)
     axs[0].axvline(1839., color='r', linestyle='--', label="Si Kedge", alpha=0.6, lw=0.5)
@@ -150,13 +152,13 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     axs[1].grid(alpha=0.1)
     axs[1].set_xlim(emin, emax)
 
-    ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}.png"
+    ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}.png"
     fig.tight_layout()  # Adjust layout    
     plt.savefig(ofname)
     plt.show()
     print(f"..... {ofname} is created.")
 
-    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}.csv"
+    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}_log.csv"
     with open(log_fname, 'w', newline='') as csvfile:
         log_writer = csv.writer(csvfile)
         log_writer.writerow(['file_name', 'obsid', 'target', 'ontime', 'event_number'])

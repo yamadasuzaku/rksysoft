@@ -68,7 +68,7 @@ def load_from_csv(filename):
     return xval, total_hist
 
 def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, rebin, binnum, \
-                  plotflag=False, debug=True, filters=False, ylin=False, calout=True):
+                  plotflag=False, debug=True, filters=False, ylin=False, calout=True, itype_cut=0):
 
     if calout:
         cutp="only12"
@@ -76,7 +76,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
         cutp="cut12"
 
     # CSV filename for saving/loading xval and total_hist
-    csv_filename = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_data.csv"
+    csv_filename = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}_data.csv"
 
     # Check if CSV file exists
     if os.path.exists(csv_filename):
@@ -90,15 +90,16 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
                 print(f"..... {x_col} is opened from HDU={x_hdu}")
                 data = hdul[x_hdu].data
                 pixel = data["PIXEL"] 
+                itype = data["ITYPE"] 
                 len_pre = len(pixel)
                 if calout:
                     print("only cal pixels")
-                    cutid = np.where(pixel==12)[0]
+                    cutid = np.where( (pixel==12) & (itype==itype_cut) )[0]
                     data = data[cutid]
                     pixel = pixel[cutid]
                 else:
                     print("except for cal pixels")
-                    cutid = np.where( (pixel < 12) | (pixel > 12))[0]
+                    cutid = np.where( ((pixel < 12) | (pixel > 12)) & (itype==itype_cut) )[0]
                     data = data[cutid]
                     pixel = pixel[cutid]
 
@@ -159,14 +160,14 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     axs[1].grid(alpha=0.1)
     axs[1].set_xlim(emin, emax)
 
-    ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}.png"
+    ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}.png"
     fig.tight_layout()  # Adjust layout    
     plt.savefig(ofname)
     if plotflag:
         plt.show()
     print(f"..... {ofname} is created.")
 
-    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_log.csv"
+    log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}_log.csv"
     with open(log_fname, 'w', newline='') as csvfile:
         log_writer = csv.writer(csvfile)
         log_writer.writerow(['file_name', 'obsid', 'target', 'ontime', 'event_number'])
