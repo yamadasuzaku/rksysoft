@@ -73,8 +73,12 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
             for hdu in hdulist:
                 if 'GTI' in hdu.name:
                     print(f"..... {hdu.name} is opened.")
-                    obj = hdu.header["OBJECT"]
+                    if "OBJECT" in hdu.header:
+                        obj = hdu.header["OBJECT"]
+                    else:
+                    	obj ="N/A"                    
                     objlist.append(obj)
+
                     start = hdu.data["START"]
                     stop = hdu.data["STOP"]
                     # 辞書にデータを格納
@@ -97,8 +101,12 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
                 for hdu in hdulist:
                     if 'EVENTS' in hdu.name:	
                         time = hdu.data["TIME"]        
-                        itype = hdu.data["ITYPE"]        
-                        cutid = np.where(itype<5)[0]
+                        if 'ITYPE' in hdu.columns.names:	
+	                        itype = hdu.data["ITYPE"]        
+	                        cutid = np.where(itype<5)[0] # Hp, Mp, Ms, Lp, Ls
+                        if 'AC_ITYPE' in hdu.columns.names:	
+	                        itype = hdu.data["AC_ITYPE"]        
+	                        cutid = np.where(itype==0)[0] # 0:AC, 1:BL, 2:EL, 3:PE
                         time = time[cutid]
                         itype = itype[cutid]
                         x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time)
@@ -145,7 +153,7 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
             shortfname = os.path.basename(data['file_name'])
             ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt='.', ms=2, color=colors[idx], label=shortfname)
         # 凡例をプロット
-        ax2.legend(bbox_to_anchor=(1.05, 0.9), loc='upper left', borderaxespad=0., fontsize=6)
+        ax2.legend(bbox_to_anchor=(1.05, 0.5), loc='upper left', borderaxespad=0., fontsize=6)
         ax2.set_ylabel(f"c/s (binsize={timebinsize}s), ITYPE < 5")
 
     objset = set(objlist)
@@ -176,7 +184,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     gtifiles = get_file_list(args.gtifilelist)
     print(f'gtifiles = {gtifiles}')        
-    title = ",".join(gtifiles)
+    gtifiles_shortname = [os.path.basename(_) for _ in gtifiles]
+    title = ",".join(gtifiles_shortname)
 
     if args.evtfilelist == None:
         evtfiles = None
@@ -184,6 +193,6 @@ if __name__ == "__main__":
         evtfiles = get_file_list(args.evtfilelist)
     print(f'evtfiles = {evtfiles}')        
 
-    outfname = "gtiplot_" + ("_".join(gtifiles)).replace(".","_p_") + ".png"
+    outfname = "gtiplot_" + ("_".join(gtifiles_shortname)).replace(".","_p_") + ".png"
 
     plot_fits_data(gtifiles, evtfiles, title, outfname, plotflag = args.plot, markers = args.markers, markersize = args.markersize)
