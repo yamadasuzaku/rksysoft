@@ -155,7 +155,8 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, pimin, pimax, emin, emax, reb
     ofname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}.png"
     fig.tight_layout()  # Adjust layout    
     plt.savefig(ofname)
-    plt.show()
+    if plotflag:
+        plt.show()
     print(f"..... {ofname} is created.")
 
     log_fname = f"{outfname}_emin{emin}_emax{emax}_rebin{rebin}_{cutp}_itype{itype_cut}_log.csv"
