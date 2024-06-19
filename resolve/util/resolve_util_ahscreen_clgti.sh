@@ -8,7 +8,7 @@ fi
 
 # ファイル名を引数から取得
 infile=$1
-outfile="${infile%_uf.evt}_uf_clgti.evt"
+outfile="${infile%.evt}_clgti.evt"
 gtifile=$2
 
 # 出力ファイルが存在するか確認
