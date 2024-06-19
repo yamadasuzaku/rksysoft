@@ -159,7 +159,7 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
     axs.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
 
     if evtfiles is not None:
-    	colors = plt.cm.viridis(np.linspace(0, 1, lcindex))    
+        colors = plt.cm.viridis(np.linspace(0, 1, lcindex))    
         ax2 = axs.twinx()  # Create a second y-axis
         for idx, data in lcdic.items():
             print(f"Index: {idx}, File: {data['file_name']}, datetime: {data['datetime']}, y_lc: {data['y_lc']}, y_err: {data['y_err']}")
