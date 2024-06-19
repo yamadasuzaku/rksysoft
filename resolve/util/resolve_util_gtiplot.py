@@ -61,7 +61,7 @@ def fast_lc(tstart, tstop, binsize, x):
 
 
 def plot_fits_data(gtifiles, evtfiles, title, outfname, \
-                      plotflag = False, markers = "o", debug=True, markersize = 1, timebinsize = 100.):
+                      plotflag = False, markers = "o", debug=True, markersize = 1, timebinsize = 100., usetime = False):
 
     # GTI データを格納する辞書
     gtidic = {}
@@ -135,11 +135,23 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
     # gtidic の内容を表示
     for idx, data in gtidic.items():
         print(f"Index: {idx}, File: {data['file_name']}, HDU: {data['hdu_name']}, START: {data['start']}, STOP: {data['stop']}")
+        pretime = 0
+        for i, (s, e) in enumerate(zip(data['start'], data['stop'])): 	      
+            if i == 0:
+                pretime = e
+            print(".... debug :", s, e, e-s, s-pretime)
+
         yval = 1 - (1/index) * idx
         sdate = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in data['start']])
         edate = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in data['stop']])
-        for s,e in zip(sdate, edate):
-            axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
+
+        if usetime:
+            for s,e in zip(data['start'], data['stop']):
+                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
+        else:
+            for s,e in zip(sdate, edate):
+                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
+
         shortfname = os.path.basename(data['file_name'])
         # 凡例要素を追加
         legend_elements.append(Line2D([0], [0], color=colors[idx], marker=markers, label=shortfname+":"+data['hdu_name']))
@@ -147,6 +159,7 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
     axs.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
 
     if evtfiles is not None:
+    	colors = plt.cm.viridis(np.linspace(0, 1, lcindex))    
         ax2 = axs.twinx()  # Create a second y-axis
         for idx, data in lcdic.items():
             print(f"Index: {idx}, File: {data['file_name']}, datetime: {data['datetime']}, y_lc: {data['y_lc']}, y_err: {data['y_err']}")
