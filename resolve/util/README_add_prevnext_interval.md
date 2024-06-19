@@ -38,11 +38,21 @@ resolve_tool_addcol_prev_next_interval.py xa000114000rsl_p0px1000_uf.evt -o xa00
 
 ``` bash:
 # Example 1) Overwrite the original target FITS file:
-resolve_tool_map_interval_quick.py xa000114000rsl_p0px1000_uf_prevnext.evt xa000114000rsl_a0pxpr_uf.evt 
+resolve_tool_map_prevnextinterval.py xa000114000rsl_p0px1000_uf_prevnext.evt xa000114000rsl_a0pxpr_uf.evt 
 
 # Example 2) Create a new target FITS file:
-resolve_tool_map_interval_quick.py xa000114000rsl_p0px1000_uf_prevnext.evt xa000114000rsl_a0pxpr_uf.evt -o xa000114000rsl_a0pxpr_uf_fillprenext.evt
+resolve_tool_map_prevnextinterval.py xa000114000rsl_p0px1000_uf_prevnext.evt xa000114000rsl_a0pxpr_uf.evt -o xa000114000rsl_a0pxpr_uf_fillprenext.evt
 ``` 
+
+### Automatic tool for pulse record 
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_pr_prevnextadd.sh
+
+``` bash:
+resolve_tool_pr_prevnextadd.py xa000114000rsl_p0px1000_uf.evt xa000114000rsl_a0pxpr_uf.evt
+```
+
+
 
 ## Requirements
 
