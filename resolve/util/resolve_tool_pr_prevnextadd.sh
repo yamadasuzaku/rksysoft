@@ -3,7 +3,7 @@
 # 引数が2つ指定されているか確認
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <infile1> <infile2>"
-  echo ex) resolve_tool_pr_prevnextadd.sh xa000114000rsl_p0px1000_uf.evt xa000114000rsl_a0pxpr_uf.evt
+  echo "e.g. resolve_tool_pr_prevnextadd.sh xa000114000rsl_p0px1000_uf.evt xa000114000rsl_a0pxpr_uf.evt"
   exit 1
 fi
 
