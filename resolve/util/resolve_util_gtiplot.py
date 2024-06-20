@@ -1,211 +1,100 @@
 #!/usr/bin/env python
 
-#!/usr/bin/env python
-
-import argparse
+import numpy as np
 import matplotlib.pyplot as plt
-import sys
-import datetime
-import os 
+import argparse
+from astropy.io import fits
+from pathlib import Path
 
 params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
-from astropy.io import fits
-from astropy.time import Time
-import numpy as np
-from matplotlib.lines import Line2D
+pixel_map = np.array([
+    [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6],  # DETY
+    [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6],  # DETX
+    [12, 11, 9, 19, 21, 23, 14, 13, 10, 20, 22, 24, 16, 15, 17, 18, 25, 26, 8, 7, 0, 35, 33, 34, 6, 4, 2, 28, 31, 32, 5, 3, 1, 27, 29, 30]  # PIXEL
+])
 
-# Define global variables
-MJD_REFERENCE_DAY = 58484
-REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')  # Reference time in Modified Julian Day
+def plot_data_6x6(prevt, itypes, dumptext=False):
+    data = fits.open(prevt)
+    pulse = data[1].data['PULSEREC'].copy()
+    pix_num_list = data[1].data['PIXEL'].copy()
+    itype_list = data[1].data['ITYPE'].copy()
+    data.close()
 
-def get_file_list(input_arg):
-    # Check if input_arg is a file list indicator
-    print(input_arg, input_arg)
-    if input_arg.startswith('@'):
-        file_list_path = input_arg[1:]
-        with open(file_list_path, 'r') as file:
-            file_list = [line.strip() for line in file.readlines()]
-    else:
-        # Assume it's a comma-separated list of file names or a single file name
-        file_list = input_arg.split(',')
-    
-    return file_list
+    dt = 80.0e-6  # hres fix
+    x_time = np.arange(0, pulse.shape[-1], 1) * dt
 
-# Define a function to compute a fast light curve
-def fast_lc(tstart, tstop, binsize, x):
-    """Compute a fast light curve using a given time series."""
-    times = np.arange(tstart, tstop, binsize)[:-1]
-    n_bins = len(times)
+    for itype in itypes:
+        itype = int(itype)
+        itype_str = get_itype_str(itype)
 
-    # Initialize arrays for the light curve data
-    x_lc, y_lc = np.zeros(n_bins), np.zeros(n_bins)
-    x_err = np.full(n_bins, 0.5 * binsize)
-    y_err = np.zeros(n_bins)
+        path = Path(prevt)
+        ofile = f'pulserecode_{path.stem}_{itype_str}.png'
 
-    # Ensure the time array is sorted
-    x = np.sort(x)
+        print(f'Load file name = {prevt}')
+        print(f'Output file name = {ofile}')
+        print(f'hres = {dt} s')
+        print(f'ITYPE = {itype}:{itype_str}')
 
-    # Compute counts for each bin
-    for i, t in enumerate(times):
-        start, end = np.searchsorted(x, [t, t + binsize])
-        count = end - start
+        fig, ax = plt.subplots(6, 6, figsize=(16, 9), sharex=True, sharey=True)
+        for e in range(36):
+            dety = 6 - pixel_map.T[e][0]
+            detx = pixel_map.T[e][1] - 1
+            pixel = pixel_map.T[e][2]
+            pix_mask = pix_num_list == pixel
+            if itype == -1:
+                itype_mask = itype_list[pix_mask] <= 7
+                ph_max = pulse.max()
+            else:
+                itype_mask = itype_list[pix_mask] == itype
+                if pulse[itype_list == itype].size > 0:
+                    ph_max = pulse[itype_list == itype].max()
+                else:
+                    ph_max = 0
+            num_of_evt = len(pulse[pix_mask][itype_mask])
+            print(f'DETY={dety}, DETX={detx}, PIXEL={pixel}')
 
-        x_lc[i] = t + 0.5 * binsize
-        y_lc[i] = count / binsize
-        y_err[i] = np.sqrt(count) / binsize
+            for j, p in enumerate(pulse[pix_mask][itype_mask]):
+                if j == 0:
+                    ax[dety, detx].text(0.07, ph_max - 500, fr'$\rm Pix = {pixel}$', ha='center', va='center')
+                    ax[dety, detx].text(0.07, ph_max - 2500, fr'$\rm N   = {num_of_evt}$', ha='center', va='center')
 
-    return x_lc, x_err, y_lc, y_err
+                ax[dety, detx].plot(x_time, p)
 
+            if dumptext and num_of_evt > 0:
+                dump_to_npz(f"{path.stem}_{itype_str}_dety{dety}_detx{detx}_pixel{pixel}.npz", x_time, pulse[pix_mask][itype_mask])
 
-def plot_fits_data(gtifiles, evtfiles, title, outfname, \
-                      plotflag = False, markers = "o", debug=True, markersize = 1, timebinsize = 100., usetime = False):
+        for i in range(6):
+            ax[5, i].set_xlabel(r'$\rm time\ (s)$', fontsize=10)
+            ax[i, 0].set_ylabel(r'$\rm PulseRec$', fontsize=10)
 
-    # GTI データを格納する辞書
-    gtidic = {}
-    index = 0
-    objlist = []
+        plt.suptitle(f"Pulse Recode: {prevt}, ITYPE={itype}")
+        plt.tight_layout()
+        plt.savefig(ofile)
 
-    for gtifile in gtifiles:
-        with fits.open(gtifile) as hdulist:
-            for hdu in hdulist:
-                if 'GTI' in hdu.name:
-                    print(f"..... {hdu.name} is opened.")
-                    if "OBJECT" in hdu.header:
-                        obj = hdu.header["OBJECT"]
-                    else:
-                    	obj ="N/A"                    
-                    objlist.append(obj)
+def get_itype_str(itype):
+    itype_dict = {-1: 'all', 0: 'Hp', 1: 'Mp', 2: 'Ms', 3: 'Lp', 4: 'Ls', 5: 'BL', 6: 'EL', 7: '--'}
+    return itype_dict.get(itype, 'unknown')
 
-                    start = hdu.data["START"]
-                    stop = hdu.data["STOP"]
-                    # 辞書にデータを格納
-                    gtidic[index] = {
-                        'file_name': gtifile,
-                        'hdu_name': hdu.name,
-                        'start': start,
-                        'stop': stop
-                    }
-                    index += 1
+def dump_to_npz(filename, x_time, pulses):
+    np.savez(filename, x_time=x_time, pulses=pulses)
 
-    # make lightcurves 
-    lcdic = {}
-    lcindex = 0
-    if evtfiles == None:
-        pass
-    else:
-        for evtfile in evtfiles:
-            with fits.open(evtfile) as hdulist:
-                for hdu in hdulist:
-                    if 'EVENTS' in hdu.name:	
-                        time = hdu.data["TIME"]        
-                        if 'ITYPE' in hdu.columns.names:	
-	                        itype = hdu.data["ITYPE"]        
-	                        cutid = np.where(itype<5)[0] # Hp, Mp, Ms, Lp, Ls
-                        if 'AC_ITYPE' in hdu.columns.names:	
-	                        itype = hdu.data["AC_ITYPE"]        
-	                        cutid = np.where(itype==0)[0] # 0:AC, 1:BL, 2:EL, 3:PE
-                        time = time[cutid]
-                        itype = itype[cutid]
-                        x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time)
-                        zcutid = np.where(y_lc > 0)[0]
-                        x_lc  = x_lc[zcutid]
-                        x_err = x_err[zcutid]
-                        y_lc  = y_lc[zcutid]
-                        y_err = y_err[zcutid]           
-                        dtime_lc = [REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in x_lc]
-                        lcdic[lcindex] = {
-                        'file_name': evtfile,
-                        'datetime': dtime_lc,
-                        'y_lc': y_lc,
-                        'y_err': y_err
-                        }
-                        lcindex += 1
+def load_from_npz(filename):
+    data = np.load(filename)
+    return data['x_time'], data['pulses']
 
-
-    fig, axs = plt.subplots(1, 1, figsize=(12, 7))
-    plt.subplots_adjust(right=0.75)  # make the right space bigger
-    colors = plt.cm.viridis(np.linspace(0, 1, index))    
-
-    # 凡例用のリストを初期化
-    legend_elements = []
-
-    # gtidic の内容を表示
-    for idx, data in gtidic.items():
-        print(f"Index: {idx}, File: {data['file_name']}, HDU: {data['hdu_name']}, START: {data['start']}, STOP: {data['stop']}")
-        pretime = 0
-        for i, (s, e) in enumerate(zip(data['start'], data['stop'])): 	      
-            if i == 0:
-                pretime = e
-            print(".... debug :", s, e, e-s, s-pretime)
-
-        yval = 1 - (1/index) * idx
-        sdate = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in data['start']])
-        edate = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in data['stop']])
-
-        if usetime:
-            for s,e in zip(data['start'], data['stop']):
-                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
-        else:
-            for s,e in zip(sdate, edate):
-                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
-
-        shortfname = os.path.basename(data['file_name'])
-        # 凡例要素を追加
-        legend_elements.append(Line2D([0], [0], color=colors[idx], marker=markers, label=shortfname+":"+data['hdu_name']))
-
-    axs.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
-
-    if evtfiles is not None:
-        colors = plt.cm.viridis(np.linspace(0, 1, lcindex))    
-        ax2 = axs.twinx()  # Create a second y-axis
-        for idx, data in lcdic.items():
-            print(f"Index: {idx}, File: {data['file_name']}, datetime: {data['datetime']}, y_lc: {data['y_lc']}, y_err: {data['y_err']}")
-            shortfname = os.path.basename(data['file_name'])
-            ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt='.', ms=2, color=colors[idx], label=shortfname)
-        # 凡例をプロット
-        ax2.legend(bbox_to_anchor=(1.05, 0.5), loc='upper left', borderaxespad=0., fontsize=6)
-        ax2.set_ylabel(f"c/s (binsize={timebinsize}s), ITYPE < 5")
-
-    objset = set(objlist)
-    plt.title(",".join(objset))
-    axs.set_ylabel("a.u.")
-    axs.set_xlabel("TIME")
-    plt.tight_layout()
-    plt.savefig(outfname)
-    print(f".....{outfname} is saved.")
-    if plotflag:
-        plt.show()
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-      description='This program is used to check deltaT distribution for each pixel',
-      epilog='''
-        Example:
-        resolve_util_gtiplot.py xa300049010rsl_p0px3000_uf_prevnext_cutclgti.fits PHA 1,1 PI,EPI 1,1 --plot --filters itype==0
-    ''',
-    formatter_class=argparse.RawDescriptionHelpFormatter)    
-    parser.add_argument("gtifilelist", type=str, help="Comma-separated GTI file names or a file containing GTI file names.")
-    parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
-    parser.add_argument("--markers", '-m', type=str, help="marker type", default="o")
-    parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
-    parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis",default=None)
-    parser.add_argument("--evtfilelist", '-e', type=str, help="Comma-separated evt file names or a file containing evt file names.",default=None)
+def main():
+    parser = argparse.ArgumentParser(description="Process FITS files and plot data.")
+    parser.add_argument('prevt', type=str, help='Input FITS file')
+    parser.add_argument('--itypelist', type=str, default='0,1,2,3,4', help='Comma-separated list of itype values (default: 0,1,2,3,4)')
+    parser.add_argument('--dumptext', action='store_true', help='Flag to dump x_time and pulse data to text files')
 
     args = parser.parse_args()
-    gtifiles = get_file_list(args.gtifilelist)
-    print(f'gtifiles = {gtifiles}')        
-    gtifiles_shortname = [os.path.basename(_) for _ in gtifiles]
-    title = ",".join(gtifiles_shortname)
+    itypes = [int(itype) for itype in args.itypelist.split(',')]
+    
+    plot_data_6x6(args.prevt, itypes, args.dumptext)
 
-    if args.evtfilelist == None:
-        evtfiles = None
-    else:
-        evtfiles = get_file_list(args.evtfilelist)
-    print(f'evtfiles = {evtfiles}')        
-
-    outfname = "gtiplot_" + ("_".join(gtifiles_shortname)).replace(".","_p_") + ".png"
-
-    plot_fits_data(gtifiles, evtfiles, title, outfname, plotflag = args.plot, markers = args.markers, markersize = args.markersize)
+if __name__ == "__main__":
+    main()

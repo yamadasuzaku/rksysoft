@@ -20,6 +20,7 @@ def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
     """
     max_value = (1 << bit_width) - 1
     diffs = []
+    minus_counter = 0  
     for i in range(1, len(counter_list)):
         if reverse:
             diff = -1 * (counter_list[i] - counter_list[i - 1])
@@ -27,7 +28,10 @@ def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
             diff = counter_list[i] - counter_list[i - 1]
         if diff < 0:
             diff += max_value + 1
+        if diff < 0: # something wrong when diff + (max_value + 1) < 0
+            minus_counter +=1 
         diffs.append(diff)
+    print(f"debug: def compute_diff_with_overflow, minus_counter = {minus_counter}")
     return np.array(diffs)
 
 def update_intervals(fits_file, output_file=None):
