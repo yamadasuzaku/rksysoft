@@ -51,6 +51,11 @@ ftselect infile=xa000114000rsl_a0pxpr_uf_fillprenext.evt outfile=xa000114000rsl_
 
 ## pulserecord のプロット
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_pr_plot.py
+
+を使う。
+
+
 単純なプロットは、
 
 ``` bash:
