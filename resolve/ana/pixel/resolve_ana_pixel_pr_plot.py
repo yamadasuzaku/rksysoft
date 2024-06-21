@@ -173,7 +173,17 @@ def main():
     """
     Main function to parse arguments and call the plot_data_6x6 function.
     """
-    parser = argparse.ArgumentParser(description="Process FITS files and plot data.")
+    parser = argparse.ArgumentParser(
+      description='This program is to plot pulserecord',
+      epilog='''
+        Example 1) just plot 
+        resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext.evt
+        Example 2) Create a new file:
+        resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_below30.evt --prevflag --xlims 0,500 --ylims=-5000,-2000      
+        [Note] --ylims=-5000,-2000 should work but --ylims -5000,-2000 NOT work. 
+        ''',
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+
     parser.add_argument('prevt', type=str, help='Input FITS file')
     parser.add_argument('--itypelist', type=str, default='0,1,2,3,4', help='Comma-separated list of itype values (default: 0,1,2,3,4)')
     parser.add_argument('--dumptext', action='store_true', help='Flag to dump x_time and pulse data to NPZ files')

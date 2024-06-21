@@ -5,7 +5,7 @@ input_file="$1"
 
 # 引数が渡されているか確認
 if [ -z "$input_file" ]; then
-  echo "Usage: $0 <input_file>"
+  echo "Usage: $0 evtfile_with_PREV_INTERVAL"
   exit 1
 fi
 
