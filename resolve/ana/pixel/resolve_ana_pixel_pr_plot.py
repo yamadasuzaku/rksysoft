@@ -34,13 +34,22 @@ def get_deriv(ydata):
     # Iterate over each element in ydata
     for onei, oneydata in enumerate(ydata):
         # Get the previous 8 elements
-        prey = ydata[np.where((numarray > onei - 9) & (numarray < onei))]
-        
+        if onei >= 8:
+            prey = ydata[onei-8:onei]
+        else:
+            prey = []
+
         # Get the next 8 elements
-        posty = ydata[np.where((numarray > onei - 1) & (numarray < onei + 8))]
+        if onei + 8 < len(ydata):
+            posty = ydata[onei:onei+8]
+        else:
+            posty = []
 
         # Calculate the long derivative as the difference of means multiplied by 8
-        derivLong = (np.mean(posty) - np.mean(prey)) * 8
+        if len(prey) > 0 and len(posty) > 0:
+            derivLong = (np.mean(posty) - np.mean(prey)) * 8
+        else:
+            derivLong = 0
         
         # Calculate the final derivative, using floor function for adjustment
         derivative = np.floor((derivLong + 2.) / 4.)
@@ -117,6 +126,7 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
 
         # Create subplots for a 6x6 grid
         fig, ax = plt.subplots(6, 6, figsize=(16, 9), sharex=True, sharey=True)
+        plt.subplots_adjust(right=0.9)
         for e in range(36):
             dety = 6 - pixel_map.T[e][0]
             detx = pixel_map.T[e][1] - 1
