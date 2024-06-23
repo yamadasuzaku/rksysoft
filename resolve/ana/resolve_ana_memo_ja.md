@@ -109,3 +109,17 @@ resolve_util_fplot.py $input_file TIME 7,6,6,6,6 XBOXA_TEMP3_CAL,HE_TANK2,JT_SHL
 ```
 
 を動かしているだけです。
+
+
+# 論文執筆前のデータチェック用ツールのルーティン
+
+## ghf のチェック
+
+```bash:
+resolve_ecal_plot_ghf.py xa000126000rsl_000_fe55.ghf
+resolve_ecal_plot_ghf_with_FWE.py xa000126000rsl_000_fe55.ghf --hk1 xa000126000rsl_a0.hk1
+```
+
+- resolve_ecal_plot_ghf.py でフィット結果が正しいことを目視で確認する。
+- resolve_ecal_plot_ghf_with_FWE.py で、FWEの時刻とGHFがあってることを確認する。
+
