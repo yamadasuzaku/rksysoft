@@ -134,3 +134,12 @@ resolve_ecal_plot_ghf_detail.py xa000126000rsl_000_fe55.ghf --pixels 3,4,19,20,2
 --pixels を指定しないと全ピクセルで、カンマ区切りで整数を指定するとピクセル毎にプロットする
 
 
+## GTI の確認
+
+``` bash:
+resolve_util_gtiplot.py xa300036010rsl_tel.gti,xa300036010rsl_p0px1000_uf.evt -p -e xa300036010rsl_p0px1000_cl.evt,xa300036010rsl_p0px1000_uf.evt
+``` 
+
+コラムに `GTI` を含むファイルをカンマ区切り(or @ファイル)で指定するとGTIを表示する。-e オプションでイベントファイルを指定すると100秒ごとのライトカーブを生成して右y軸に表示してくれる。
+
+
