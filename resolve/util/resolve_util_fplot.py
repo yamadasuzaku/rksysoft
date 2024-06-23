@@ -83,7 +83,7 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
             if x_col == 'TIME':
                 ax2 = axs[-1].twiny()
                 ax2.plot(x_data['datetime'], y_data[y_cols[0]], markers, markersize=0)  # Hide the second plot
-                ax2.set_xlabel('datetime')
+                ax2.set_xlabel('Date')
                 ax2.xaxis.set_label_position('top')
                 ax2.xaxis.set_ticks_position('top')
                 fig.autofmt_xdate()
