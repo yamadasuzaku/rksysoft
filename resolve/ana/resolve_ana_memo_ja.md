@@ -116,11 +116,21 @@ resolve_util_fplot.py $input_file TIME 7,6,6,6,6 XBOXA_TEMP3_CAL,HE_TANK2,JT_SHL
 ## ghf のチェック
 
 ```bash:
-resolve_ecal_plot_ghf.py xa000126000rsl_000_fe55.ghf
+resolve_ecal_plot_ghf_detail.py xa000126000rsl_000_fe55.ghf
 resolve_ecal_plot_ghf_with_FWE.py xa000126000rsl_000_fe55.ghf --hk1 xa000126000rsl_a0.hk1
 ```
 
-- resolve_ecal_plot_ghf.py でフィット結果が正しいことを目視で確認する。
+- resolve_ecal_plot_ghf_detail.py でフィット結果が正しいことを目視で確認する。
 - resolve_ecal_plot_ghf_with_FWE.py で、FWEの時刻とGHFがあってることを確認する。
 
-## ghf のチェック
+## ghf の詳細チェック
+
+```bash:
+resolve_ecal_plot_ghf_detail.py xa000126000rsl_000_fe55.ghf  --detail
+resolve_ecal_plot_ghf_detail.py xa000126000rsl_000_fe55.ghf --pixels 3,4,19,20,27,32 --detail
+```
+
+`--detail` というオプションで、一つのフィットごとに詳細な図を出力してくれる。
+--pixels を指定しないと全ピクセルで、カンマ区切りで整数を指定するとピクセル毎にプロットする
+
+
