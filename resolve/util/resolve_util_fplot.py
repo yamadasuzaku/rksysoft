@@ -37,7 +37,6 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
     num_plots = len(y_cols)
     fig_ysize = 8
     fig, axs = plt.subplots(num_plots, 1, figsize=(12, fig_ysize), sharex=True)
-
     for file_name in file_names:
         # Create subplots
         with fits.open(file_name) as hdul:
@@ -46,6 +45,7 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
 
             # Get X data
             x_data = {}
+            dtimelist = []
             for ycol, xhdu in zip(y_cols, x_hdus):
                 print(f"..... {x_col} is opened from HDU={xhdu}")
                 data = hdul[xhdu].data
@@ -58,6 +58,7 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
                     time = x_data[ycol]
                     dtime = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in time])
                     x_data['datetime'] = dtime
+                    dtimelist.append(dtime)
 
             # Get Y data
             y_data = {}
@@ -81,16 +82,16 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
             axs[-1].set_xlabel(x_col)  # Set x-axis label only on the bottom plot
 
             if x_col == 'TIME':
-                ax2 = axs[-1].twiny()
-                ax2.plot(x_data['datetime'], y_data[y_cols[0]], markers, markersize=0)  # Hide the second plot
+                ax2 = axs[0].twiny()
+                ax2.plot(dtimelist[0], y_data[y_cols[0]], markers, markersize=0)  # Hide the second plot
                 ax2.set_xlabel('Date')
                 ax2.xaxis.set_label_position('top')
                 ax2.xaxis.set_ticks_position('top')
-                fig.autofmt_xdate()
 
             plt.suptitle(title)
-
     plt.tight_layout()
+    plt.subplots_adjust(hspace=0, top=0.9)  # Adjust space between plots and top margin
+#    fig.autofmt_xdate()  # does not work for tile plots
     plt.savefig(outfname)
     print(f".....{outfname} is saved.")
     if plotflag:
