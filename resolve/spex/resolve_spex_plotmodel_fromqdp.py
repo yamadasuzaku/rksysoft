@@ -13,8 +13,13 @@ parser = argparse.ArgumentParser(description='Plot spectra from a model QDP file
 parser.add_argument('qdpfile', help='The name of the QDP file to process.')
 parser.add_argument('-l', '--ylin', action='store_true', help='Plot yscale in linear scale (log in default)')
 parser.add_argument('-m','--emin', type=float, help='emin', default=1.5)
-parser.add_argument('-x','--emax', type=float, help='emax', default=9.0)
+parser.add_argument('-x','--emax', type=float, help='emax', default=10.0)
+parser.add_argument('--y1', type=float, help='y1', default=None)
+parser.add_argument('--y2', type=float, help='y2', default=None)
+
 parser.add_argument('--output', type=str, help='Output file name', default='spex_fitmodel.png')
+parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
+
 args = parser.parse_args()
 
 # Ensure only one argument is passed
@@ -32,6 +37,8 @@ qdpfile = args.qdpfile
 ylin = args.ylin
 emin = args.emin
 emax = args.emax
+y1 = args.y1
+y2 = args.y2
 
 def read_data(file_path, emin, emax):
     data = np.loadtxt(file_path, skiprows=1)
@@ -49,15 +56,18 @@ def read_data(file_path, emin, emax):
     model = model[ecut]
     return xval, xerr, model
 
-def plot_data(file_path):
+def plot_data(file_path, plotflag=False):
     x, xerr, model = read_data(file_path, emin, emax)
 
     plt.figure(figsize=(10, 6))
     if ylin:
         plt.yscale('linear')
     else:
-        plt.yscale('log')			        
+        plt.yscale('log')
 
+    if y1 is not None:
+        plt.ylim(y1,y2)
+        
     plt.errorbar(x, model, fmt='-', label='model', capsize=0, color='red',alpha=0.9)
     plt.ylabel(r'Photons/m$^2$/s/keV')
     plt.xlabel('Energy (keV)')
@@ -66,6 +76,7 @@ def plot_data(file_path):
     plt.grid(True,alpha=0.3)
     plt.savefig(args.output)
     print(f"Output file {args.output} is created.")
-    plt.show()
+    if plotflag:
+        plt.show()
 
-plot_data(qdpfile)
+plot_data(qdpfile, plotflag = args.plot)
