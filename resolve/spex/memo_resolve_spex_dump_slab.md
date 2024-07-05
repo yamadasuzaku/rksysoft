@@ -1,6 +1,22 @@
 # SPEX : a test scirpt to dump slab's data
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/spex/resolve_spex_dump_slab.sh
+
 This shell script processes spectral data for different elements and their respective ranges, generating output files and organizing them into directories. Below is a detailed explanation of each part of the script.
+
+## Examples of the output 
+
+After png files are created, 
+
+``` bash:
+convert -delay 10 -loop 0 fe*.png fe_slab.gif
+convert -delay 10 -loop 0 ca*.png ca_slab.gif
+convert -delay 10 -loop 0 ni*.png ni_slab.gif
+```
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/spex/fe_slab.gif
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/spex/ni_slab.gif
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/spex/ca_slab.gif
 
 # Usage 
 
@@ -27,6 +43,8 @@ resolve_spex_dump_slab.sh
 - The script runs the SPEX software for the current element and range, saving logs and generating plots. The SPEX commands are provided within a here-document (`<< EOF ... EOF`).
 
 - The script runs a Python script (`resolve_spex_plotmodel_fromqdp_with_tral.py`) to process the generated QDP files and produce PNG images. It echoes a message when each PNG file is generated.
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/spex/resolve_spex_plotmodel_fromqdp_with_tral.py
 
 - After processing all elements and ranges, the script moves the generated files to their respective directories.
 
