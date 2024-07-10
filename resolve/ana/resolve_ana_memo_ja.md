@@ -12,7 +12,7 @@ resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py xa000138000rsl_p0px1000_cl.e
 
 `--timebinsize TIMEBINSIZE` オプションを使用して、時間ビン（秒）を変更できます。
 
-## スペクトルの作成方法
+## スペクトルの作成方法 (非タイルプロット)
 
 [resolve_ana_pixel_ql_plotspec_v1.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_ql_plotspec_v1.py) のコマンドを使用して、スペクトルを作成します：
 
@@ -30,6 +30,19 @@ resolve_ana_pixel_ql_plotspec.py xa000138000rsl_p0px1000_cl.evt --rebin 250
 ```
 
 のように、energy の bin 幅を変えることができるのもあります。
+
+
+## スペクトルの作成方法 (タイルプロット)
+
+イベントファイル、エネルギーの下限、上限、ビン幅、を指定すると、タイルプロットが生成されます。
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py
+
+
+``` python:
+python resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa900001010rsl_p0px1000_cl.evt  -l 0 -x 10000 -b 20 -c
+```
+
 
 
 ## delta T 分布のチェック
