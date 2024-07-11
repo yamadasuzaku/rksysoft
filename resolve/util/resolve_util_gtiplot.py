@@ -71,7 +71,45 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
     for gtifile in gtifiles:
         with fits.open(gtifile) as hdulist:
             for hdu in hdulist:
-                if 'GTI' in hdu.name:
+                if 'GTILOST' in hdu.name:
+                    print(f"..... {hdu.name} is opened.")
+                    if "OBJECT" in hdu.header:
+                        obj = hdu.header["OBJECT"]
+                    else:
+                        obj ="N/A"                    
+                    objlist.append(obj)
+
+                    data = hdu.data
+                    # コラムの名前をリストとして取得
+                    column_names = data.columns.names
+                    # "PIXEL" コラムが存在するかどうかを確認   
+                    if 'PIXEL' in column_names:
+                        # "PIXEL" コラムが存在する場合 (PIXELの場合を想定)
+                        pixel = data['PIXEL']
+                        looprange = np.arange(36)
+                        pname = "PIXEL"
+                    else:
+                    # "PIXEL" コラムが存在しない場合 (ACの場合を想定)
+                        pixel = data['PSP_ID'] 
+                        looprange = [0,1,2,3] # only 1, 3 are used for the nominal cases
+                        pname = "AC"
+
+                    for pixel_ in looprange:
+                        pixelcut = np.where(pixel == pixel_)[0]
+                        if len(pixelcut) == 0: 
+                            continue
+                        cutdata = data[pixelcut]
+                        start = cutdata["START"]
+                        stop = cutdata["STOP"]
+                        # 辞書にデータを格納
+                        gtidic[index] = {
+                        'file_name': gtifile +"_"+ pname + str(pixel_), 
+                        'hdu_name': hdu.name,
+                        'start': start,
+                        'stop': stop
+                        }
+                        index += 1
+                elif 'GTI' in hdu.name:
                     print(f"..... {hdu.name} is opened.")
                     if "OBJECT" in hdu.header:
                         obj = hdu.header["OBJECT"]
@@ -134,12 +172,17 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
 
     # gtidic の内容を表示
     for idx, data in gtidic.items():
-        print(f"Index: {idx}, File: {data['file_name']}, HDU: {data['hdu_name']}, START: {data['start']}, STOP: {data['stop']}")
+        if debug:
+            print(f"Index: {idx}, File: {data['file_name']}, HDU: {data['hdu_name']}, START: {data['start']}, STOP: {data['stop']}")
+        else:
+            print(f"Index: {idx}, File: {data['file_name']}, HDU: {data['hdu_name']}")
+
         pretime = 0
         for i, (s, e) in enumerate(zip(data['start'], data['stop'])): 	      
             if i == 0:
                 pretime = e
-            print(".... debug :", s, e, e-s, s-pretime)
+            if debug:
+                print(".... debug :", s, e, e-s, s-pretime)
 
         yval = 1 - (1/index) * idx
         sdate = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in data['start']])
@@ -190,6 +233,7 @@ if __name__ == "__main__":
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument("gtifilelist", type=str, help="Comma-separated GTI file names or a file containing GTI file names.")
     parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
+    parser.add_argument('--debug', '-d', action='store_true', default=False, help='Flag to dump info')
     parser.add_argument("--markers", '-m', type=str, help="marker type", default="o")
     parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
     parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis",default=None)
@@ -209,4 +253,5 @@ if __name__ == "__main__":
 
     outfname = "gtiplot_" + ("_".join(gtifiles_shortname)).replace(".","_p_") + ".png"
 
-    plot_fits_data(gtifiles, evtfiles, title, outfname, plotflag = args.plot, markers = args.markers, markersize = args.markersize)
+    plot_fits_data(gtifiles, evtfiles, title, outfname, \
+        plotflag = args.plot, markers = args.markers, markersize = args.markersize ,debug = args.debug)
