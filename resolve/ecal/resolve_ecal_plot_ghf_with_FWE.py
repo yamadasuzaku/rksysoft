@@ -46,7 +46,8 @@ binnum = int((pimax - pimin) / rebin)
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot gain history from a FITS file.')
     parser.add_argument('filename', help='The name of the FITS file to process.')
-    parser.add_argument('--hk1', type=str, help='hk1file', default=None)
+    parser.add_argument('--hk1', '-k', type=str, help='hk1file', default=None)
+    parser.add_argument('--reverse_axes', '-r', action='store_true', help='Reverse x-axis to show date instead of elapsed time')
     return parser.parse_args()
 
 def open_fits_data(fname):
@@ -86,22 +87,27 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
         df.to_csv(csv_filename, index=False)
         print(f"Data for pixel {pixel_} saved to {csv_filename}")
 
-def plot_ghf(time, dtime, pixel, temp_fit, hk1=None, outfname="mkpi.png", title="test"):
-    plt.figure(figsize=(11, 7))
+def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test"):
+    fig, ax1 = plt.subplots(figsize=(11, 7))
     plt.subplots_adjust(right=0.85)  # make the right space bigger
-    plt.xscale("linear")
-    plt.yscale("linear")
-    plt.ylabel("TEMP_FIT : Effective Temperature (mK)")
-    plt.xlabel("Time (s) from " + str(dtime[0]))
-    plt.grid(alpha=0.2)
-    plt.title(title)
 
-    ax1 = plt.gca()  # Primary y-axis
+    if reverse_axes:
+        ax1.set_xlabel('Date')
+        ax1.set_xlim(dtime[0], dtime[-1])
+        x_data = dtime
+    else:
+        ax1.set_xlabel("Elapsed Time (s) from " + str(dtime[0]))
+        ax1.set_xlim(time[0], time[-1])
+        x_data = time
+
+    ax1.set_ylabel("TEMP_FIT : Effective Temperature (mK)")
+    ax1.grid(alpha=0.2)
+    ax1.set_title(title)
 
     # Plot histograms for each pixel
     for pixel_ in np.arange(36):
         pixelcut = (pixel == pixel_)
-        px_time = time[pixelcut]
+        px_time = x_data[pixelcut]
         px_temp_fit = temp_fit[pixelcut]
         if len(px_time) == 0:
             print("warning: data is empty for pixel =", pixel_)
@@ -121,10 +127,15 @@ def plot_ghf(time, dtime, pixel, temp_fit, hk1=None, outfname="mkpi.png", title=
         hk1time = hk1data["TIME"]
         hk1fwpos = hk1data["FWE_FW_POSITION1_CAL"]
 
-        ax2 = ax1.twinx()  # Secondary y-axis
-        ax2.set_ylabel("FW Position (calibrated units)")
-        ax2.plot(hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
-        ax2.legend(loc='upper right', fontsize=6)
+        ax3 = ax1.twinx()  # Secondary y-axis
+        ax3.set_ylabel("FW Position (calibrated units)")
+        if reverse_axes:
+            dtime_hk1time = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in hk1time])
+            ax3.plot(dtime_hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
+        else:
+            ax3.plot(hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
+
+        ax3.legend(loc='upper right', fontsize=6)
 
     ofname = f"fig_{outfname}"
     plt.savefig(ofname)
@@ -134,8 +145,8 @@ def plot_ghf(time, dtime, pixel, temp_fit, hk1=None, outfname="mkpi.png", title=
 def main():
     args = parse_arguments()
     if not args.filename or (args.hk1 and not os.path.isfile(args.hk1)):
-        print("Usage: resolve_ecal_plot_ghf_with_FWE.py <filename> [--hk1 <hk1file>]")
-        print("Example: resolve_ecal_plot_ghf_with_FWE.py xa300065010rsl_000_fe55.ghf --hk1 xa300065010rsl_a0.hk1")
+        print("Usage: resolve_ecal_plot_ghf_with_FWE.py <filename> [--hk1 <hk1file>] [--reverse_axes]")
+        print("Example: resolve_ecal_plot_ghf_with_FWE.py xa300065010rsl_000_fe55.ghf --hk1 xa300065010rsl_a0.hk1 --reverse_axes")
         sys.exit(1)
     
     data = open_fits_data(args.filename)
@@ -145,7 +156,7 @@ def main():
     # Save pixel data to CSV
     save_pixel_data_to_csv(pixel, time, temp_fit)
 
-    plot_ghf(time, dtime, pixel, temp_fit, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}")
+    plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}")
 
 if __name__ == "__main__":
     main()
