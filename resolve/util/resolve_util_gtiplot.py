@@ -61,7 +61,7 @@ def fast_lc(tstart, tstop, binsize, x):
 
 
 def plot_fits_data(gtifiles, evtfiles, title, outfname, \
-                      plotflag = False, markers = "o", debug=True, markersize = 1, timebinsize = 100., usetime = False):
+                      plotflag = False, markers = "o", debug=True, markersize = 1, timebinsize = 100., usetime = False, lcfmt=".", lccol=None):
 
     # GTI データを格納する辞書
     gtidic = {}
@@ -207,7 +207,10 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
         for idx, data in lcdic.items():
             print(f"Index: {idx}, File: {data['file_name']}, datetime: {data['datetime']}, y_lc: {data['y_lc']}, y_err: {data['y_err']}")
             shortfname = os.path.basename(data['file_name'])
-            ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt='.', ms=2, color=colors[idx], label=shortfname)
+            if lccol is not None:
+                ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt=lcfmt, ms=2, color=lccol, label=shortfname)
+            else:
+                ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt=lcfmt, ms=2, color=colors[idx], label=shortfname)
         # 凡例をプロット
         ax2.legend(bbox_to_anchor=(1.05, 0.5), loc='upper left', borderaxespad=0., fontsize=6)
         ax2.set_ylabel(f"c/s (binsize={timebinsize}s), ITYPE < 5")
@@ -238,6 +241,9 @@ if __name__ == "__main__":
     parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
     parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis",default=None)
     parser.add_argument("--evtfilelist", '-e', type=str, help="Comma-separated evt file names or a file containing evt file names.",default=None)
+    parser.add_argument("--lcfmt", '-l', type=str, help="fmt for light curve", default=".")
+    parser.add_argument("--lccol", '-c', type=str, help="Forced set of lc color",default=None)
+
 
     args = parser.parse_args()
     gtifiles = get_file_list(args.gtifilelist)
@@ -249,9 +255,10 @@ if __name__ == "__main__":
         evtfiles = None
     else:
         evtfiles = get_file_list(args.evtfilelist)
-    print(f'evtfiles = {evtfiles}')        
+    print(f'evtfiles = {evtfiles}')
 
     outfname = "gtiplot_" + ("_".join(gtifiles_shortname)).replace(".","_p_") + ".png"
 
     plot_fits_data(gtifiles, evtfiles, title, outfname, \
-        plotflag = args.plot, markers = args.markers, markersize = args.markersize ,debug = args.debug)
+
+        plotflag = args.plot, markers = args.markers, markersize = args.markersize ,debug = args.debug, lcfmt = args.lcfmt, lccol = args.lccol)

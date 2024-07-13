@@ -9,6 +9,7 @@ import datetime
 import argparse
 import sys
 from matplotlib.colors import Normalize
+import matplotlib.dates as mdates ######################################追加
 import matplotlib.cm as cm
 import os
 
@@ -37,6 +38,46 @@ def pi_to_ev(pi):
     """Convert PI units to energy in eV."""
     return pi * 0.5 + 0.5
 
+def create_date_time_funcs(base_date, unit='seconds'):
+    # https://qiita.com/yusuke_s_yusuke/items/9563f2484fdac29031d8
+    base_date_num = mdates.date2num(base_date)  # 基準日付を内部形式に変換
+
+    def date_to_time(date):
+        """Convert matplotlib date to elapsed time."""
+        elapsed_days = date - base_date_num
+        if unit == 'seconds':
+            elapsed_time = elapsed_days * 24 * 60 * 60
+        elif unit == 'minutes':
+            elapsed_time = elapsed_days * 24 * 60
+        elif unit == 'hours':
+            elapsed_time = elapsed_days * 24
+        elif unit == 'days':
+            elapsed_time = elapsed_days
+        elif unit == 'years':
+            elapsed_time = elapsed_days / 365.25  # 1年を約365.25日と定義
+        else:
+            raise ValueError("Invalid unit. Choose from 'seconds', 'minutes', 'hours', 'days', 'years'.")
+        return elapsed_time
+
+    def time_to_date(elapsed_time):
+        """Convert elapsed time to matplotlib date."""
+        if unit == 'seconds':
+            elapsed_days = elapsed_time / (24 * 60 * 60)
+        elif unit == 'minutes':
+            elapsed_days = elapsed_time / (24 * 60)
+        elif unit == 'hours':
+            elapsed_days = elapsed_time / 24
+        elif unit == 'days':
+            elapsed_days = elapsed_time
+        elif unit == 'years':
+            elapsed_days = elapsed_time * 365.25  # 1年を約365.25日と定義
+        else:
+            raise ValueError("Invalid unit. Choose from 'seconds', 'minutes', 'hours', 'days', 'years'.")
+        date = elapsed_days + base_date_num
+        return date
+
+    return date_to_time, time_to_date
+
 # Define the energy range
 emin, emax = 0, 20000  # Energy range in eV
 pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
@@ -47,7 +88,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot gain history from a FITS file.')
     parser.add_argument('filename', help='The name of the FITS file to process.')
     parser.add_argument('--hk1', '-k', type=str, help='hk1file', default=None)
-    parser.add_argument('--reverse_axes', '-r', action='store_true', help='Reverse x-axis to show date instead of elapsed time')
+    parser.add_argument('--reverse_axes', '-r', action='store_false', help='Reverse x-axis to show only time instead of date and time')
     return parser.parse_args()
 
 def open_fits_data(fname):
@@ -94,6 +135,11 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
     if reverse_axes:
         ax1.set_xlabel('Date')
         ax1.set_xlim(dtime[0], dtime[-1])
+        # 単位を指定して変換関数を作成
+        unit = 'seconds'  # ここで単位を変更できる（'seconds', 'minutes', 'hours', 'days', 'years'）
+        dtime_to_time, time_to_dtime = create_date_time_funcs(dtime[0], unit)        
+        ax2 = ax1.secondary_xaxis('top', functions=(dtime_to_time, time_to_dtime)) ###############################追加
+        ax2.set_xlabel("Elapsed Time (s) from " + str(dtime[0])) ###############################追加
         x_data = dtime
     else:
         ax1.set_xlabel("Elapsed Time (s) from " + str(dtime[0]))
