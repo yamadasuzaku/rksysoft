@@ -7,7 +7,7 @@ params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 10}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
-def calc_branchingratios(rate, template_length_HR=874, template_length_MR=219, template_length_LR=15):
+def calc_branchingratios(rate, template_length_HR=874, template_length_MR=219, template_length_LR=15, debug=True):
     """
     Compute branching ratios : Hp_bl_cor, Mp_bl, Ms_bl, Lp_bl_cor, and Ls_bl_cor based on the given rate.
     
@@ -35,12 +35,30 @@ def calc_branchingratios(rate, template_length_HR=874, template_length_MR=219, t
     exp_mr = np.exp(-1.0 * dtMR * rate)             
     exp_lr = np.exp(-1.0 * dtLR * rate)             
 
-    Hp_bl_cor = exp_hr * exp_hr + exp_hr * (1. - exp_lr) # pileup correction
+    # Calculate the initial values (according to ProcSPIETemplate_A4_takedav6.pdf or https://ui.adsabs.harvard.edu/abs/2014SPIE.9144E..5BT/abstract)
+    Hp_bl_cor = exp_hr * (exp_hr + 1 - exp_lr)
     Mp_bl = exp_hr * (exp_mr - exp_hr)
-    Ms_bl = exp_mr * (exp_mr - exp_hr)           
-    Lp_bl_cor = exp_hr * (exp_lr - exp_mr) # pileup correction
-    Ls_bl_cor = (1. - exp_mr) * (1. + exp_mr - exp_hr) - exp_hr * (1 - exp_lr) # pileup correction
+    Ms_bl = exp_mr * (exp_mr - exp_hr)
+    Lp_bl_cor = exp_hr * (exp_lr - exp_mr)
+    Ls_bl_cor = (1 - exp_mr) * (1 + exp_mr - exp_hr) - exp_hr * (1 - exp_lr)
 
+    # Calculate checksum
+    checksum = Hp_bl_cor + Mp_bl + Ms_bl + Lp_bl_cor + Ls_bl_cor
+
+    # Normalize values
+    Hp_bl_cor /= checksum
+    Mp_bl /= checksum
+    Ms_bl /= checksum
+    Lp_bl_cor /= checksum
+    Ls_bl_cor /= checksum
+
+    # Calculate checksum confirmation
+    checksum_confirm = Hp_bl_cor + Mp_bl + Ms_bl + Lp_bl_cor + Ls_bl_cor
+
+    # Debug output
+    if debug:
+        print("checksum", checksum)
+        print("checksum_confirm", checksum_confirm)
     return Hp_bl_cor, Mp_bl, Ms_bl, Lp_bl_cor, Ls_bl_cor
 
 # Define the rate range for plotting
