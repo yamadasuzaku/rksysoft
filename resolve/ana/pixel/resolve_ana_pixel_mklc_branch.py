@@ -24,6 +24,8 @@ def parse_args():
     parser.add_argument('--plot_rate_vs_grade', '-g', action='store_true', help='rate_vs_gradeをプロットする')
     parser.add_argument('--gtiuse', '-u', action='store_true', help='GTIを使用して光度曲線を生成する')
     parser.add_argument('--debug', '-d', action='store_true', help='デバッグモード')
+    parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')
+
 
     args = parser.parse_args()
 
@@ -275,7 +277,7 @@ def process_data_wgti(fname, ref_time, timebinsize, debug=False):
     return dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, np.array(overlaps_start), np.array(overlaps_stop)
 
 # 光度曲線をプロットする関数
-def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref_time, gtiuse = False, debug=False):
+def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref_time, gtiuse = False, debug=False, show = False):
     """
     イベントリストから光度曲線をプロットする。
     """
@@ -373,10 +375,11 @@ def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref
 
     plt.tight_layout()
     plt.savefig(f"{output}_lightcurve.png")
-    plt.show()
+    if show:
+        plt.show()
 
 # rate_vs_gradeをプロットする関数
-def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, gtiuse = False, debug=False):
+def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, gtiuse = False, debug=False, show = False):
     """
     イベントリストからrate_vs_gradeをプロットする。
     """
@@ -456,7 +459,8 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
     ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.tight_layout()
     plt.savefig(f"{output}_rate_vs_grade.png")
-    plt.show()
+    if show:
+        plt.show()
 
 # メイン関数
 def main():
@@ -478,12 +482,12 @@ def main():
     if args.gtiuse:
         if args.plot_lightcurve:
             plot_lightcurve(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug)
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show)
             print(f"出力ファイル {args.output}_lightcurve.png が作成されました。")
 
         if args.plot_rate_vs_grade:
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug)
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show)
             print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
 
     else:
