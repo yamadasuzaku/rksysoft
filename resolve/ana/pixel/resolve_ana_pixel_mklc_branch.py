@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--gtiuse', '-u', action='store_true', help='GTIを使用して光度曲線を生成する')
     parser.add_argument('--debug', '-d', action='store_true', help='デバッグモード')
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')
-
+    parser.add_argument('--nonstop', '-n', action='store_true', help='GTIが同時刻の部分で区切らない。')
 
     args = parser.parse_args()
 
@@ -120,7 +120,7 @@ def process_data(fname, ref_time, TRIGTIME_FLAG=False, AC_FLAG=False):
     return dt, time, dtime, pha, itype, rise_time, deriv_max, pixel
 
 # 重複期間を見つける関数
-def find_overlaps(start1, stop1, start2, stop2):
+def find_overlaps(start1, stop1, start2, stop2, nonstop=False):
     """
     重複期間を見つける。
     """
@@ -129,9 +129,14 @@ def find_overlaps(start1, stop1, start2, stop2):
              [(x, 2, i) for i, x in enumerate(stop1)] +  \
              [(x, 3, i) for i, x in enumerate(start2)] + \
              [(x, 4, i) for i, x in enumerate(stop2)]    
-             
-    # イベントを時間 (x[0]) とイベントの優先順位 (x[1]) に基づいてソートする
-    events.sort(key=lambda x: (x[0], {2: 1, 4: 2, 1: 3, 3: 4}[x[1]]))
+
+    # イベントを時間 (x[0]) とイベントの優先順位 (x[1]) に基づいてソートする         
+    if nonstop:
+        # 同時刻なら start の方を優先する
+        events.sort(key=lambda x: (x[0], {1: 1, 2: 2, 3: 3, 4: 4}[x[1]]))
+    else:
+        # 同時刻なら stop の方を優先する
+        events.sort(key=lambda x: (x[0], {2: 1, 4: 2, 1: 3, 3: 4}[x[1]]))
 
     # 各セットは現在アクティブな時間区間を追跡するために使用される
     inside1 = set()  # start1-stop1 間のアクティブなインデックス
@@ -215,7 +220,7 @@ def fast_lc(tstart, tstop, binsize, x, debug=True, gtiuse = False, overlaps_star
     return x_lc, x_err, y_lc, y_err
 
 # GTIを使用してデータを処理する関数
-def process_data_wgti(fname, ref_time, timebinsize, debug=False):
+def process_data_wgti(fname, ref_time, timebinsize, debug=False, nonstop = False):
     """
     GTIを使用してFITSファイルからデータを処理する。
     """
@@ -236,7 +241,7 @@ def process_data_wgti(fname, ref_time, timebinsize, debug=False):
     bintimes_start = times[:-1]
     bintimes_stop = times[1:]
 
-    overlaps_start, overlaps_stop = find_overlaps(bintimes_start, bintimes_stop, gtistart, gtistop)
+    overlaps_start, overlaps_stop = find_overlaps(bintimes_start, bintimes_stop, gtistart, gtistop, nonstop = nonstop)
 
     if debug:
         # 新しい図としてfig_debug, ax_debugを作成
@@ -277,7 +282,8 @@ def process_data_wgti(fname, ref_time, timebinsize, debug=False):
     return dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, np.array(overlaps_start), np.array(overlaps_stop)
 
 # 光度曲線をプロットする関数
-def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref_time, gtiuse = False, debug=False, show = False):
+def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
+                       gtiuse = False, debug=False, show = False, nonstop = False):
     """
     イベントリストから光度曲線をプロットする。
     """
@@ -305,7 +311,7 @@ def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref
         oname = head["OBJECT"]
 
         if gtiuse:
-            dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, overlaps_start, overlaps_stop = process_data_wgti(fname, ref_time, timebinsize, debug=debug)
+            dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, overlaps_start, overlaps_stop = process_data_wgti(fname, ref_time, timebinsize, debug=debug, nonstop = nonstop)
         else:
             dt, time, dtime, pha, itype, rise_time, deriv_max, pixel = process_data(fname, ref_time)
 
@@ -379,7 +385,8 @@ def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref
         plt.show()
 
 # rate_vs_gradeをプロットする関数
-def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, gtiuse = False, debug=False, show = False):
+def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
+                            gtiuse = False, debug=False, show = False, nonstop = False):
     """
     イベントリストからrate_vs_gradeをプロットする。
     """
@@ -404,7 +411,7 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
         oname = head["OBJECT"]
 
         if gtiuse:
-            dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, overlaps_start, overlaps_stop = process_data_wgti(fname, ref_time, timebinsize, debug=debug)
+            dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, overlaps_start, overlaps_stop = process_data_wgti(fname, ref_time, timebinsize, debug=debug, nonstop = nonstop)
         else:
             dt, time, dtime, pha, itype, rise_time, deriv_max, pixel = process_data(fname, ref_time)
 
@@ -482,12 +489,12 @@ def main():
     if args.gtiuse:
         if args.plot_lightcurve:
             plot_lightcurve(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug, show = args.show)
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop)
             print(f"出力ファイル {args.output}_lightcurve.png が作成されました。")
 
         if args.plot_rate_vs_grade:
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug, show = args.show)
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop)
             print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
 
     else:
