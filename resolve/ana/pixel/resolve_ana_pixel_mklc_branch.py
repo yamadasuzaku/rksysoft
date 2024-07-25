@@ -7,14 +7,33 @@ from astropy.time import Time
 import datetime
 import argparse
 import sys
+from matplotlib.cm import get_cmap
+
+# Type Information
+g_itypename = [0, 1, 2, 3, 4]
+g_typename = ["Hp", "Mp", "Ms", "Lp", "Ls"]
+
+# 40色の色リストを複数のカラーマップから作成
+cmap1 = get_cmap('tab20')
+cmap2 = get_cmap('tab20b')
+cmap3 = get_cmap('tab20c')
+g_pixcolors = [cmap1(i/20) for i in range(20)] + [cmap2(i/20) for i in range(10)] + [cmap3(i/20) for i in range(10)]
 
 # コマンドライン引数を解析する関数
 def parse_args():
     """
     コマンドライン引数を解析する。
     """
-    parser = argparse.ArgumentParser(description='FITSファイルから光度曲線をプロットするスクリプト。',
+    parser = argparse.ArgumentParser(description='',
                                      usage='python resolve_ana_pixel_mklc_branch.py f.list -y 0 -p 0 -g')
+
+    parser = argparse.ArgumentParser(
+      description='FITSファイルから光度曲線をプロットするスクリプト。',
+      epilog='''
+        Example 1) 中心４ピクセルの Hpだけ(-y0)、GTIを使う(-u)場合の例:
+        resolve_ana_pixel_mklc_branch.py f.list -l -u -y 0 -p 0,17,18,35 -t 256 -o p0_17_18_35 -s 
+      ''',
+    formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument('filelist', help='処理するFITSファイルリストの名前。')
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
@@ -26,6 +45,7 @@ def parse_args():
     parser.add_argument('--debug', '-d', action='store_true', help='デバッグモード')
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')
     parser.add_argument('--nonstop', '-n', action='store_true', help='GTIが同時刻の部分で区切らない。')
+    parser.add_argument('--lcthresh', '-e', action='store_true', help='fractional exposure の閾値')
 
     args = parser.parse_args()
 
@@ -283,24 +303,12 @@ def process_data_wgti(fname, ref_time, timebinsize, debug=False, nonstop = False
 
 # 光度曲線をプロットする関数
 def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
-                       gtiuse = False, debug=False, show = False, nonstop = False):
+                       gtiuse = False, debug=False, show = False, nonstop = False, lcthresh = 0.8):
     """
     イベントリストから光度曲線をプロットする。
     """
     colors = plt.cm.get_cmap('tab10', len(plotpixels)).colors
     ishape = [".", "s", "D", "*", "x"]
-
-    fig, (ax, branching_ax) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-    ax.set_xscale("linear")
-    ax.set_yscale("linear")
-    ax.set_ylabel(f"Counts/s (binsize = {timebinsize}s)")
-    ax.grid(alpha=0.2)
-
-    branching_ax.set_xscale("linear")
-    branching_ax.set_yscale("linear")
-    branching_ax.set_ylabel("Branching Ratios")
-    branching_ax.set_xlabel("TIME")
-    branching_ax.grid(alpha=0.2)
 
     type_colors = plt.cm.Set1(np.linspace(0, 1, 9))
 
@@ -316,7 +324,169 @@ def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref
             dt, time, dtime, pha, itype, rise_time, deriv_max, pixel = process_data(fname, ref_time)
 
         for j, pix in enumerate(plotpixels):
+
+            fig, (ax, branching_ax) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+            ax.set_xscale("linear")
+            ax.set_yscale("linear")
+            ax.set_ylabel(f"Counts/s (binsize = {timebinsize}s)")
+            ax.grid(alpha=0.2)
+
+            branching_ax.set_xscale("linear")
+            branching_ax.set_yscale("linear")
+            branching_ax.set_ylabel("Branching Ratios")
+            branching_ax.set_xlabel("TIME")
+            branching_ax.grid(alpha=0.2)
+
             for k, itype_ in enumerate(itypenames):
+                type_color = type_colors[k % len(type_colors)]
+
+                print(f"ピクセル{pix}とタイプ{itype_}のデータを処理中 (obsid {obsid})")
+
+                pixel_cutid = np.where((pixel == pix))[0]
+                pixel_time_ = time[pixel_cutid]            
+
+                if len(pixel_time_) == 0:
+                    print(f"エラー: ピクセル{pix}とタイプ{itype_}のデータが空です。")
+                    continue
+
+                cutid = np.where((itype == itype_) & (pixel == pix))[0]
+                time_ = time[cutid]
+                if len(time_) == 0:
+                    print(f"エラー: ピクセル{pix}とタイプ{itype_}のデータが空です。")
+                    continue
+
+                if gtiuse:
+                    pixel_x_lc, pixel_x_err, pixel_y_lc, pixel_y_err = fast_lc(time[0], time[-1], timebinsize, pixel_time_, \
+                        gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = lcthresh)            
+
+                    x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_, \
+                        gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = lcthresh)
+
+                else:
+                    pixel_x_lc, pixel_x_err, pixel_y_lc, pixel_y_err = fast_lc(time[0], time[-1], timebinsize, pixel_time_)                                
+                    x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_)
+
+                zcutid = np.where(y_lc > 0)[0]
+                pixel_x_lc  = pixel_x_lc[zcutid]
+                pixel_x_err = pixel_x_err[zcutid]
+                pixel_y_lc  = pixel_y_lc[zcutid]
+                pixel_y_err = pixel_y_err[zcutid]
+
+                bratios = calc_branchingratios(pixel_y_lc)
+
+                x_lc  = x_lc[zcutid]
+                x_err = x_err[zcutid]
+                y_lc  = y_lc[zcutid]
+                y_err = y_err[zcutid]
+
+                dtime_lc = [ref_time.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in x_lc]
+
+                if k == 0:
+                    ax.errorbar(dtime_lc, pixel_y_lc, yerr=pixel_y_err, fmt=ishape[0], label=f"p={pix},t=all,id={obsid}")
+
+                ax.errorbar(dtime_lc, y_lc, yerr=y_err, fmt=ishape[0], label=f"p{pix},t={itype_},id={obsid}", color=type_color)
+                ax.errorbar(dtime_lc, y_lc/bratios[itype_], yerr=y_err/bratios[itype_], fmt=ishape[0], label=f"p={pix},t={itype_} (rate/bratio)", \
+                                    color=type_color, alpha=0.4)
+
+                # 分岐比
+                if k == 0:
+                    branching_ax.errorbar(dtime_lc, bratios[0], fmt="-",label=f"pix={pix}, type=Hp", alpha=0.4, color=type_colors[0])
+                    branching_ax.errorbar(dtime_lc, bratios[1], fmt="-",label=f"pix={pix}, type=Mp", alpha=0.4, color=type_colors[1])
+                    branching_ax.errorbar(dtime_lc, bratios[2], fmt="-",label=f"pix={pix}, type=Ms", alpha=0.4, color=type_colors[2])
+                    branching_ax.errorbar(dtime_lc, bratios[3], fmt="-",label=f"pix={pix}, type=Lp", alpha=0.4, color=type_colors[3])
+                    branching_ax.errorbar(dtime_lc, bratios[4], fmt="-",label=f"pix={pix}, type=Ls", alpha=0.4, color=type_colors[4])                
+                branching_ax.errorbar(dtime_lc, y_lc/pixel_y_lc, fmt="o",label=f"pix={pix}, type={itype_} (data)",ms=2, color=type_color)
+
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+            branching_ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+            plt.tight_layout()
+            outpng = f"{output}_lightcurve_pixel{pix:02d}.png"
+            plt.savefig(outpng)
+            print(f"..... {outpng} is created. ")
+            if show:
+                plt.show()
+
+# 光度曲線をプロットする関数
+def plot_sumlightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
+                       gtiuse = False, debug=False, show = False, nonstop = False, pfactor = 2, lcthresh = 0.8):
+    """
+    イベントリストから光度曲線をプロットする。
+    """
+    colors = plt.cm.get_cmap('tab10', len(plotpixels)).colors
+    ishape = [".", "s", "D", "*", "x"]
+
+    type_colors = plt.cm.Set1(np.linspace(0, 1, 9))
+
+    for fname in event_list:
+        outftag = fname.replace(".evt", "").replace(".gz", "")
+        head = fits.open(fname)[1].header
+        obsid = head["OBS_ID"]
+        oname = head["OBJECT"]
+
+        if gtiuse:
+            dt, time, dtime, pha, itype, rise_time, deriv_max, pixel, overlaps_start, overlaps_stop = process_data_wgti(fname, ref_time, timebinsize, debug=debug, nonstop = nonstop)
+        else:
+            dt, time, dtime, pha, itype, rise_time, deriv_max, pixel = process_data(fname, ref_time)
+
+        for k, itype_ in enumerate(itypenames):
+
+            fig, (ax, branching_ax) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+            ax.set_xscale("linear")
+            ax.set_yscale("linear")
+            ax.set_ylabel(f"Counts/s (binsize = {timebinsize}s)")
+            ax.grid(alpha=0.2)
+            ax.set_title(f"{obsid} {oname}")
+
+            branching_ax.set_xscale("linear")
+            branching_ax.set_yscale("linear")
+            branching_ax.set_ylabel("Branching Ratios")
+            branching_ax.set_xlabel("TIME")
+            branching_ax.grid(alpha=0.2)
+
+
+            # plot all pixels (itype < 5)
+            cutid = np.where(itype < 5)[0]
+            time_ = time[cutid]
+
+            if gtiuse:
+                x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_, \
+                    gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = lcthresh)
+            else:
+                x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_)
+
+            zcutid = np.where(y_lc > 0)[0]
+            x_lc  = x_lc[zcutid]
+            x_err = x_err[zcutid]
+            y_lc  = y_lc[zcutid]
+            y_err = y_err[zcutid]
+
+            dtime_lc = [ref_time.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in x_lc]
+            # all lightcurve in all types
+            ax.errorbar(dtime_lc, y_lc, yerr=y_err, fmt=".", label=f"all pixel,all types", color="r")
+
+            # plot all pixels (itype == itype_)
+            cutid = np.where(itype == itype_)[0]
+            time_ = time[cutid]
+
+            if gtiuse:
+                x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_, \
+                    gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = lcthresh)
+            else:
+                x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_)
+
+            zcutid = np.where(y_lc > 0)[0]
+            x_lc  = x_lc[zcutid]
+            x_err = x_err[zcutid]
+            y_lc  = y_lc[zcutid]
+            y_err = y_err[zcutid]
+
+            dtime_lc = [ref_time.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in x_lc]
+            # all lightcurve 
+            ax.errorbar(dtime_lc, y_lc, yerr=y_err, fmt=".", label=f"all pixel,{g_typename[itype_]}", color="k")
+
+            for j, pix in enumerate(plotpixels):
+
                 type_color = type_colors[k % len(type_colors)]
 
                 print(f"ピクセル{pix}とタイプ{itype_}のデータを処理中 (obsid {obsid})")
@@ -360,54 +530,37 @@ def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref
 
                 dtime_lc = [ref_time.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in x_lc]
 
-                if k == 0:
-                    ax.errorbar(dtime_lc, pixel_y_lc, yerr=pixel_y_err, fmt=ishape[0], label=f"p={pix},t=all,id={obsid}")
+                # each lightcurve 
+                ax.errorbar(dtime_lc, y_lc * pfactor  + 2*j, yerr=y_err * pfactor, fmt=".", label=f"p{pix},{g_typename[itype_]}, x {pfactor} + {j}", color=g_pixcolors[pix])
 
-                ax.errorbar(dtime_lc, y_lc, yerr=y_err, fmt=ishape[0], label=f"p{pix},t={itype_},id={obsid}", color=type_color)
-                ax.errorbar(dtime_lc, y_lc/bratios[itype_], yerr=y_err/bratios[itype_], fmt=ishape[0], label=f"p={pix},t={itype_} (rate/bratio)", \
-                                    color=type_color, alpha=0.4)
+                # branching ratios 
+                branching_ax.errorbar(dtime_lc, y_lc/pixel_y_lc, fmt="o",label=f"p{pix},{g_typename[itype_]} (data)",ms=2, color=g_pixcolors[pix])
 
-                # 分岐比
-                if k == 0:
-                    branching_ax.errorbar(dtime_lc, bratios[0], fmt="-",label=f"pix={pix}, type=Hp", alpha=0.4, color=type_colors[0])
-                    branching_ax.errorbar(dtime_lc, bratios[1], fmt="-",label=f"pix={pix}, type=Mp", alpha=0.4, color=type_colors[1])
-                    branching_ax.errorbar(dtime_lc, bratios[2], fmt="-",label=f"pix={pix}, type=Ms", alpha=0.4, color=type_colors[2])
-                    branching_ax.errorbar(dtime_lc, bratios[3], fmt="-",label=f"pix={pix}, type=Lp", alpha=0.4, color=type_colors[3])
-                    branching_ax.errorbar(dtime_lc, bratios[4], fmt="-",label=f"pix={pix}, type=Ls", alpha=0.4, color=type_colors[4])                
-                branching_ax.errorbar(dtime_lc, y_lc/pixel_y_lc, fmt="o",label=f"pix={pix}, type={itype_} (data)",ms=2, color=type_color)
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+            branching_ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
-    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    branching_ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+            plt.tight_layout()
+            outpng = f"{output}_sumlightcurve_type_{g_typename[itype_]}.png"
+            plt.savefig(outpng)
+            print(f"..... {outpng} is created. ")
+            if show:
+                plt.show()
 
-    plt.tight_layout()
-    plt.savefig(f"{output}_lightcurve.png")
-    if show:
-        plt.show()
 
 # rate_vs_gradeをプロットする関数
 def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
-                            gtiuse = False, debug=False, show = False, nonstop = False):
+                            gtiuse = False, debug=False, show = False, nonstop = False, lcthresh = 0.8):
     """
     イベントリストからrate_vs_gradeをプロットする。
     """
     colors = plt.cm.get_cmap('tab10', len(plotpixels)).colors
     ishape = [".", "s", "D", "*", "x"]
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    ax.set_xscale("linear")
-    ax.set_yscale("linear")
-    ax.set_xlabel("all grade rate (c/s/pixel)")
-    ax.set_ylabel("each grade rate (c/s/pixel)")
-    ax.grid(alpha=0.2)
-
     type_colors = plt.cm.Set1(np.linspace(0, 1, 9))
 
     for fname in event_list:
         outftag = fname.replace(".evt", "").replace(".gz", "")
         head = fits.open(fname)[1].header
         obsid = head["OBS_ID"]
-        ax.set_title(f"OBSID={obsid}")
         oname = head["OBJECT"]
 
         if gtiuse:
@@ -422,6 +575,15 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
         bratios = calc_branchingratios(rate_y)
 
         for j, pix in enumerate(plotpixels):
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.set_xscale("linear")
+            ax.set_yscale("linear")
+            ax.set_xlabel("all grade rate (c/s/pixel)")
+            ax.set_ylabel("each grade rate (c/s/pixel)")
+            ax.grid(alpha=0.2)
+            ax.set_title(f"OBSID={obsid}")
+
             for k, itype_ in enumerate(itypenames):
                 print(f"ピクセル{pix}とタイプ{itype_}のデータを処理中 (obsid {obsid})")
                 type_color = type_colors[k % len(type_colors)]
@@ -441,10 +603,10 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
 
                 if gtiuse:
                     pixel_x_lc, pixel_x_err, pixel_y_lc, pixel_y_err = fast_lc(time[0], time[-1], timebinsize, pixel_time_, \
-                        gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = 0.8)            
+                        gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = lcthresh)            
 
                     x_lc, x_err, y_lc, y_err = fast_lc(time[0], time[-1], timebinsize, time_, \
-                        gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = 0.8)
+                        gtiuse = gtiuse, overlaps_start=overlaps_start, overlaps_stop=overlaps_stop, lcthresh = lcthresh)
 
                 else:
                     pixel_x_lc, pixel_x_err, pixel_y_lc, pixel_y_err = fast_lc(time[0], time[-1], timebinsize, pixel_time_)                                
@@ -463,11 +625,13 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
                 ax.plot(rate_y,rate_y*bratios[itype_], "--", alpha=0.7,label=f"pix={pix}, itype={itype_}", color=type_color)
                 ax.errorbar(pixel_y_lc, y_lc, fmt=".", label=f"pix={pix}, itype={itype_}", color=type_color)
 
-    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    plt.tight_layout()
-    plt.savefig(f"{output}_rate_vs_grade.png")
-    if show:
-        plt.show()
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+            plt.tight_layout()
+            outpng = f"{output}_rate_vs_grade_pixel{pix:02d}.png"
+            plt.savefig(outpng)
+            print(f"..... {outpng} is created. ")
+            if show:
+                plt.show()
 
 # メイン関数
 def main():
@@ -488,13 +652,18 @@ def main():
 
     if args.gtiuse:
         if args.plot_lightcurve:
+            print("----- plot_lightcurve ----- ")
             plot_lightcurve(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop)
-            print(f"出力ファイル {args.output}_lightcurve.png が作成されました。")
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh)
+
+            print("----- plot_sumlightcurve ----- ")
+            plot_sumlightcurve(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh)
 
         if args.plot_rate_vs_grade:
+            print("----- plot_rate_vs_grade ----- ")
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop)
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh)
             print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
 
     else:
