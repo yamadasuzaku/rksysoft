@@ -149,7 +149,7 @@ def plot_pi(pi, itype, pixel, time, gtistart, gtistop, emin=0, emax=20000, ymin=
             bincenters = 0.5 * (binedges[1:] + binedges[0:-1])
             ene = bincenters * 0.5 + 0.5
             handle = plt.errorbar(ene, cumulative_hist/(ene_rebin * mgti_dt) + offset, yerr=np.sqrt(cumulative_hist)/(ene_rebin * mgti_dt), color=color, fmt='-', 
-                                  label=f"GTI-{len(gtistart) - cumulative_event_number // binnum + 1} to {len(gtistart)} ({cumulative_event_number} counts / {mgti_dt:.1f} seconds)", alpha=0.8)
+                                  label=f"GTI-{(nspec-1) * mgti} to {len(gtistart)} ({cumulative_event_number} counts / {mgti_dt:.1f} seconds)", alpha=0.8)
             handles.append(handle)
             print(f"itype={itype_}, gti_i={i}, de={ene[1]-ene[0]}eV, {ene[0]} to {ene[-1]} eV ({cumulative_event_number} counts / {mgti_dt:.1f} seconds)")
             # Set error bar transparency
