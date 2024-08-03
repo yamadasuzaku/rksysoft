@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument('--debug', '-d', action='store_true', help='デバッグモード')
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')
     parser.add_argument('--nonstop', '-n', action='store_true', help='GTIが同時刻の部分で区切らない。')
-    parser.add_argument('--lcthresh', '-e', action='store_true', help='fractional exposure の閾値')
+    parser.add_argument('--lcthresh', '-e', type=float, default=0.8, help='fractional exposure の閾値')
 
     args = parser.parse_args()
 
