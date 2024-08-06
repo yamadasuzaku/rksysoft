@@ -33,7 +33,7 @@ def gen_energy_hist(pi, bin_width):
     energy = pi2e(bin_centers)
     return energy, ncount, bin_half_width, ncount_sqrt
 
-def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypemax = 5, commonymax = True):
+def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypemax = 5, commonymax = True, ratio=False):
     pixel_map = np.array([
         [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6], # DETY
         [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6], # DETX
@@ -116,10 +116,12 @@ def main():
     parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
     parser.add_argument('--itypemax', '-i', type=int, default=5, help='Max of ITYPE')
     parser.add_argument('--commonymax', '-c', action='store_false', help='Flag to set global ymax')
+    parser.add_argument('--ratio', '-r', action='store_false', help='Flag to make a spectral ratio to average')
+
     args = parser.parse_args()
 
     plot_spec_6x6(ifile=args.filename, bin_width=args.bin_width, ene_min=args.ene_min, ene_max=args.ene_max, \
-                  itypemax = args.itypemax, commonymax = args.commonymax)
+                  itypemax = args.itypemax, commonymax = args.commonymax, ratio=args.ratio)
 
 if __name__ == "__main__":
     main()
