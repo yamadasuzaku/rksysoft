@@ -43,6 +43,14 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana
 python resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa900001010rsl_p0px1000_cl.evt  -l 0 -x 10000 -b 20 -c
 ```
 
+広域のスペクトルを見る場合。`-r` オプションをつけると、スペクトルの比をだしてくれる。 
+
+``` bash:
+Example (1): plot spectra from 2keV to 20 keV witn 400 eV bin, Hp only 
+  python resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa300049010rsl_p0px3000_cl.evt -b 400 -l 2000 -x 20000 -y 0
+Example (2): plot spectral ratios from 2keV to 20 keV witn 400 eV bin, Hp only 
+  python resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa300049010rsl_p0px3000_cl.evt -r -b 400 -l 2000 -x 20000 -y 0 -c -g
+```
 
 
 ## delta T 分布のチェック
