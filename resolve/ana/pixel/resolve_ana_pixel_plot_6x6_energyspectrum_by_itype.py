@@ -85,12 +85,14 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
     
     itype_name = ['Hp', 'Mp', 'Ms', 'Lp', 'Ls']
     data = fits.open(ifile)
+    objectname = data[1].header["OBJECT"]
+
     itype_list = data[1].data['ITYPE']
     pix_num_list = data[1].data['PIXEL']
     pi = data[1].data['PI']
 
     fig, ax = plt.subplots(6, 6, figsize=(21.3, 12), sharex=True)
-    fig.suptitle(f'{ifile}: Energy range {ene_min}-{ene_max} eV, using itype {outtag}')
+    fig.suptitle(f'{ifile}: {objectname}, energy {ene_min}-{ene_max} eV, itype {outtag}')
 
     g_ymax = 0
 
@@ -98,7 +100,7 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
         # Initialize the dictionary
         stored_hist_dic = {}
         for itype in itypenames:
-            cutid = np.where(itype_list==itype)[0]
+            cutid = np.where( (itype_list==itype)&((pix_num_list==0)|(pix_num_list==17)|(pix_num_list==18)|(pix_num_list==35)) )[0]
             pi_itype_allpixel = pi[cutid]
             energy, ncount, xerr, yerr = gen_energy_hist(pi_itype_allpixel, bin_width)
             stored_hist_dic[itype] = (energy, ncount, xerr, yerr)
@@ -114,16 +116,18 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
         y_min, y_max = np.inf, -np.inf
 
         for itype in itypenames:
-            print(f"PIXEL={pixel}: ITYPE={itype}, {itype_name[itype]}")
+            print(f"{objectname} PIXEL={pixel}: ITYPE={itype}, {itype_name[itype]}")
             mask_itype = itype_pix == itype
             pi_pix_itype = pi_pix[mask_itype]
 
             energy, ncount, xerr, yerr = gen_energy_hist(pi_pix_itype, bin_width)
             mask = (ene_min < energy) & (energy < ene_max)
 
+            energy, ncount, yerr = energy[mask], ncount[mask], yerr[mask]
+
             if mask.any():
-                current_ymin = ncount[mask].min()
-                current_ymax = ncount[mask].max()
+                current_ymin = np.amin(ncount)
+                current_ymax = np.amax(ncount)
                 if g_ymax < current_ymax:
                     g_ymax = current_ymax
 
@@ -132,12 +136,11 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
                 ax[dety, detx].set_title(rf"PIXEL={pixel}")
                 if ratioflag:
                     ave_energy, ave_ncount, ave_xerr, ave_yerr = stored_hist_dic[itype]          
+                    ave_energy, ave_ncount, ave_yerr = ave_energy[mask], ave_ncount[mask], ave_yerr[mask]
                     ratio, ratio_err = propagate_division_error(ncount, yerr, ave_ncount, ave_yerr)      
                     # ax[dety, detx].errorbar(energy, ncount/ave_ncount, \
                     #       yerr=ncount/ave_ncount * np.sqrt( (yerr/ncount)**2 + (ave_yerr/ave_ncount)**2),ls='-')
                     ax[dety, detx].errorbar(energy, ratio, xerr=xerr, yerr=ratio_err, ls='-')
-                    print(ratio)
-                    print(ratio_err)
 
                 else:
                     ax[dety, detx].errorbar(energy, ncount, xerr=xerr, yerr=yerr, ls='-')
@@ -160,7 +163,7 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
 
     for i in range(6):
         if ratioflag:
-            ax[i, 0].set_ylabel('ratio to pixel sum')
+            ax[i, 0].set_ylabel('ratio to cen4')
             ax[5, i].set_xlabel(rf'$\rm Energy\ (eV)$')            
         else:
             ax[i, 0].set_ylabel(rf'$\rm Counts/{bin_width}eV$')
