@@ -137,6 +137,15 @@ resolve_util_ftselect_split_file_quickdouble_slopediffer.py xa000114000rsl_a0pxp
 
 指定したいファイルを指定するだけ。
 
+## 波形 pr.evt の 6x6 のプロット方法
+
+``` bash:
+# 生波形
+resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits
+# boxcar後の微分波形
+resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --prevflag 
+``` 
+
 ### itype 毎、pixel 毎のライトカーブを event list のファイルから生成する
 
 eve.list に、ファイル名を1行ずつ書いておき、-y で itype, -p で pixel を指定してライトカーブを生成する。
