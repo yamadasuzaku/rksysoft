@@ -97,11 +97,13 @@ cl.evt と uf.evt の２つが同じディレクトリにある状態、例え�
 
 の２つのファイルがある状態で、
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_run_addprevnext_Lscheck.sh
+
 ``` bash:
 resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 ``` 
 
-と実行すると、prev/next interval をつけて、Ls の quick check をしてくれる。
+と実行すると、prev/next interval をつけて、Ls の quick check (`tolerance=100`(default)以下の連続したイベントの数の分布を計算)をしてくれる。
 
 
 ### itype 毎、pixel 毎のライトカーブを event list のファイルから生成する
@@ -112,6 +114,14 @@ eve.list に、ファイル名を1行ずつ書いておき、-y で itype, -p �
 ``` bash:
 resolve_ana_pixel_ql_mklc_binned_sorted_grade_itypes.py eve.list -y 0 -p 0,17,18,35,5,11,23,30
 ```
+
+## 波形の確認方法
+
+
+単純に波形をプロットする方法
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_pr_plot.py
+
 
 ### 温度のプロット
 
