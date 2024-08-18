@@ -106,6 +106,24 @@ resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 と実行すると、prev/next interval をつけて、Ls の quick check (`tolerance=100`(default)以下の連続したイベントの数の分布を計算)をしてくれる。
 
 
+## uf.evt と pr.evt に prev/next interval をつける方法
+
+uf.evt, pr.evt, cl.evt の3つが同じディレクトリにある状態、例えば、
+
+- xa000114000rsl_p0px1000_uf.evt
+- xa000114000rsl_a0pxpr_uf.evt
+- xa000114000rsl_p0px1000_cl.evt
+
+の3つのファイルがある状態で、
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_pr_prevnextadd_cutcl.sh
+
+``` bash:
+resolve_tool_pr_prevnextadd_cutcl.sh xa000114000rsl_p0px1000_uf.evt xa000114000rsl_a0pxpr_uf.evt xa000114000rsl_p0px1000_cl.evt
+``` 
+
+を実行する。
+
 ### itype 毎、pixel 毎のライトカーブを event list のファイルから生成する
 
 eve.list に、ファイル名を1行ずつ書いておき、-y で itype, -p で pixel を指定してライトカーブを生成する。
