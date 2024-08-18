@@ -52,7 +52,6 @@ Example (2): plot spectral ratios from 2keV to 20 keV witn 400 eV bin, Hp only
   python resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa300049010rsl_p0px3000_cl.evt -r -b 400 -l 2000 -x 20000 -y 0 -c -g
 ```
 
-
 ## delta T 分布のチェック
 
 [resolve_ana_pixel_deltat_distribution.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_deltat_distribution.py) のコマンドを使用して、delta T 分布をチェックします：
@@ -123,6 +122,18 @@ resolve_tool_pr_prevnextadd_cutcl.sh xa000114000rsl_p0px1000_uf.evt xa000114000r
 ``` 
 
 を実行する。
+
+
+## イベントファイルを、QUICK_DOUBLE と SLOPE_DIFFER で場合わけする方法
+
+
+カットしたいファイル (例として `xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.fits`) に対して、下記を実行する。
+
+``` bash:
+resolve_util_ftselect_split_file_quickdouble_slopediffer.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.fits
+```
+
+
 
 ### itype 毎、pixel 毎のライトカーブを event list のファイルから生成する
 
