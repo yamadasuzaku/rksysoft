@@ -22,9 +22,38 @@ pixel_map = np.array([
 CMAX = 20
 colors = plt.cm.tab20(np.linspace(0, 1, CMAX))
 
-import numpy as np
+def check_quickdouble(xdata, ydata, xmin=140, xmax=200):
+    """
+    - src/150615b/psp_task_pxp_calc.c
+        if ( derivative - deriv_pre >= quick_double_thres ) {
+            quick_double = 1;
+    """
+    cutxdata = xdata[xmin:xmax]
+    cutydata = ydata[xmin:xmax]
 
-def get_deriv(ydata):
+    # 負の値が存在するかを確認
+    negative_indices = np.where(cutydata < 0)[0]
+
+    if len(negative_indices) > 0:
+        # 負の値がある場合、最初の負の値が現れるインデックスを取得してカット
+        negative_index = negative_indices[0]
+        cutxdata = cutxdata[:negative_index]
+        cutydata = cutydata[:negative_index]
+    else:
+        # 負の値がない場合、何かおかしいが特に何もしない。
+        pass
+
+    ydiff = cutydata[1:] - cutydata[0:-1]
+    cutid = np.where(ydiff >= 1)[0]
+    if len(cutid) == 0:
+        return 0, -1, -1
+    else:        
+        qd_x = cutxdata[cutid]
+        qd_y = cutydata[cutid]
+        npoint = len(qd_x)
+        return npoint,qd_x, qd_y
+
+def get_deriv(ydata, step=8):
     # Initialize an empty list to store the derivative values
     ydatalc = []
     
@@ -33,19 +62,19 @@ def get_deriv(ydata):
 
     # Iterate over each element in ydata
     for onei, oneydata in enumerate(ydata):
-        # Get the previous 8 elements
-        if onei >= 8:
-            prey = ydata[onei-8:onei]
+        # Get the previous 'step' elements
+        if onei >= step:
+            prey = ydata[onei-step:onei]
         else:
             prey = []
 
-        # Get the next 8 elements
-        if onei + 8 < len(ydata):
-            posty = ydata[onei:onei+8]
+        # Get the next 'step' elements
+        if onei + step < len(ydata):
+            posty = ydata[onei:onei+step]
         else:
             posty = []
 
-        # Calculate the long derivative as the difference of means multiplied by 8
+        # Calculate the long derivative as the difference of means multiplied by 8 (not STEP)
         if len(prey) > 0 and len(posty) > 0:
             derivLong = (np.mean(posty) - np.mean(prey)) * 8
         else:
@@ -81,7 +110,10 @@ def get_deriv(ydata):
     return (npydatalc, deriv_max, deriv_max_i, deriv_min, deriv_min_i, peak, deriv_peak_i)
 
 
-def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, prevflag=False, xlims=None, ylims=None, usederiv=False):
+
+
+def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, prevflag=False, xlims=None, ylims=None, \
+                  usederiv=False, step=8, check_qd = False):
     """
     Plots the pulse record data from a FITS file in a 6x6 grid format.
 
@@ -102,11 +134,14 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
     pix_num_list = data[1].data['PIXEL']
     itype_list = data[1].data['ITYPE']
     prev_list = data[1].data['PREV_INTERVAL']
+    derivmax_list = data[1].data['DERIV_MAX']
+
     data.close()
 
     # Define the time resolution
     dt = 80.0e-6
     x_time = np.arange(0, pulse.shape[-1], 1) * dt
+    xadc_time = np.arange(0, pulse.shape[-1], 1) * 1
 
     for itype in itypes:
         itype = int(itype)
@@ -128,6 +163,7 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
         fig, ax = plt.subplots(6, 6, figsize=(16, 9), sharex=True, sharey=True)
         plt.subplots_adjust(right=0.9)
         for e in range(36):
+            ncheck_qd = 0
             dety = 6 - pixel_map.T[e][0]
             detx = pixel_map.T[e][1] - 1
             pixel = pixel_map.T[e][2]
@@ -136,6 +172,7 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
 
             pulse_p_pix_itype = pulse[pix_mask][itype_mask]
             prev_p_pix_itype  = prev_list[pix_mask][itype_mask]
+            derivmax_p_pix_itype = derivmax_list[pix_mask][itype_mask]
 
             num_of_evt = len(pulse_p_pix_itype)
             if num_of_evt > 0:
@@ -145,17 +182,30 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
             ax[dety, detx].text(-0.05, 0.92, f'#{num_of_evt}', fontsize=8, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
             if usederiv: # plot derivative
-                for j, (pulserecord, prev) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype)):
+                for j, (pulserecord, prev, derivmax) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype, derivmax_p_pix_itype)):
                     color = colors[j % len(colors)]  # get color 
-                    one_deriv, deriv_max, deriv_max_i, deriv_min, deriv_min_i, deriv_peak, deriv_peak_i = get_deriv(pulserecord)                                        
+                    one_deriv, deriv_max, deriv_max_i, deriv_min, deriv_min_i, deriv_peak, deriv_peak_i = get_deriv(pulserecord, step=step)
+                    print(f"..... check j={j}, prev={prev}, derivmax={derivmax} <=> (recalc) {deriv_max}")                                        
 
-                    if usetime:
-                        ax[dety, detx].plot(x_time, one_deriv, color=color)
+                    if check_qd:
+                        npoint, qd_x, qd_y = check_quickdouble(xadc_time, one_deriv, xmin=deriv_max_i, xmax=200)
+                        if npoint > 0:                                 
+                            ncheck_qd = ncheck_qd + 1                            
+                            print(f"Found quick double # {ncheck_qd}/{j+1} at pixel = {e}, npoint = {npoint}")
+                            ax[dety, detx].scatter(qd_x, qd_y, color=color)
+                            ax[dety, detx].plot(xadc_time,one_deriv, color=color)
+                            # plot text
+                            if prevflag:
+                                ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+
                     else:
-                        ax[dety, detx].plot(one_deriv, color=color)
-                    # plot text
-                    if prevflag:
-                        ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+                        if usetime:
+                            ax[dety, detx].plot(x_time, one_deriv, color=color)
+                        else:
+                            ax[dety, detx].plot(xadc_time,one_deriv, color=color)
+                        # plot text
+                        if prevflag:
+                            ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
             else: # plot raw pulse
                 for j, (pulserecord, prev) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype)):
@@ -165,13 +215,14 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
                         ax[dety, detx].plot(x_time, pulserecord, color=color)
                     else:
                         ax[dety, detx].plot(pulserecord, color=color)
+
                     # plot text
                     if prevflag:
                         ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
             if dumptext and num_of_evt > 0:
                 if usederiv:
-                    dump_to_npz(f"deriv_{path.stem}_{itype_str}_dety{dety}_detx{detx}_pixel{pixel}.npz", x_time, pulse[pix_mask][itype_mask])
+                    dump_to_npz(f"deriv_step{step}_{path.stem}_{itype_str}_dety{dety}_detx{detx}_pixel{pixel}.npz", x_time, pulse[pix_mask][itype_mask])
                 else:
                     dump_to_npz(f"{path.stem}_{itype_str}_dety{dety}_detx{detx}_pixel{pixel}.npz", x_time, pulse[pix_mask][itype_mask])
 
@@ -189,8 +240,8 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
                 ax[i, 0].set_ylim(ylims)
 
         if usederiv: # plot derivative
-            plt.suptitle(f"Derivative of Pulse Record: {prevt}, ITYPE={itype}")
-            ofile = "deriv_" + ofile
+            plt.suptitle(f"Derivative of Pulse Record with step = {step}: {prevt}, ITYPE={itype}")
+            ofile = "deriv_step" + str(step) + "_" + ofile
         else: # plot raw palse 
             plt.suptitle(f"Pulse Record: {prevt}, ITYPE={itype}")
 
@@ -271,20 +322,24 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('prevt', type=str, help='Input FITS file')
-    parser.add_argument('--itypelist', type=str, default='0,1,2,3,4', help='Comma-separated list of itype values (default: 0,1,2,3,4)')
+    parser.add_argument('--itypelist', '-i', type=str, default='0,1,2,3,4', help='Comma-separated list of itype values (default: 0,1,2,3,4)')
     parser.add_argument('--dumptext', action='store_true', help='Flag to dump x_time and pulse data to NPZ files')
     parser.add_argument('--plot', '-p', action='store_true', help='Flag to plot')
-    parser.add_argument('--xlims', type=parse_limits, help='Comma-separated x-axis limits (xmin,xmax)')
-    parser.add_argument('--ylims', type=parse_limits, help='Comma-separated y-axis limits (ymin,ymax)')
-    parser.add_argument('--prevflag', action='store_true', help='Flag to plot previous interval values as text')
-    parser.add_argument('--deriv', action='store_true', help='Flag to plot derivative')
-    parser.add_argument('--usetime', action='store_true', help='Flag to usetime')
+    parser.add_argument('--xlims', '-x', type=parse_limits, help='Comma-separated x-axis limits (xmin,xmax)')
+    parser.add_argument('--ylims', '-y', type=parse_limits, help='Comma-separated y-axis limits (ymin,ymax)')
+    parser.add_argument('--prevflag', '-pr', action='store_true', help='Flag to plot previous interval values as text')
+    parser.add_argument('--deriv', '-dr', action='store_true', help='Flag to plot derivative')
+    parser.add_argument('--usetime', '-t', action='store_true', help='Flag to usetime')
+    parser.add_argument('--step', '-s', type=int, default='8', help='Step size to created deriavtive')
+    parser.add_argument('--check_qd', '-c', action='store_true', help='check qd by myself')
+
 
     args = parser.parse_args()
     itypes = [int(itype) for itype in args.itypelist.split(',')]
     
     plot_data_6x6(args.prevt, itypes, args.dumptext, \
-        plotflag=args.plot, usetime=args.usetime, prevflag=args.prevflag, xlims=args.xlims, ylims=args.ylims, usederiv=args.deriv)
+        plotflag=args.plot, usetime=args.usetime, prevflag=args.prevflag, xlims=args.xlims, ylims=args.ylims, \
+                    usederiv=args.deriv, step=args.step, check_qd=args.check_qd)
 
 if __name__ == "__main__":
     main()
