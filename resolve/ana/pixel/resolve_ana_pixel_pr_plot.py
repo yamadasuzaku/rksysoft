@@ -135,6 +135,10 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
     itype_list = data[1].data['ITYPE']
     prev_list = data[1].data['PREV_INTERVAL']
     derivmax_list = data[1].data['DERIV_MAX']
+    pha_list = data[1].data['PHA']
+    risetime_list = data[1].data['RISE_TIME']
+    tickshift_list = data[1].data['TICK_SHIFT']
+    time_list = data[1].data['TIME']
 
     data.close()
 
@@ -173,30 +177,37 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
             pulse_p_pix_itype = pulse[pix_mask][itype_mask]
             prev_p_pix_itype  = prev_list[pix_mask][itype_mask]
             derivmax_p_pix_itype = derivmax_list[pix_mask][itype_mask]
+            pha_p_pix_itype = pha_list[pix_mask][itype_mask]
+            risetime_p_pix_itype = risetime_list[pix_mask][itype_mask]
+            tickshift_p_pix_itype = tickshift_list[pix_mask][itype_mask]
+            time_p_pix_itype = time_list[pix_mask][itype_mask]
 
             num_of_evt = len(pulse_p_pix_itype)
             if num_of_evt > 0:
                 print(f'PIXEL={pixel:02d}, N={num_of_evt}')
 
-            ax[dety, detx].text(-0.05, 1.02, f'P{pixel:02d}', fontsize=8, ha='center', va='center', transform=ax[dety, detx].transAxes)
+            ax[dety, detx].text(-0.05, 1.02, f'P{pixel:02d}', fontsize=8, ha='center', va='center', transform=ax[dety, detx].transAxes)            
             ax[dety, detx].text(-0.05, 0.92, f'#{num_of_evt}', fontsize=8, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
             if usederiv: # plot derivative
-                for j, (pulserecord, prev, derivmax) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype, derivmax_p_pix_itype)):
+                for j, (pulserecord, prev, derivmax, pha, risetime, tickshift, onetime) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype, derivmax_p_pix_itype, pha_p_pix_itype, risetime_p_pix_itype, tickshift_p_pix_itype, time_p_pix_itype)):
                     color = colors[j % len(colors)]  # get color 
                     one_deriv, deriv_max, deriv_max_i, deriv_min, deriv_min_i, deriv_peak, deriv_peak_i = get_deriv(pulserecord, step=step)
-                    print(f"..... check j={j}, prev={prev}, derivmax={derivmax} <=> (recalc) {deriv_max}")                                        
+                    # print(f"..... check j={j}, prev={prev}, derivmax={derivmax} <=> (recalc) {deriv_max}")                                        
 
                     if check_qd:
                         npoint, qd_x, qd_y = check_quickdouble(xadc_time, one_deriv, xmin=deriv_max_i, xmax=200)
                         if npoint > 0:                                 
                             ncheck_qd = ncheck_qd + 1                            
-                            print(f"Found quick double # {ncheck_qd}/{j+1} at pixel = {e}, npoint = {npoint}")
+                            print(f"Found quick double # {ncheck_qd}/{j+1} at pixel = {e}, npoint = {npoint}, derivmax={derivmax} <=> (recalc) {deriv_max}")
                             ax[dety, detx].scatter(qd_x, qd_y, color=color)
                             ax[dety, detx].plot(xadc_time,one_deriv, color=color)
                             # plot text
                             if prevflag:
-                                ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+                                offset = 4065                                
+                                ax[dety, detx].plot(xadc_time, pulserecord + offset, "--",color=color, alpha=0.5)
+                                ax[dety, detx].text(0.3, 0.9 - 0.1 * ncheck_qd, f'{onetime:.1f}/{pha}/{derivmax}/{risetime}/{tickshift}', fontsize=7, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+#                                ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
                     else:
                         if usetime:
@@ -225,6 +236,10 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
                     dump_to_npz(f"deriv_step{step}_{path.stem}_{itype_str}_dety{dety}_detx{detx}_pixel{pixel}.npz", x_time, pulse[pix_mask][itype_mask])
                 else:
                     dump_to_npz(f"{path.stem}_{itype_str}_dety{dety}_detx{detx}_pixel{pixel}.npz", x_time, pulse[pix_mask][itype_mask])
+
+            if ncheck_qd:
+                ax[dety, detx].text(-0.05, 0.85, f'#QD{ncheck_qd}', fontsize=8, ha='center', va='center', transform=ax[dety, detx].transAxes)
+
 
         # Set common labels and limits
         for i in range(6):
