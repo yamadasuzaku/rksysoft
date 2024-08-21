@@ -129,10 +129,10 @@ resolve_tool_pr_prevnextadd_cutcl.sh xa000114000rsl_p0px1000_uf.evt xa000114000r
 
 カットしたいファイル (例として `xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.fits`) に対して、下記を実行する。
 
-https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_ftselect_split_file_quickdouble_slopediffer.py
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_ftselect_split_file_quickdouble_slopediffer.sh
 
 ``` bash:
-resolve_util_ftselect_split_file_quickdouble_slopediffer.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.fits
+resolve_util_ftselect_split_file_quickdouble_slopediffer.sh xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.fits
 ```
 
 指定したいファイルを指定するだけ。
