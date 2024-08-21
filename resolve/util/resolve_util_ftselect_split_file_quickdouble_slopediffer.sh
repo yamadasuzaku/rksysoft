@@ -41,6 +41,6 @@ do
 for sd in b00 b01
 do 
 echo -e "${GREEN}[RUN]${NC}resolve_util_ftselect_split_file.py FLAG: QD=${YELLOW}$qd${NC} SD=${YELLOW}$sd${NC} "
-python resolve_util_ftselect_split_file.py $infile -qd ${qd} -sd ${sd}
+resolve_util_ftselect_split_file.py $infile -qd ${qd} -sd ${sd}
 done 
 done 
