@@ -137,6 +137,15 @@ resolve_util_ftselect_split_file_quickdouble_slopediffer.sh xa000114000rsl_a0pxp
 
 指定したいファイルを指定するだけ。
 
+## イベントのカットをかける
+
+望月くんのカットをかける。
+
+``` bash:
+resolve_util_screen_20240508.sh xa300049010rsl_a0pxpr_uf_fillprenext_cutclgti.fits xa300049010rsl_a0pxpr_uf_fillprenext_cutclgti_screenmochi.fits
+```
+
+
 ## 波形 pr.evt の 6x6 のプロット方法
 
 ``` bash:
@@ -145,6 +154,13 @@ resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype
 # boxcar後の微分波形
 resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --prevflag 
 ``` 
+
+## 微分波形 pr.evt の 6x6 のプロット方法 + quick double で step を変更して確認する方法
+
+``` bash:
+resolve_ana_pixel_pr_plot.py xa300049010rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b00_quick_b00_pixel_all_mochicut.fits --xlims 100,300 -p -dr -c -s 1 -pr 
+```
+
 
 ### itype 毎、pixel 毎のライトカーブを event list のファイルから生成する
 
