@@ -117,7 +117,7 @@ EOF
         # header keywordの変更
         subprocess.run(f"fparkey {rmf_file} {fitsfname}.pha RESPFILE", shell=True)
         subprocess.run(f"fparkey {arf_file} {fitsfname}.pha ANCRFILE", shell=True)
-        subprocess.run(f"mv {fitsfname}.pha {fitsfname}_v0.pha.pha", shell=True)
+        subprocess.run(f"mv {fitsfname}.pha {fitsfname}_v0.pha", shell=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process region files and generate related data.")
