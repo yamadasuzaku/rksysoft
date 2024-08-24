@@ -230,3 +230,22 @@ resolve_util_gtiplot.py xa300036010rsl_tel.gti,xa300036010rsl_p0px1000_uf.evt -p
 コラムに `GTI` を含むファイルをカンマ区切り(or @ファイル)で指定するとGTIを表示する。-e オプションでイベントファイルを指定すると100秒ごとのライトカーブを生成して右y軸に表示してくれる。
 
 
+# リプロセスの自動化に向けたスクリプト
+
+## 暫定版のイベントスクリーニング、arf, rmf 生成のスクリプト
+
+### Resolve
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_runproc.py
+
+``` bash:
+resolve_ana_runproc.py
+```
+
+### Xtend
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/resolve_xtend_runproc.py
+
+``` bash:
+resolve_xtend_runproc.py
+```
