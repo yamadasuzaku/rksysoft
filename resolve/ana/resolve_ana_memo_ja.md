@@ -249,3 +249,22 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/xtend/resolve_xtend_runproc.p
 ``` bash:
 resolve_xtend_runproc.py
 ```
+
+
+# GTIを丁寧に取り扱うスクリプト
+
+## GTIごとにスペクトルを生成する
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_mkspec_eachgti.py
+
+``` bash:
+resolve_ana_pixel_mkspec_eachgti.py xa300036010rsl_p0px1000_cl2_filt.evt -i 6600 -x 7200 -y 0 -m 5 -r 4 -t -v 0.002 --ymin 0.002 --ymax 0.017
+```
+
+## GTIごとに Branching ratio とライトカーブを生成する方法
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_mklc_branch.py
+
+``` bash:
+resolve_ana_pixel_mklc_branch.py f.list -l -u -y 0 -p 0,17,18,35 -t 256 -o p0_17_18_35 -s
+```
