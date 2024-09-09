@@ -283,3 +283,14 @@ resolve_ana_pixel_mklc_branch.py f.list -l -u -y 0 -p 0,17,18,35 -t 256 -o p0_17
 ``` bash:
 resolve_ana_pixel_mklc_branch.py noscreen.list -g -u -t 256 
  ```
+
+
+# 波形処理関係
+
+## テンプレート、平均波形、平均微分波形のプロット
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/plot/resolve_plot_templ_avgpulse.py
+
+``` bash:
+  python resolve_plot_templ_avgpulse.py xa035315064rsl_a0.hk2 -p
+```        
