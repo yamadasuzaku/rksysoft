@@ -94,7 +94,7 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana
 で、`-r` オプションをつけると、中心４画素の pixel 平均との比を作ってくれる。`-l 2000 -x 12000` で 2000 - 12000 eV の範囲で、`-b 250` で 250 eV ビンまとめ。`-c` で pixel ごとに autoscale、`-g` で縦軸をリニア表示する。
 
 ``` bash:
-resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py $fits -r -y 0 -l 2000 -x 12000 -b 250 -c -g
+resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa000102000rsl_p0px1000_cl.evt  -r -y 0 -l 2000 -x 12000 -b 250 -c -g
 ```
 
 
@@ -116,7 +116,7 @@ resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 と実行すると、prev/next interval をつけて、Ls の quick check (`tolerance=100`(default)以下の連続したイベントの数の分布を計算)をしてくれる。
 
 
-## uf.evt と pr.evt に prev/next interval をつける方法
+## uf.evt と pr.evt に prev/next interval をつけて、cl.gti でカットする方法
 
 uf.evt, pr.evt, cl.evt の3つが同じディレクトリにある状態、例えば、
 
@@ -133,6 +133,13 @@ resolve_tool_pr_prevnextadd_cutcl.sh xa000114000rsl_p0px1000_uf.evt xa000114000r
 ``` 
 
 を実行する。
+
+### uf.evt と pr.evt に prev/next interval だけつける方法
+
+``` bash:
+resolve_tool_pr_prevnextadd.sh xa097093120rsl_a0px_uf.evt xa097093120rsl_a0pxpr_uf.evt  
+```
+
 
 
 ## イベントファイルを、QUICK_DOUBLE と SLOPE_DIFFER で場合わけする方法
@@ -207,6 +214,14 @@ resolve_util_fplot.py $input_file TIME 7,6,6,6,6 XBOXA_TEMP3_CAL,HE_TANK2,JT_SHL
 ```
 
 を動かしているだけです。
+
+## fplot の使い方
+
+- NEXT/PREV_INTERVAL の確認の例
+
+``` bash:
+resolve_util_fplot.py xa097093500rsl_a0pxpr_uf_fillprenext_p13.evt ITYPE 1,1 PREV_INTERVAL,NEXT_INTERVAL 1,1 -p
+```
 
 
 # 論文執筆前のデータチェック用ツールのルーティン
