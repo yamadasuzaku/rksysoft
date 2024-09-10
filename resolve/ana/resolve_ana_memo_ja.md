@@ -87,6 +87,17 @@ resolve_plot_detxdety_v1_alltypes.py xa300049010rsl_p0px3000_cl.evt
 
 # cal用のツール
 
+## 広帯域でのスペクトルの比を作成
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py
+
+で、`-r` オプションをつけると、pixel 平均との比を作ってくれる。`-l 0 -x 12000` で 0 - 12000 eV の範囲で、`-b 250` で 250 eV ビンまとめ。
+
+``` bash:
+ resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa000115000rsl_p0px1000_cl.evt -r -y 0 -p -l 0 -x 12000 -b 250
+```
+
+
 ## prev/next interval をつけて、Ls の分類
 
 cl.evt と uf.evt の２つが同じディレクトリにある状態、例えば、
