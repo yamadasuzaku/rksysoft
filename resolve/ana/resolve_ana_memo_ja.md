@@ -91,10 +91,10 @@ resolve_plot_detxdety_v1_alltypes.py xa300049010rsl_p0px3000_cl.evt
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py
 
-で、`-r` オプションをつけると、中心４画素の pixel 平均との比を作ってくれる。`-l 0 -x 12000` で 0 - 12000 eV の範囲で、`-b 250` で 250 eV ビンまとめ。
+で、`-r` オプションをつけると、中心４画素の pixel 平均との比を作ってくれる。`-l 2000 -x 12000` で 2000 - 12000 eV の範囲で、`-b 250` で 250 eV ビンまとめ。`-c` で pixel ごとに autoscale、`-g` で縦軸をリニア表示する。
 
 ``` bash:
- resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa000115000rsl_p0px1000_cl.evt -r -y 0 -p -l 0 -x 12000 -b 250
+resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py $fits -r -y 0 -l 2000 -x 12000 -b 250 -c -g
 ```
 
 
