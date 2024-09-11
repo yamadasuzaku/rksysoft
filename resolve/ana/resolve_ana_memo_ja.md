@@ -320,3 +320,11 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/plot/resolve_plot_tem
 ``` bash:
   python resolve_plot_templ_avgpulse.py xa035315064rsl_a0.hk2 -p
 ```        
+
+## 波形処理のパラメータの確認方法
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_dumphk1.py
+
+``` bash:
+python resolve_util_dumphk1.py xa300049010rsl_a0.hk1
+```
