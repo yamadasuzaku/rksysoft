@@ -228,6 +228,13 @@ resolve_util_fplot.py xa097093500rsl_a0pxpr_uf_fillprenext_p13.evt ITYPE 1,1 PRE
 
 ## ghf のチェック
 
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_plot_ghf_with_FWE.py
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_plot_ghf_detail.py
+
+の２つのスクリプトと使います。
+
 ```bash:
 resolve_ecal_plot_ghf_detail.py xa000126000rsl_000_fe55.ghf
 resolve_ecal_plot_ghf_with_FWE.py xa000126000rsl_000_fe55.ghf --hk1 xa000126000rsl_a0.hk1
