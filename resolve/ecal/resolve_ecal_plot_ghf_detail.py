@@ -80,7 +80,7 @@ def plot_ghf(ghf, dumpflag=False, plotflag=False, detailflag=False, selected_pix
                 ax1.set_ylabel('Intensity (counts/bin)')
                 ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=8)
 
-                ax2.errorbar(valid_binmesh, ratio, yerr=np.sqrt(valid_spec) / valid_fitprof, fmt=".", color=color, label='SPECTRUM / FITPROF', alpha=0.7)
+                ax2.errorbar(valid_binmesh, ratio, yerr=np.abs(np.sqrt(valid_spec) / valid_fitprof), fmt=".", color=color, label='SPECTRUM / FITPROF', alpha=0.7)
                 ax2.set_xlabel('BINMESH')
                 ax2.set_ylabel('Ratio')
                 ax2.set_yscale('log')
@@ -126,7 +126,7 @@ def plot_ghf(ghf, dumpflag=False, plotflag=False, detailflag=False, selected_pix
                 ax1.set_ylabel('Intensity (counts/bin) + offset')
                 ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., handletextpad=0.5, labelspacing=0.5)
 
-                ax2.errorbar(valid_binmesh, ratio * (offset2 * (i + 1)), yerr=np.sqrt(valid_spec) / valid_fitprof, fmt=".", color=color, label='SPECTRUM / FITPROF', alpha=0.7)
+                ax2.errorbar(valid_binmesh, ratio * (offset2 * (i + 1)), yerr=np.abs(np.sqrt(valid_spec) / valid_fitprof), fmt=".", color=color, label='SPECTRUM / FITPROF', alpha=0.7)
                 ax2.set_xlabel('BINMESH')
                 ax2.set_ylabel('Ratio + offset')
                 ax2.set_yscale('log')
