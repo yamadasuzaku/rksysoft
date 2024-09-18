@@ -335,3 +335,24 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_dum
 ``` bash:
 python resolve_util_dumphk1.py xa300049010rsl_a0.hk1
 ```
+
+## 時間に沿った波形のプロット
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/psp/pulse/resolve_pr_plot_timeseries.py
+
+``` bash:
+resolve_pr_plot_timeseries.py xa097093500rsl_a0pxpr_uf_fillprenext_oneclip.evt -s -p 23 -c
+``` 
+
+`-s`　でプロットを表示する。`-p` でピクセルを指定できる。`-c` で色をパルスごとに変える。
+
+
+## 微分波形を差し引く
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_pr_plot_derivsub.py
+
+``` bash:
+resolve_ana_pixel_pr_plot_derivsub.py xa097093500rsl_a0pxpr_uf_fillprenext_itype_4_slope_b01_quick_b00_pixel_all.fits -p
+```
+
+平均微分波形を差し引いてプロットする。
