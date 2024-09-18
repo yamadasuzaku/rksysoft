@@ -17,7 +17,7 @@ if resolve_tools is None:
 print(f"RESOLVETOOLS is set to: {resolve_tools}")
 
 # Set plot parameters for consistent styling
-params = {'xtick.labelsize': 12, 'ytick.labelsize': 12, 'legend.fontsize': 8}
+params = {'xtick.labelsize': 12, 'ytick.labelsize': 12, 'legend.fontsize': 6}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
@@ -84,13 +84,21 @@ def check_quickdouble(xdata, ydata, xmin=140, xmax=200):
         npoint = len(qd_x)
         return npoint,qd_x, qd_y
 
-def get_deriv(ydata, step=8):
+def find_first_positive_to_negative(npydatalc, deriv_max_i, search_max = 300):
+    for i in range(deriv_max_i, search_max):
+#    for i in range(deriv_max_i, len(npydatalc) - 1):
+        if npydatalc[i] >= 0 and npydatalc[i + 1] < 0:
+            return i + 1  # 正から負に変わった位置のインデックス
+    return 0  # 変化が見つからない場合
+
+def get_deriv(ydata, step=8, search_i_min = 100, search_i_max = 200):
     # Initialize an empty list to store the derivative values
     ydatalc = []
     
     # Create an array of indices from 0 to the length of ydata
     numarray = np.arange(0, len(ydata), 1)
 
+    ipos_fall_end = 0
     # Iterate over each element in ydata
     for onei, oneydata in enumerate(ydata):
         # Get the previous 'step' elements
@@ -114,15 +122,19 @@ def get_deriv(ydata, step=8):
         # Calculate the final derivative, using floor function for adjustment
         derivative = np.floor((derivLong + 2.) / 4.)
 
-        # Append the derivative to the list
+        # if ipos_fall_end == 0:
+        #     if derivative < FALL_END_THRES:
+        #         if (onei > search_i_min) and (onei < search_i_max):
+        #             ipos_fall_end = onei
+        # # append the derivative to the list
         ydatalc.append(derivative)
 
     # Convert the list to a numpy array
     npydatalc = np.array(ydatalc)
 
-    # Find the maximum and minimum derivative values within the range of 100 to 200 indices
-    deriv_max = np.amax(npydatalc[np.where((numarray > 100) & (numarray < 200))])
-    deriv_min = np.amin(npydatalc[np.where((numarray > 100) & (numarray < 200))])
+    # Find the maximum and minimum derivative values within the range of search_i_min to search_i_max indices
+    deriv_max = np.amax(npydatalc[np.where((numarray > search_i_min) & (numarray < search_i_max))])
+    deriv_min = np.amin(npydatalc[np.where((numarray > search_i_min) & (numarray < search_i_max))])
 
     # Find the indices of the maximum and minimum derivative values
     deriv_max_i = numarray[np.where(npydatalc == deriv_max)][0]
@@ -170,6 +182,7 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
     header = data[1].header
     obsid = header["OBS_ID"]
     target = header["OBJECT"]
+    dateobs = header["DATE-OBS"]
 
     pulse_list = data[1].data['PULSEREC']
 
@@ -180,6 +193,7 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
     next_list = data[1].data['NEXT_INTERVAL']
     dmax_list = data[1].data['DERIV_MAX']
     pha_list = data[1].data['PHA']
+    pi_list = data[1].data['PI']
     risetime_list = data[1].data['RISE_TIME']
     tickshift_list = data[1].data['TICK_SHIFT']
 
@@ -221,6 +235,8 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
             nexts = next_list[cutid]
             dmaxs = dmax_list[cutid]
             phas = pha_list[cutid]
+            pis = pi_list[cutid]
+
             risetimes = risetime_list[cutid]
             tickshifts = tickshift_list[cutid]
 
@@ -233,21 +249,27 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
             if num_of_evt > 0:
                 print(f'PIXEL={pixel:02d}, N={num_of_evt}')
 
-            for k, (pulse, time, pt, nt, dmax, pha, rs, ts, qd, sd, lo, status) in enumerate(zip(pulses,times, prevs,nexts, dmaxs, phas, risetimes, tickshifts,qds,sds,los, statuss)):
+            for k, (pulse, time, pt, nt, dmax, pha, pi, rs, ts, qd, sd, lo, status) in enumerate(zip(pulses,times, prevs,nexts, dmaxs, phas, pis, risetimes, tickshifts,qds,sds,los, statuss)):
                 print("pulse =", pulse)
-                print(f"k, time, pt, nt, dmax, pha, rs, ts, qd, sd, lo, status = {k}, {time}, {pt}, {nt}, {dmax}, {pha}, {rs}, {ts}, {qd}, {sd}, {lo}, {status}")
-                slow_pulse = 1 if rs > 127 else 0                
+                print(f"k, time, pt, nt, dmax, pha, pi, rs, ts, qd, sd, lo, status = {k}, {time}, {pt}, {nt}, {dmax}, {pha}, {pi}, {rs}, {ts}, {qd}, {sd}, {lo}, {status}")
+                slow_pulse = 1 if rs > 127 else 0  
+                rs = rs - 128 if rs > 127 else rs                
                 fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True, sharey=False)
                 plt.subplots_adjust(right=0.9, top=0.85)
 
                 pulse = pulse[SPARE_LEN:]
 
-                deriv_to_use, deriv_max, deriv_max_i, _, _, _, _ = get_deriv(pulse)
+                if itype == 2 or itype == 4:
+                    deriv_to_use, deriv_max, deriv_max_i, _, _, _, _ = get_deriv(pulse, search_i_min = 0, search_i_max = 150)
+                else:
+                    deriv_to_use, deriv_max, deriv_max_i, _, _, _, _ = get_deriv(pulse)                    
+                ipos_fall_end = find_first_positive_to_negative(deriv_to_use, deriv_max_i)
+
                 print(f"{k} :  (deriv_max_i,deriv_max)={deriv_max_i},{deriv_max}")
                 scaled_deriv_to_sub = deriv_max * MEM_DERIV_TO_SUB_ADDR[pixel]/(MEM_DERIV_TO_SUB_ADDR_DERIVMAX[pixel]["derivmax"])
                 # ゼロパディングを追加して1040 - 8(offset) 要素にする
                 padded_array = np.pad(scaled_deriv_to_sub, (0, 8), 'constant')
-                # 整数 m の要素だけシフトする（m = 50 で例を示します）
+                # 整数 m の要素だけシフトする
                 m = deriv_max_i - MEM_DERIV_TO_SUB_ADDR_DERIVMAX[pixel]["derivmax_i"]
                 shifted_array = np.zeros_like(padded_array)  # ゼロで初期化した配列
                 # シフトの処理（はみ出た部分はゼロ）
@@ -259,10 +281,17 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
                     shifted_array = padded_array
                 deriv_to_sub = shifted_array
 
+                mycalc_slow_pulse = 0
+                # 現在のパルスについて, slope check を実施
+                if SLOPE_DETECT_LEN <= deriv_max_i - PRE_TRIG_LEN_H or \
+                                2 * SLOPE_DETECT_LEN <= ipos_fall_end - PRE_TRIG_LEN_H:
+                    mycalc_slow_pulse = 1  # slow_pulse フラグ (MSB of rise_time) をセット
+
+
                 xindex = np.arange(len(deriv_to_sub))[1:-1]
                 thres_margin = np.abs((deriv_to_sub[2:]-deriv_to_sub[:-2])/2)
 
-                fig.text(0.1,0.93,f"time={time} pt={pt} nt={nt} dmax={dmax} pha={pha} rs={rs} ts={ts}")
+                fig.text(0.1,0.93,f"time={time} pt={pt} nt={nt} dmax={dmax} pha={pha} pi={pi} rs={rs} ts={ts}")
                 fig.text(0.1,0.90,f"qd={qd} sd={sd} status={status} slow={slow_pulse}") 
                 if lo > CLIPTHRES:
                     fig.text(0.8,0.90,f"lo={lo} > {CLIPTHRES}", color="red")
@@ -272,8 +301,10 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
 
                 axes[0].plot(deriv_to_use,"b-",label=f"itype={itype}", alpha=0.8)
                 axes[0].plot(deriv_to_sub,"r--",label="adjusted deriv", alpha=0.6)
-                axes[0].vlines(x=deriv_max_i, ymin=0, ymax=deriv_max, color='c', linestyle='--')
-                axes[0].plot(xindex[deriv_max_i + SECOND_TRIG_GAP_LEN:],thres_margin[deriv_max_i + SECOND_TRIG_GAP_LEN:], "-", color='magenta', label="thres_margin", alpha=0.5)
+                axes[0].vlines(x=deriv_max_i, ymin=0, ymax=deriv_max, color='c', linestyle='--',  label=f"deriv_max_i={deriv_max_i}", lw=1)
+#                axes[0].plot(xindex[deriv_max_i + SECOND_TRIG_GAP_LEN:],thres_margin[deriv_max_i + SECOND_TRIG_GAP_LEN:], "-", color='magenta', label="thres_margin", alpha=0.5)
+                axes[0].axvline(ipos_fall_end, color='g', linestyle='--', alpha=0.5, label=f"ipos_fall_end = {ipos_fall_end} calc. SP = {mycalc_slow_pulse}", lw=1)
+
 
                 axes[0].set_ylabel("DERIV")
                 axes[0].legend()
@@ -350,21 +381,22 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
                 axes[1].plot(xindex[deriv_max_i + SECOND_TRIG_GAP_LEN:],\
                              nega_thre, "-", color='y', label="-2 * (thres_margin + PULSE_THRES)", alpha=0.4)
 
-
-                axes[1].grid(alpha=0.5)
+                axes[0].grid(alpha=0.3, ls=':')
+                axes[1].grid(alpha=0.3, ls=':')
                 axes[1].legend()
-                axes[1].legend(loc='upper right')
+                axes[1].legend(loc='lower right')
 
                 if xlims:
                     axes[0].set_xlim(xlims)
                 if ylims:
                     axes[0].set_ylim(ylims)
 
-                fig.text(0.55,0.02,f"SECOND_TRIG_GAP_LEN={SECOND_TRIG_GAP_LEN}", fontsize=8,color="gray")
-                fig.text(0.75,0.02,f"SECOND_THRES_USE_LEN={SECOND_THRES_USE_LEN}", fontsize=8,color="gray")
+                fig.text(0.75,0.05,f"SLOPE_DETECT_LEN={SLOPE_DETECT_LEN}", fontsize=8,color="gray")
+                fig.text(0.75,0.03,f"SECOND_TRIG_GAP_LEN={SECOND_TRIG_GAP_LEN}", fontsize=8,color="gray")
+                fig.text(0.75,0.01,f"SECOND_THRES_USE_LEN={SECOND_THRES_USE_LEN}", fontsize=8,color="gray")
                 fig.text(0.05,0.02,f"fname = {prevt}", fontsize=8)
 
-                plt.suptitle(f"obs={obsid} tname={target} pix={pixel} itype={itype_str}")
+                plt.suptitle(f"ID={obsid} {target} DATE-OBS={dateobs}   PIXEL={pixel} ITYPE={itype_str}")
 #                plt.tight_layout()
                 ofile = f"{oname}_{k:05d}.png"
                 plt.savefig(ofile)
