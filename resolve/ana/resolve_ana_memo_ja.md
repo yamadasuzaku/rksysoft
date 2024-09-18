@@ -356,3 +356,11 @@ resolve_ana_pixel_pr_plot_derivsub.py xa097093500rsl_a0pxpr_uf_fillprenext_itype
 ```
 
 平均微分波形を差し引いてプロットする。
+
+
+## slopediffer, quickdouble, itype で場合分けしたイベントファイルを生成する
+
+``` bash:
+resolve_util_ftselect_split_file_quickdouble_slopediffer_itype.sh
+``` 
+
