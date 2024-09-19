@@ -367,7 +367,7 @@ resolve_util_ftselect_split_file_quickdouble_slopediffer_itype.sh
 
 ## イベントファイルが閾値を満たしたときに、その前後の時間のイベントファイルを保存する方法
 
-
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_cut_eventfile.py
 
 https://qiita.com/yamadasuzaku/items/08ab56fc8d5549089c78
 
