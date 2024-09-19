@@ -364,3 +364,13 @@ resolve_ana_pixel_pr_plot_derivsub.py xa097093500rsl_a0pxpr_uf_fillprenext_itype
 resolve_util_ftselect_split_file_quickdouble_slopediffer_itype.sh
 ``` 
 
+
+## イベントファイルが閾値を満たしたときに、その前後の時間のイベントファイルを保存する方法
+
+
+
+https://qiita.com/yamadasuzaku/items/08ab56fc8d5549089c78
+
+``` bash:
+python resolve_util_cut_eventfile.py mock_fits.evt --threshold 60000 --timewindow 2
+```

@@ -17,18 +17,50 @@ import numpy as np
 MJD_REFERENCE_DAY = 58484
 REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')  # Reference time in Modified Julian Day
 
+import re
+
 def parse_filter_conditions(conditions):
     filters = []
+    # '!=' を含めた正規表現パターンに変更
+    condition_pattern = re.compile(r"(.*?)(==|<=|>=|<|>|!=)(.*)")
     for condition in conditions.split(","):
-        col, value = condition.split("==")
-        filters.append((col.strip(), float(value.strip())))
+        match = condition_pattern.match(condition.strip())
+        if match:
+            col, op, value = match.groups()
+            filters.append((col.strip(), op, float(value.strip())))
+        else:
+            raise ValueError(f"Invalid filter condition: {condition}")
     return filters
 
 def apply_filters(data, filters):
     mask = np.ones(len(data), dtype=bool)
-    for col, value in filters:
-        mask &= (data[col] == value)
+    for col, op, value in filters:
+        if op == "==":
+            mask &= (data[col] == value)
+        elif op == "!=":
+            mask &= (data[col] != value)
+        elif op == "<":
+            mask &= (data[col] < value)
+        elif op == "<=":
+            mask &= (data[col] <= value)
+        elif op == ">":
+            mask &= (data[col] > value)
+        elif op == ">=":
+            mask &= (data[col] >= value)
     return data[mask]
+
+# def parse_filter_conditions(conditions):
+#     filters = []
+#     for condition in conditions.split(","):
+#         col, value = condition.split("==")
+#         filters.append((col.strip(), float(value.strip())))
+#     return filters
+
+# def apply_filters(data, filters):
+#     mask = np.ones(len(data), dtype=bool)
+#     for col, value in filters:
+#         mask &= (data[col] == value)
+#     return data[mask]
 
 def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, filters=None,\
                       plotflag = False, markers = "o", debug=True, markersize = 1, gtifiles = None):
@@ -111,7 +143,7 @@ if __name__ == "__main__":
     parser.add_argument('x_hdus', type=str, help='List of Number of FITS HDU for X')
     parser.add_argument("y_cols", type=str, help="Comma-separated column names for the y-axis")
     parser.add_argument('y_hdus', type=str, help='List of Number of FITS HDU for Y')
-    parser.add_argument("--filters", '-f', type=str, help="Comma-separated filter conditions in the format 'COLUMN==VALUE'", default="")
+    parser.add_argument("--filters", '-f', type=str, help="Comma-separated filter conditions in the format 'COLUMN==VALUE' or 'COLUMN1<VALUE,COLUMN2>=VALUE'", default="")
     parser.add_argument('--plot', '-p', action='store_true', default=False, help='Flag to display plot')
     parser.add_argument("--markers", '-m', type=str, help="marker type", default="o")
     parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
@@ -138,7 +170,8 @@ if __name__ == "__main__":
     print(f'y_scales = {y_scales}')
     print(f'y_hdus = {y_hdus}')
 
-    filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
+    filter_conditions = parse_filter_conditions(args.filters) if args.filters else None    
+
     title = f"{args.file_names} : filtered with {args.filters}"
     outfname = "fplot_" + args.file_names.replace(",", "_").replace(".", "_p_") + ".png"
     plot_fits_data(file_names, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname,
