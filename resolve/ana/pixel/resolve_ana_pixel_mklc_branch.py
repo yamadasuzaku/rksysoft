@@ -47,6 +47,10 @@ def parse_args():
     parser.add_argument('--nonstop', '-n', action='store_true', help='GTIが同時刻の部分で区切らない。')
     parser.add_argument('--lcthresh', '-e', type=float, default=0.8, help='fractional exposure の閾値')
 
+    # added for Pereus 
+    parser.add_argument('--rate_max_ingratio', '-rmax', type=float, default=30.0, help='max rate for bratio')
+    parser.add_argument('--yscale_ingratio', '-yscaleing', type=str, default="liinear", help='log or linear for bratio')
+
     args = parser.parse_args()
 
     # 引数の確認をプリント
@@ -549,7 +553,7 @@ def plot_sumlightcurve(event_list, plotpixels, itypenames, timebinsize, output, 
 
 # rate_vs_gradeをプロットする関数
 def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
-                            gtiuse = False, debug=False, show = False, nonstop = False, lcthresh = 0.8):
+                            gtiuse = False, debug=False, show = False, nonstop = False, lcthresh = 0.8, rate_max_ingratio=0.2, yscale_ingratio = "log"):
     """
     イベントリストからrate_vs_gradeをプロットする。
     """
@@ -569,16 +573,15 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
             dt, time, dtime, pha, itype, rise_time, deriv_max, pixel = process_data(fname, ref_time)
 
         # 分岐比を計算
-        rate_max = 30.0
         npoints = 100
-        rate_y = np.linspace(0, rate_max, num=npoints)
+        rate_y = np.linspace(0, rate_max_ingratio, num=npoints)
         bratios = calc_branchingratios(rate_y)
 
         for j, pix in enumerate(plotpixels):
 
             fig, ax = plt.subplots(figsize=(10, 6))
             ax.set_xscale("linear")
-            ax.set_yscale("linear")
+            ax.set_yscale(yscale_ingratio)
             ax.set_xlabel("all grade rate (c/s/pixel)")
             ax.set_ylabel("each grade rate (c/s/pixel)")
             ax.grid(alpha=0.2)

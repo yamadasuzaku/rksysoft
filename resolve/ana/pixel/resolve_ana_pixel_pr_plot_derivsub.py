@@ -33,6 +33,7 @@ CMAX = 20
 colors = plt.cm.tab20(np.linspace(0, 1, CMAX))
 
 # グローバル変数として宣言
+MEM_AVGS_TO_SUB_ADDR = {}
 MEM_DERIV_TO_SUB_ADDR = {}
 MEM_DERIV_TO_SUB_ADDR_DERIVMAX = {}
 
@@ -398,7 +399,7 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
 
                 plt.suptitle(f"ID={obsid} {target} DATE-OBS={dateobs}   PIXEL={pixel} ITYPE={itype_str}")
 #                plt.tight_layout()
-                ofile = f"{oname}_{k:05d}.png"
+                ofile = f"{oname}_{k:05d}_pixel{pixel:02d}.png"
                 plt.savefig(ofile)
                 print(f'.... {ofile} is saved.')
 
@@ -493,6 +494,8 @@ def load_hk2(hk2_file, debug=False):
     pixels = data["PIXEL"]
 
     # グローバル変数に代入
+    MEM_AVGS_TO_SUB_ADDR = {pixel: avgs[np.where(pixels == pixel)[0]][0] for pixel in range(36)}
+
     MEM_DERIV_TO_SUB_ADDR = {pixel: derivs[np.where(pixels == pixel)[0]][0] for pixel in range(36)}
 
     # 各ピクセルの波形データに基づく特徴量（最大値）を計算して別の辞書で管理
@@ -502,12 +505,22 @@ def load_hk2(hk2_file, debug=False):
         # MEM_DERIV_TO_SUB_ADDR のデータをプロット（ピクセルごとの波形）
         plt.figure(figsize=(10, 6))
         for pixel in range(36):
-            plt.plot(MEM_DERIV_TO_SUB_ADDR[pixel], label=f'Pixel {pixel}', alpha=0.5)
+            plt.plot(MEM_AVGS_TO_SUB_ADDR[pixel], label=f'Pixel {pixel}', alpha=0.5)
 
-        plt.title('Waveform Data for Each Pixel')
+        plt.title('Average waveform Data for Each Pixel')
         plt.xlabel('Index')
         plt.ylabel('Amplitude')
-        plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1))
+        plt.legend(loc='upper right')
+        plt.show()
+
+        plt.figure(figsize=(10, 6))
+        for pixel in range(36):
+            plt.plot(MEM_DERIV_TO_SUB_ADDR[pixel], label=f'Pixel {pixel}', alpha=0.5)
+
+        plt.title('Derivative for Each Pixel')
+        plt.xlabel('Index')
+        plt.ylabel('Amplitude')
+        plt.legend(loc='upper right')
         plt.show()
 
         # MEM_DERIV_TO_SUB_ADDR_DERIVMAX の最大値（derivmax）をピクセルごとにプロット
@@ -564,13 +577,14 @@ def main():
     parser.add_argument('--check_qd', '-c', action='store_true', help='check qd by myself')
     parser.add_argument('--pixels', type=str, help='Comma-separated list of pixel numbers to process')
     parser.add_argument('--hk2', default=resolve_tools +'/resolve/ana/pixel/xa035315064rsl_a0.hk2', type=str, help='Comma-separated list of pixel numbers to process')
+    parser.add_argument('--debug', '-d', action='store_true', help='debug flag')
 
     args = parser.parse_args()
     itypes = [int(itype) for itype in args.itypelist.split(',')]
 
     selected_pixels = parse_pixel_range(args.pixels)
 
-    load_hk2(args.hk2)
+    load_hk2(args.hk2, debug=args.debug)
     
     plot_deriv(args.prevt, itypes, args.dumptext, \
         plotflag=args.plot, usetime=args.usetime, prevflag=args.prevflag, xlims=args.xlims, ylims=args.ylims, \

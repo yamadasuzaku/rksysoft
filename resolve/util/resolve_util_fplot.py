@@ -73,6 +73,13 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
         # Create subplots
         with fits.open(file_name) as hdul:
             print(f"..... {file_name} is opened.")
+
+            # obtain header info 
+            header = hdul[0].header
+            obsid = header["OBS_ID"]
+            target = header["OBJECT"]
+            dateobs = header["DATE-OBS"]
+
             # Apply filters if any
 
             # Get X data
@@ -120,7 +127,8 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
                 ax2.xaxis.set_label_position('top')
                 ax2.xaxis.set_ticks_position('top')
 
-            plt.suptitle(title)
+            plt.suptitle(f"{title}")
+    plt.figtext(0.05,0.02,f"OBSID={obsid} {target} {dateobs}", fontsize=8,color="gray")
     plt.tight_layout()
     plt.subplots_adjust(hspace=0, top=0.9)  # Adjust space between plots and top margin
 #    fig.autofmt_xdate()  # does not work for tile plots

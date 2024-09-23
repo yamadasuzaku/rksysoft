@@ -10,29 +10,38 @@ def main():
     parser.add_argument("--threshold",'-t', type=float, default=65000.,  help="Threshold for column.")
     parser.add_argument("--column", '-c', type=str, default='PHA',  help="Threshold for column.")    
     parser.add_argument("--timewindow", '-w', type=float, default=1.0,  help="Time window at the threshold")        
+    parser.add_argument("--itype",'-i', type=int, default=None,  help="ITYPE (default=None)")
+
     args = parser.parse_args()
 
     fname = args.fname
     threshold = args.threshold
     column = args.column
     timewindow = args.timewindow
+    itype = args.itype
 
     # Prepare the output filename
     outftag = fname.replace(".evt", "").replace(".gz", "")
-    output_fname = f"sc_{outftag}_{column}_{int(threshold):d}_{int(timewindow):d}.evt"
+    output_fname = f"sc_{outftag}_{column}_thre{int(threshold):d}_dt{int(timewindow):d}_cuttype{itype}.evt"
 
     # Load FITS data
     hdu = fits.open(args.fname)[1]
     data = hdu.data
     # Extract relevant columns
     time_array = data["TIME"]
+    itype_array = data["ITYPE"]
     ref_array = data[column]
 
     # Condition: lo_array greater than or equal to the threshold
-    condition_indices = np.where(ref_array >= threshold)[0]
+    if itype == None:
+        condition_indices = np.where(ref_array >= threshold)[0]
+    else:
+        condition_indices = np.where( (ref_array >= threshold) & (itype_array == itype))[0]
 
     # Prepare an empty mask to keep +/- timewindow second data
     mask = np.zeros(len(time_array), dtype=bool)
+
+    print(f"Length changes from {len(time_array)} to {len(condition_indices)}.")
 
     # Loop over each index where the condition is satisfied
     for idx in condition_indices:
