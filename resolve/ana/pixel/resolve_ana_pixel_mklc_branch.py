@@ -48,8 +48,8 @@ def parse_args():
     parser.add_argument('--lcthresh', '-e', type=float, default=0.8, help='fractional exposure の閾値')
 
     # added for Pereus 
-    parser.add_argument('--rate_max_ingratio', '-rmax', type=float, default=30.0, help='max rate for bratio')
-    parser.add_argument('--yscale_ingratio', '-yscaleing', type=str, default="liinear", help='log or linear for bratio')
+    parser.add_argument('--rate_max_ingratio', '-rmax', type=float, default=10.0, help='max rate for bratio')
+    parser.add_argument('--yscale_ingratio', '-yscaleing', type=str, default="linear", help='log or linear for bratio')
 
     args = parser.parse_args()
 
@@ -58,6 +58,7 @@ def parse_args():
     print("  plot_lightcurve    = ", args.plot_lightcurve)
     print("  plot_rate_vs_grade = ", args.plot_rate_vs_grade)
     print("  gtiuse             = ", args.gtiuse)
+    print("  show               = ", args.show)
     print("-----------------")
 
     # どちらのプロットフラグも設定されていない場合はエラーを表示
@@ -71,7 +72,7 @@ def setup_plot():
     """
     matplotlibのプロットパラメータを設定する。
     """
-    params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
+    params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 12}
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams.update(params)
 
@@ -553,13 +554,18 @@ def plot_sumlightcurve(event_list, plotpixels, itypenames, timebinsize, output, 
 
 # rate_vs_gradeをプロットする関数
 def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, ref_time, \
-                            gtiuse = False, debug=False, show = False, nonstop = False, lcthresh = 0.8, rate_max_ingratio=0.2, yscale_ingratio = "log"):
+                            gtiuse = False, debug=False, show = True, nonstop = False, lcthresh = 0.8, rate_max_ingratio=10, yscale_ingratio = "log"):
     """
     イベントリストからrate_vs_gradeをプロットする。
     """
     colors = plt.cm.get_cmap('tab10', len(plotpixels)).colors
     ishape = [".", "s", "D", "*", "x"]
     type_colors = plt.cm.Set1(np.linspace(0, 1, 9))
+
+    if yscale_ingratio == "log":
+        ms_gratio="o"
+    else:
+        ms_gratio="."
 
     for fname in event_list:
         outftag = fname.replace(".evt", "").replace(".gz", "")
@@ -573,19 +579,22 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
             dt, time, dtime, pha, itype, rise_time, deriv_max, pixel = process_data(fname, ref_time)
 
         # 分岐比を計算
-        npoints = 100
+        npoints = 10000
         rate_y = np.linspace(0, rate_max_ingratio, num=npoints)
         bratios = calc_branchingratios(rate_y)
 
         for j, pix in enumerate(plotpixels):
 
             fig, ax = plt.subplots(figsize=(10, 6))
-            ax.set_xscale("linear")
+            ax.set_xscale(yscale_ingratio)
             ax.set_yscale(yscale_ingratio)
             ax.set_xlabel("all grade rate (c/s/pixel)")
             ax.set_ylabel("each grade rate (c/s/pixel)")
             ax.grid(alpha=0.2)
-            ax.set_title(f"OBSID={obsid}")
+            ax.set_title(f"OBSID={obsid} pixel={pix:02d}")
+            if yscale_ingratio == "log":
+                ax.set_ylim(1e-5,rate_max_ingratio)
+                ax.set_xlim(1e-2,rate_max_ingratio)
 
             for k, itype_ in enumerate(itypenames):
                 print(f"ピクセル{pix}とタイプ{itype_}のデータを処理中 (obsid {obsid})")
@@ -626,13 +635,14 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
                 y_err = y_err[zcutid]
 
                 ax.plot(rate_y,rate_y*bratios[itype_], "--", alpha=0.7,label=f"pix={pix}, itype={itype_}", color=type_color)
-                ax.errorbar(pixel_y_lc, y_lc, fmt=".", label=f"pix={pix}, itype={itype_}", color=type_color)
+                ax.errorbar(pixel_y_lc, y_lc, fmt=ms_gratio, label=f"pix={pix}, itype={itype_}", color=type_color)
 
             ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
             plt.tight_layout()
             outpng = f"{output}_rate_vs_grade_pixel{pix:02d}.png"
             plt.savefig(outpng)
             print(f"..... {outpng} is created. ")
+            print("show",show)
             if show:
                 plt.show()
 
@@ -675,7 +685,8 @@ def main():
             print(f"出力ファイル {args.output}_lightcurve.png が作成されました。")
 
         if args.plot_rate_vs_grade:
-            plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time)
+            plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time, \
+                debug= args.debug, show = args.show, rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
             print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
 
 if __name__ == "__main__":
