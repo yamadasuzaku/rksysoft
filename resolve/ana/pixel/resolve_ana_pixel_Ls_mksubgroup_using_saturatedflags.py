@@ -195,7 +195,7 @@ def plot_fits_data(file_name, x_col, y_col, hdu, title, outfname, tolerance, fil
         for j, (indexes, segment, tcol1, tcol2, tcol3, tcol4) in enumerate(split_sequences):
             input_order = np.arange(len(segment))
             if j == 0:
-                axs[4].plot(input_order, tcol4, ".-", alpha=0.2, label=trigcol3name)
+                axs[4].plot(input_order, tcol4, ".-", alpha=0.2, label=trigcol4name)
                 axs[4].legend()
             else:
                 axs[4].plot(input_order, tcol4, ".-", alpha=0.2)
@@ -352,5 +352,5 @@ if __name__ == "__main__":
     print("Starting plot generation...")
     plot_fits_data(args.file_name, args.x_col, args.y_col, args.hdu, title, outfname, args.tolerance, 
         filters=filter_conditions, plotflag=args.plot, markers=args.markers, datatime_flag=args.datatime_flag, \
-        trigcol1name = args.trigcol1name, trigcol2name = args.trigcol2name, trigcol3name = args.trigcol3name)
+        trigcol1name = args.trigcol1name, trigcol2name = args.trigcol2name, trigcol3name = args.trigcol3name, trigcol4name = args.trigcol4name)
     print("Plot generation complete.")
