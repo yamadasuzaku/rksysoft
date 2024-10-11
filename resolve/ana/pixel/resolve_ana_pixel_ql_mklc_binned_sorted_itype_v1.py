@@ -19,6 +19,7 @@ TIME_50MK = 150526800.0  # Corresponds to 2023-10-09 05:00:00
 # Set up argument parser to allow user input from command line
 parser = argparse.ArgumentParser(description='Plot lightcurves from a FITS file.')
 parser.add_argument('--timebinsize', type=float, help='Time bin size for light curves', default=100.0)
+parser.add_argument('--debug', '-d', action='store_true', help='デバッグモード')
 parser.add_argument('filename', help='The name of the FITS file to process.')
 args = parser.parse_args()
 
@@ -101,7 +102,7 @@ def fast_lc(tstart, tstop, binsize, x):
     return x_lc, x_err, y_lc, y_err
 
 # Define a function to plot the light curve
-def plot_lc(time, itype, outfname="mklc_binened.png", title="test"):
+def plot_lc(time, itype, outfname="mklc_binened.png", title="test", debug=False):
     # Set up the plot
     plt.figure(figsize=(10, 7))
     plt.xscale("linear")
@@ -129,7 +130,8 @@ def plot_lc(time, itype, outfname="mklc_binened.png", title="test"):
     # Save and show the plot
     plt.savefig(outfname)
     print("..... " + outfname + " is created.")
-    plt.show()
+    if debug:
+        plt.show()
 
 # Main section to execute the functions
 # Prepare the output filename
@@ -138,4 +140,4 @@ outfname = "ql_mklc_binned_sorted_itype_" + outftag + ".png"
 
 # Process the data and plot the light curve
 dt, time, dtime, pha, itype, rise_time, deriv_max = process_data(fname, TRIGTIME_FLAG=False, AC_FLAG=False)
-plot_lc(time, itype, outfname=outfname, title="Light curves of pixels from " + fname)
+plot_lc(time, itype, outfname=outfname, title="Light curves of pixels from " + fname, debug=args.debug)
