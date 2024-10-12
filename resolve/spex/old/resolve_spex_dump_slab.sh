@@ -8,7 +8,7 @@ ranges=("1 27" "1 21" "1 29")
 
 # Get the length of the elements array
 length=${#elements[@]}
-
+nh_m2=23
 # Create directories for output if they do not exist
 mkdir -p output_qdp
 mkdir -p output_asc
@@ -34,16 +34,34 @@ for (( j=0; j<$length; j++ )); do
 log save ${element}${i} overwrite
 plot device xs
 plot type model
-plot fill disp false 
 egrid lin 500:10000 9500 eV
+# set plot style
 com pow
-com slab 
-com r 1 2 
-par 1 1 norm v 100000
-par 1 2 ${element}${i} v 23
+com slab
+com r 1 2
+par 1 1 norm value 100000
+par 1 2 v    value 1.0
+par 1 2 rms  value 1.0
+par 1 2 dv   value 1.0
+par 1 2 ${element}${i} value ${nh_m2}
 calc 
+par show 
+plot x lin
+plot y lin
+# dump qdpfile
 plot adum ${element}${i} overwrite
+
+plot rx 0.5 10
+plot ry 0.005 5000.0
+plot x log 
+plot y log 
+plot fill disp false 
+plot
+plot device cps ${element}${i}.ps 
+
+# dump log file 
 ascdump file ${element}${i} 1 2 tral
+
 quit
 EOF
     # Run the resolve_spex_plotmodel_fromqdp_with_tral.py script
