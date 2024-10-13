@@ -51,6 +51,7 @@ for (( j=0; j<$length; j++ )); do
 
     # Run SPEX with the current element, range, and nh_m2
     spex << EOF
+var calc new
 log save spexcom_${element}${i}_nh${nh_m2} overwrite
 plot device xs
 plot type model
