@@ -11,6 +11,16 @@ import os
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+def extract_elements(parts):
+    
+    if '-' in parts:
+        dash_index = parts.index('-')
+        # '-' の前2つと、後ろの全てを抽出
+        result = parts[dash_index-2:dash_index] + parts[dash_index+1:]
+        return result
+    else:
+        return None
+
 def read_data(file_path, emin, emax):
     data = np.loadtxt(file_path, skiprows=1)
     xval = data[:, 0]
@@ -45,11 +55,12 @@ def read_secondary_data(file_path):
                     line = parts[6]
                     tau = float(parts[12])
                     ew_keV = float(parts[13])
-                    data.append((energy_keV, ew_keV, tau, el, stage, ion, line))
+                    lineinfo = extract_elements(parts)
+                    data.append((energy_keV, ew_keV, tau, el, stage, ion, line, lineinfo))
                 except ValueError:
                     continue
 
-    df = pd.DataFrame(data, columns=['Energy keV', 'EW keV', 'tau','el','stage','ion','line'])
+    df = pd.DataFrame(data, columns=['Energy keV', 'EW keV', 'tau','el','stage','ion','line', 'lineinfo'])
     return df
 
 def plot_data(qdpfile, secondary_file, ylin, emin, emax, y1, y2, plotflag, marker_size):
@@ -109,10 +120,11 @@ def plotly_data(qdpfile, secondary_file, ylin, emin, emax, y1, y2, marker_size):
     # Add secondary data scatter plot
     if secondary_file:
         df = read_secondary_data(secondary_file)
-        for _ene, _tau, el_, stage_, ion_, line_ in zip(df['Energy keV'], df['tau'], df['el'],df['stage'],df['ion'],df['line']):
+        for _ene, _tau, el_, stage_, ion_, line_, lineinfo_ in zip(df['Energy keV'], df['tau'], df['el'],df['stage'],df['ion'],df['line'], df['lineinfo']):
+            linfo = " ".join(lineinfo_)
             fig.add_trace( 
                 go.Scatter(x=[_ene], y=[_tau], mode='markers', 
-                           marker=dict(size=marker_size, opacity=0.8), name=f"{el_}{stage_} {ion_} {line_}"),
+                           marker=dict(size=marker_size, opacity=0.8), name=f"{el_}{stage_} {_ene} {linfo}"),
                 secondary_y=True,
             )
         print(f"Secondary data plotted from {secondary_file}")
