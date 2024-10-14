@@ -109,7 +109,7 @@ def plot_pi(pi, itype, pixel, emin, emax, rebin, outfname="mkpi.png", title="tes
 
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
         plt.xlim(emin, emax)
-        ofname = f"fig_{typename[itype_]}_{outfname}"
+        ofname = f"fig_{typename[itype_]}_{emin}_{emax}_{rebin}_{outfname}"
         plt.savefig(ofname)
         if debug:
             plt.show()
