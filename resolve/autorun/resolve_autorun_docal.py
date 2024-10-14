@@ -47,8 +47,8 @@ def parse_args():
     parser.add_argument('--bin_width', '-b', type=float, default=4, help='Bin width for histogram')
     parser.add_argument('--ene_min', '-l', type=float, default=6300, help='Minimum energy')
     parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
+    parser.add_argument('--genhtml', '-html', action='store_false', help='stop generate html')
 
-    
     # Define the fwe option with choices OPEN or ND
     parser.add_argument('--fwe', choices=['OPEN', 'ND'], default="OPEN", help='Choose OPEN for 1000 or ND for 3000')
     args = parser.parse_args()
@@ -122,6 +122,7 @@ def main():
     bin_width = int(args.bin_width)
     ene_min = args.ene_min
     ene_max = args.ene_max
+    genhtml = args.genhtml
 
     # カンマで分割して、数値に変換
     flag_values = [int(x) for x in progflags.split(',')]
@@ -178,8 +179,11 @@ def main():
         
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
         
-        
-        
+    if genhtml:
+        runprog="resolve_autorun_png2html.py"                
+        check_program_in_path(runprog)
+        subprocess.run([runprog] + [obsid], check=True)
+                        
 if __name__ == "__main__":
     main()
         
