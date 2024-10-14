@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+g#!/usr/bin/env python
 
 import os
 import subprocess
@@ -144,6 +144,11 @@ def main():
             arguments=f"{clevt} --rebin {bin_width} --emin {ene_min} --emax {ene_max}"
 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+
+        # Fe check
+        arguments=f"{clevt} --rebin 4 --emin 6100 --emax 7100"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+        
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
 
@@ -156,6 +161,10 @@ def main():
             arguments=f"{clevt} -l {ene_min} -x {ene_max} -b {bin_width} -c"        
 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+        # Fe check
+        arguments=f"{clevt} -l 6100 -x 7100 -b 4 -c"        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+        
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
         
         
