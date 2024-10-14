@@ -80,7 +80,7 @@ def main():
     args = parser.parse_args()
     
     # HTMLファイルを生成
-    generate_html_for_pngs(args.obsid, args.output_dir)
+    generate_html_for_pngs(args.obsid, args.output_dir + "_" + args.obsid)
 
 if __name__ == "__main__":
     main()
