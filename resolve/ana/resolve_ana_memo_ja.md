@@ -14,23 +14,21 @@ resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py xa000138000rsl_p0px1000_cl.e
 
 ## スペクトルの作成方法 (非タイルプロット)
 
-[resolve_ana_pixel_ql_plotspec_v1.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_ql_plotspec_v1.py) のコマンドを使用して、スペクトルを作成します：
+[resolve_ana_pixel_ql_plotspec.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_ql_plotspec.py) のコマンドを使用して、スペクトルを作成します：
 
 ```sh
-resolve_ana_pixel_ql_plotspec_v1.py xa000138000rsl_p0px1000_cl.evt
+resolve_ana_pixel_ql_plotspec.py xa000138000rsl_p0px1000_cl.evt
 ```
 
-このコマンドは、pixel ごと、itype ごとにスペクトルをプロットします。オプションはありません。
+このコマンドは、pixel ごと、itype ごとにスペクトルをプロットします。
 
-
-別のファイルですが、試験的に、
+binsize を 4 (PI空間なので、2eVに相当)、emin 0 eV から emax 20000 eV までプロットを指定する場合は、
 
 ```sh
-resolve_ana_pixel_ql_plotspec.py xa000138000rsl_p0px1000_cl.evt --rebin 250
+resolve_ana_pixel_ql_plotspec.py xa300049010rsl_p0px3000_cl.evt --rebin 4 --emin 0 --emax 20000
 ```
 
-のように、energy の bin 幅を変えることができるのもあります。
-
+となります。
 
 ## スペクトルの作成方法 (タイルプロット)
 
