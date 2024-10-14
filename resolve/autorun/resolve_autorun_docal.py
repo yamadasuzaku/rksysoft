@@ -113,7 +113,7 @@ def main():
     timebinsize=args.timebinsize
     fwe = args.fwe
 
-    bin_width = args.bin_width
+    bin_width = int(args.bin_width)
     ene_min = args.ene_min
     ene_max = args.ene_max
     
