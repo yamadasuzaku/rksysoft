@@ -36,7 +36,7 @@ def generate_html_for_pngs(obsid, output_dir):
         </style>
     </head>
     <body>
-    <h1>PNG Files for OBSID={obsid}</h1>
+    <h1>XRISM QL : OBSID={obsid}</h1>
     <p>Generated on {current_date}</p>
     """
     

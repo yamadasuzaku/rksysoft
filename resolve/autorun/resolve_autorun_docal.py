@@ -35,6 +35,9 @@ def parse_args():
       ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument('obsid', help='OBSID')
+    # カンマ区切りの数値列を受け取る
+    parser.add_argument('--progflags', type=str, help='Comma-separated flags for qlmklc, qlmkspec, spec6x6 (e.g. 0,1,0)')
+    
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
     parser.add_argument('--plotpixels', '-p', type=str, help='プロットするピクセルのカンマ区切りリスト', default=','.join(map(str, range(36))))
@@ -44,6 +47,7 @@ def parse_args():
     parser.add_argument('--bin_width', '-b', type=float, default=4, help='Bin width for histogram')
     parser.add_argument('--ene_min', '-l', type=float, default=6300, help='Minimum energy')
     parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
+
     
     # Define the fwe option with choices OPEN or ND
     parser.add_argument('--fwe', choices=['OPEN', 'ND'], default="OPEN", help='Choose OPEN for 1000 or ND for 3000')
@@ -109,6 +113,8 @@ def main():
     スクリプトを実行するメイン関数。
     """
     args, fwe_value = parse_args()
+
+    progflags = args.progflags
     obsid = args.obsid
     timebinsize=args.timebinsize
     fwe = args.fwe
@@ -116,11 +122,16 @@ def main():
     bin_width = int(args.bin_width)
     ene_min = args.ene_min
     ene_max = args.ene_max
-    
-    # program list 
-    procdic = {"qlmklc":True,"qlmkspec":True,"spec6x6":True}
-#    procdic = {"qlmklc":False,"qlmkspec":True,"spec6x6":False}
-#    procdic = {"qlmklc":False,"qlmkspec":True,"spec6x6":False}
+
+    # カンマで分割して、数値に変換
+    flag_values = [int(x) for x in progflags.split(',')]
+    # 数値列をTrue/Falseに変換し、flagが1の時だけ実行
+    procdic = {
+        "qlmklc": bool(flag_values[0]),
+        "qlmkspec": bool(flag_values[1]),
+        "spec6x6": bool(flag_values[2])
+    }
+    print(f"procdic = {procdic}")    
     
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    
