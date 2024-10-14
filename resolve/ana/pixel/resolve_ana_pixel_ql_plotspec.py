@@ -115,6 +115,37 @@ def plot_pi(pi, itype, pixel, emin, emax, rebin, outfname="mkpi.png", title="tes
             plt.show()
         print(f"..... {ofname} is created.")
 
+def plot_pi_allpixel(pi, itype, pixel, emin, emax, rebin, outfname="mkpi.png", title="test", debug=False):
+    pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
+    binnum = int((pimax - pimin) / rebin)
+    
+    for itype_ in itypename:
+        plt.figure(figsize=(11, 7))
+        plt.subplots_adjust(right=0.8) # make the right space bigger
+        plt.xscale("linear")
+        plt.yscale("log")
+        plt.ylabel(f"Counts/bin (bin={rebin/2}eV)")
+        plt.xlabel("PI (eV)")
+        plt.grid(alpha=0.8)
+        plt.title(title + " TYPE = " + typename[itype_])
+        # Filter data by itype
+        typecut = (itype == itype_)
+        pi_filtered = pi[typecut]
+
+        # Compute histogram for all pixels of current itype
+        hist, binedges = np.histogram(pi_filtered, bins=binnum, range=(pimin, pimax))
+        bincenters = 0.5 * (binedges[1:] + binedges[0:-1])
+        ene = bincenters * 0.5 + 0.5
+        event_number = len(pi_filtered)
+        plt.errorbar(ene, hist, yerr=np.sqrt(hist), color="k", fmt='-', label="all" + "("+str(event_number)+ "c)", alpha=0.5)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
+        plt.xlim(emin, emax)
+        ofname = f"fig_allpixel_{typename[itype_]}_{emin}_{emax}_{rebin}_{outfname}"
+        plt.savefig(ofname)
+        if debug:
+            plt.show()
+        print(f"..... {ofname} is created.")
+
 def main():
     args = parse_arguments()
     print(f"Parsing arguments: {args}")
@@ -124,6 +155,10 @@ def main():
     plot_pi(pi, itype, pixel, emin=args.emin, emax=args.emax, rebin=args.rebin, 
             outfname=f"ql_plotspec_{args.filename.replace('.evt', '').replace('.gz', '')}.png", 
             title=f"Spectra of {args.filename}", debug=args.debug)
+    plot_pi_allpixel(pi, itype, pixel, emin=args.emin, emax=args.emax, rebin=args.rebin, 
+            outfname=f"ql_plotspec_{args.filename.replace('.evt', '').replace('.gz', '')}.png", 
+            title=f"Spectra of {args.filename}", debug=args.debug)
+
 
 if __name__ == "__main__":
     main()
