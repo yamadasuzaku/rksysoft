@@ -8,6 +8,17 @@ import time
 
 topdir = os.getcwd()
 
+def check_program_in_path(program_name):
+    # $PATH内でプログラムを探す
+    program_path = shutil.which(program_name)
+    
+    # 見つからない場合はエラーメッセージを表示して終了
+    if program_path is None:
+        print(f"Error: {program_name} not found in $PATH.")
+        sys.exit(1)
+    else:
+        print(f"{program_name} is found at {program_path}")
+
 # コマンドライン引数を解析する関数
 def parse_args():
     """
@@ -56,6 +67,10 @@ def parse_args():
 def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
           subdir="check_lc", linkfiles=["cl.evt"], timebinsize=100, use_flist=False, gdir=f"000108000/resolve/event_cl/"):
     # Define directory and file names based on obsid and other parameters
+
+    # check if runprog exist in PATH
+    check_program_in_path(runprog)
+    
     gotodir = os.path.join(topdir, gdir)
 
     # Change to the processing directory
@@ -95,32 +110,45 @@ def main():
     fwe = args.fwe
 
     # program list 
-    procdic = {"qlmklc":False,"qlmkspec":True}
+    procdic = {"qlmklc":True,"qlmkspec":True,"spec6x6":True}
         
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    
 
     if procdic["qlmklc"]:
-        # create lightcurve
         runprog="resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py"        
         print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         if args.show:
             arguments=f"{clevt} --timebinsize {timebinsize} -d"
         else:
             arguments=f"{clevt} --timebinsize {timebinsize}"        
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_lc", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmklc", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if procdic["qlmkspec"]:
-        # create lightcurve
-        runprog="resolve_ana_pixel_ql_plotspec_v1.py"        
+        runprog="resolve_ana_pixel_ql_plotspec.py"        
         print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
-        arguments=f"{clevt}"        
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_pi", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+        if args.show:
+            arguments=f"{clevt} --rebin 4 --emin 0 --emax 20000 -d"
+        else:
+            arguments=f"{clevt} --rebin 4 --emin 0 --emax 20000"        
+
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+
+    if procdic["spec6x6"]:
+        runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
+        if args.show:
+            arguments=f"{clevt} -l 2000 -x 10000 -b 20 -c -p"
+        else:
+            arguments=f"{clevt} -l 2000 -x 10000 -b 20 -c"        
+
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
         
         
-
         
 if __name__ == "__main__":
     main()

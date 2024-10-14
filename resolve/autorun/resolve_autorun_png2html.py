@@ -47,9 +47,18 @@ def generate_html_for_pngs(obsid, output_dir):
         
         # ファイルを出力ディレクトリにコピー
         shutil.copy(png, destination_png)
+
+        # コピーされたファイルをHTMLに埋め込む（クリックでフルサイズ画像が開くように）
+        html_content += f'''
+        <div>
+            <h5><a href="{file_name}">{png}</a></h5>
+            <a href="{file_name}" target="_blank">
+                <img src="{file_name}" alt="{file_name}" style="max-width:600px; height:auto;">
+            </a>
+        </div>\n
+        '''        
         
-        # コピーされたファイルをHTMLに埋め込む
-        html_content += f'<div><h2>{file_name}</h2><img src="{file_name}" alt="{file_name}"></div>\n'
+#         html_content += f'<div><h2>{file_name}</h2><img src="{file_name}" alt="{file_name}"></div>\n'
 
     # HTMLのフッター部分を作成
     html_content += """
