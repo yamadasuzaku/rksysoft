@@ -41,6 +41,10 @@ def parse_args():
     parser.add_argument('--output', '-o', type=str, help='出力ファイル名のプレフィックス', default='mklc')
     parser.add_argument('--debug', '-d', action='store_true', help='デバッグモード')
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
+    parser.add_argument('--bin_width', '-b', type=float, default=4, help='Bin width for histogram')
+    parser.add_argument('--ene_min', '-l', type=float, default=6300, help='Minimum energy')
+    parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
+    
     # Define the fwe option with choices OPEN or ND
     parser.add_argument('--fwe', choices=['OPEN', 'ND'], default="OPEN", help='Choose OPEN for 1000 or ND for 3000')
     args = parser.parse_args()
@@ -109,6 +113,10 @@ def main():
     timebinsize=args.timebinsize
     fwe = args.fwe
 
+    bin_width = args.bin_width
+    ene_min = args.ene_min
+    ene_max = args.ene_max
+    
     # program list 
     procdic = {"qlmklc":True,"qlmkspec":True,"spec6x6":True}
         
@@ -129,9 +137,9 @@ def main():
         runprog="resolve_ana_pixel_ql_plotspec.py"        
         print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         if args.show:
-            arguments=f"{clevt} --rebin 4 --emin 0 --emax 20000 -d"
+            arguments=f"{clevt} --rebin {bin_width} --emin {ene_min} --emax {ene_max} -d"
         else:
-            arguments=f"{clevt} --rebin 4 --emin 0 --emax 20000"        
+            arguments=f"{clevt} --rebin {bin_width} --emin {ene_min} --emax {ene_max}"
 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
@@ -141,9 +149,9 @@ def main():
         runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
         print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         if args.show:
-            arguments=f"{clevt} -l 2000 -x 10000 -b 20 -c -p"
+            arguments=f"{clevt} -l {ene_min} -x {ene_max} -b {bin_width} -c -p"
         else:
-            arguments=f"{clevt} -l 2000 -x 10000 -b 20 -c"        
+            arguments=f"{clevt} -l {ene_min} -x {ene_max} -b {bin_width} -c"        
 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
