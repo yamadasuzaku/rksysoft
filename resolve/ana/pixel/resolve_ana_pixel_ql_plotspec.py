@@ -137,8 +137,11 @@ def plot_pi_allpixel(pi, itype, pixel, emin, emax, rebin, outfname="mkpi.png", t
         bincenters = 0.5 * (binedges[1:] + binedges[0:-1])
         ene = bincenters * 0.5 + 0.5
         event_number = len(pi_filtered)
-        plt.errorbar(ene, hist, yerr=np.sqrt(hist), color="k", fmt='-', label="all" + "("+str(event_number)+ "c)", alpha=0.5)
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=6)
+        cutid = np.where( (ene > emin) & (ene < emax) )[0]
+        ene = ene[cutid]
+        hist = hist[cutid]        
+        plt.errorbar(ene, hist, yerr=np.sqrt(hist), color="k", fmt='-', label="all" + "("+str(event_number)+ "c)", alpha=0.9)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=12)
         plt.xlim(emin, emax)
         ofname = f"fig_allpixel_{typename[itype_]}_{emin}_{emax}_{rebin}_{outfname}"
         plt.savefig(ofname)
