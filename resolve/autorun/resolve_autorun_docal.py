@@ -118,9 +118,9 @@ def main():
     ene_max = args.ene_max
     
     # program list 
-#    procdic = {"qlmklc":True,"qlmkspec":True,"spec6x6":True}
+    procdic = {"qlmklc":True,"qlmkspec":True,"spec6x6":True}
 #    procdic = {"qlmklc":False,"qlmkspec":True,"spec6x6":False}
-    procdic = {"qlmklc":False,"qlmkspec":True,"spec6x6":False}
+#    procdic = {"qlmklc":False,"qlmkspec":True,"spec6x6":False}
     
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    

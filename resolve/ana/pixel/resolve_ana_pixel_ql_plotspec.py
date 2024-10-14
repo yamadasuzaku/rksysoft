@@ -76,7 +76,7 @@ def plot_pi(pi, itype, pixel, emin, emax, rebin, outfname="mkpi.png", title="tes
         plt.subplots_adjust(right=0.8) # make the right space bigger
         plt.xscale("linear")
         plt.yscale("log")
-        plt.ylabel("Counts/bin")
+        plt.ylabel(f"Counts/bin (bin={int({rebin}/2)})")
         plt.xlabel("PI (eV)")
         plt.grid(alpha=0.8)
         plt.title(title + " TYPE = " + typename[itype_])
