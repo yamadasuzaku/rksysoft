@@ -43,6 +43,7 @@ binnum = int((pimax - pimin) / rebin)
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Plot spectra from a FITS file.')
     parser.add_argument('filename', help='The name of the FITS file to process.')
+    parser.add_argument('--debug', '-d', action='store_true', help='do show')    
     return parser.parse_args()
 
 def open_fits_data(fname):
@@ -66,7 +67,7 @@ def process_data(data, TRIGTIME_FLAG=False, AC_FLAG=False):
     dt = np.diff(sorted_columns[0])
     return [column[:-1] for column in sorted_columns], dt
 
-def plot_pi(pi, itype, pixel, outfname="mkpi.png", title="test"):
+def plot_pi(pi, itype, pixel, outfname="mkpi.png", title="test", debug=False):
     
     for itype_ in itypename:
         plt.figure(figsize=(11, 7))
@@ -108,7 +109,8 @@ def plot_pi(pi, itype, pixel, outfname="mkpi.png", title="test"):
         plt.xlim(emin, emax)
         ofname = f"fig_{typename[itype_]}_{outfname}"
         plt.savefig(ofname)
-        plt.show()
+        if debug:
+            plt.show()
         print(f"..... {ofname} is created.")
 
 def main():
@@ -116,7 +118,7 @@ def main():
     data = open_fits_data(args.filename)
     processed_data, dt = process_data(data)
     time, itype, pi, rise_time, deriv_max, pixel = processed_data  # data unpack
-    plot_pi(pi, itype, pixel, outfname=f"ql_plotspec_{args.filename.replace('.evt', '').replace('.gz', '')}.png", title=f"Spectra of {args.filename}")
+    plot_pi(pi, itype, pixel, outfname=f"ql_plotspec_{args.filename.replace('.evt', '').replace('.gz', '')}.png", title=f"Spectra of {args.filename}", debug=args.debug)
 
 if __name__ == "__main__":
     main()
