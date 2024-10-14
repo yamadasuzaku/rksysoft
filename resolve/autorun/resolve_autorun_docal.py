@@ -30,8 +30,9 @@ def parse_args():
     parser = argparse.ArgumentParser(
       description='Resolve calibration run. ',
       epilog='''
-        Example 1) Be filter:
-        
+        Example 
+       (1) ND filter   : resolve_autorun_docal.py 300049010 --fwe ND -b 20 -l 2000 -x 9000 --progflags 0,0,1
+       (2) Open filter : resolve_autorun_docal.py 000109000          -b 20 -l 2000 -x 9000 --progflags 1,0,1
       ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument('obsid', help='OBSID')
