@@ -143,6 +143,7 @@ def plot_pi_allpixel(pi, itype, pixel, emin, emax, rebin, outfname="mkpi.png", t
         plt.errorbar(ene, hist, yerr=np.sqrt(hist), color="k", fmt='-', label="all" + "("+str(event_number)+ "c)", alpha=0.9)
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=12)
         plt.xlim(emin, emax)
+        plt.ylim(np.amin(hist), np.amax(hist))        
         ofname = f"fig_allpixel_{typename[itype_]}_{emin}_{emax}_{rebin}_{outfname}"
         plt.savefig(ofname)
         if debug:
