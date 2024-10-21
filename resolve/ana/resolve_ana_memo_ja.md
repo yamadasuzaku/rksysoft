@@ -159,7 +159,6 @@ resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh xa097093500rsl_a0pxp
 ``` 
 
 
-
 ## uf.evt と pr.evt に prev/next interval をつけて、cl.gti でカットする方法
 
 uf.evt, pr.evt, cl.evt の3つが同じディレクトリにある状態、例えば、
@@ -217,6 +216,8 @@ resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype
 resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --deriv
 # prev_interval を表示する(波形の数が少ない時のみ使う)
 resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --prevflag
+# 範囲を絞る場合
+resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_below30.evt --prevflag --xlims 0,500 --ylims=-5000,-2000      
 ``` 
 
 
