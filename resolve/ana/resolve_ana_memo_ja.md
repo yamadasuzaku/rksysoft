@@ -158,6 +158,22 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_run
 resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh xa097093500rsl_a0pxpr_uf_fillprenext.evt
 ``` 
 
+### negative lo_res_ph の凝った解析
+
+primary の pulse を引いて、そこからは、25 tick ずつ差分のpeakを取ってくるもの。。いずれにせよ、prelimary version ...
+
+``` bash
+resolve_ana_pixel_pr_plot_derivsub_negativeloresph.py xa097093500rsl_a0pxpr_uf_fillprenext_oneclip_p23_1Lp_4Ls.evt -p
+```
+
+
+これは、かなり絞った波形を入れると、コラム分割して、一つ一つのパルスをプロットしてくれる。
+
+
+``` bash:
+resolve_pr_plot_timeseries_negativeloresph.py xa097093500rsl_a0pxpr_uf_fillprenext_oneclip_p23_1Lp_4Ls.evt -p23 -s -c 
+``` 
+
 
 ## uf.evt と pr.evt に prev/next interval をつけて、cl.gti でカットする方法
 

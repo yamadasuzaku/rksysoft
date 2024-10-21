@@ -495,7 +495,7 @@ def plot_deriv(prevt, itypes, dumptext=False, plotflag=False, usetime=False, pre
                 scaled_pulse_to_sub_Ls4 = float(lo_Ls4) * np.array(MEM_AVGS_TO_SUB_ADDR[pixel]) / float(MEM_AVGS_TO_SUB_ADDR_MAX[pixel]["adc_sample_max"])
                 padded_array_pulse_Ls4 = align_peak(scaled_pulse_to_sub_Ls4, deriv_max_i + next_interval, len(pulse_after_sub))
                 ax2.plot(padded_array_pulse_Ls4,"b--",label=f"adjusted (Ls4) lo={lo_Ls4}", alpha=0.7)
-                pnew_Ls4 = pnew_Ls3 - padded_array_pulse_Ls3
+                pnew_Ls4 = pnew_Ls3 - padded_array_pulse_Ls4
                 ax2.plot(pnew_Ls4,"b-",label="sub pulse (Ls4)", alpha=0.7)
                 print(f"[Ls4] deriv_max_i {deriv_max_i} lo={lo_Ls4} amax(pnew_Ls4)={len(pnew_Ls4)}")
 
