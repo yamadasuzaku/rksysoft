@@ -1,5 +1,7 @@
 # Resolve Ls Event の cal 関係
 
+下記は 2024.9月以前のcal関係で、将来的には obsolete する予定です。
+
 ## Ls の PREV_INTERVALの分布を作成する
 
 [resolve_run_ana_pixel_Ls_mksubgroup.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_run_ana_pixel_Ls_mksubgroup.sh) に、PREV_INTERVAL を含むイベントファイルを与えると、Ls の grouping をして、
@@ -40,10 +42,9 @@ resolve_tool_pr_prevnextadd.py xa000114000rsl_p0px1000_uf.evt xa000114000rsl_a0p
 resolve_util_ahscreen_clgti.sh xa000114000rsl_a0pxpr_uf_fillprenext.evt xa000114000rsl_p0px1000_cl.evt
 ```
 
-
 ## PREV_INTERVAL のカット
 
-ftselect を使った。
+ftselect を使ったので、Exposureは全く操作されないことに注意が必要。
 
 ``` bash:
 ftselect infile=xa000114000rsl_a0pxpr_uf_fillprenext.evt outfile=xa000114000rsl_a0pxpr_uf_fillprenext_below30.evt expr="(PREV_INTERVAL<30)&&(PREV_INTERVAL>0)" chatter=5 clobber=yes

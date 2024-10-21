@@ -114,6 +114,52 @@ resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 と実行すると、prev/next interval をつけて、Ls の quick check (`tolerance=100`(default)以下の連続したイベントの数の分布を計算)をしてくれる。
 
 
+## NEXT_INTERVAL 以下の分布と、clipped event or saturated event の関係の調査
+
+NEXT_INTERVAL が設定されているのが前提条件。
+
+[resolve_ana_pixel_Ls_mksubgroup_using_saturatedflags.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_Ls_mksubgroup_using_saturatedflags.py) に、NEXT_INTERVAL を含む event ファイルを与える。
+
+
+``` bash:
+resolve_ana_pixel_Ls_mksubgroup_using_saturatedflags.py xa097093500rsl_a0pxpr_uf_fillprenext.evt TIME NEXT_INTERVAL -f "PIXEL==23"  -p 
+``` 
+
+pixel23に関して、TIMEを横軸、NEXT_INTERVAL が 100 以下のイベントが連続したかどうかでクラスタリング判定を行い、クラスタリング上限を満たしたイベントの中で、      
+
+``` bash:
+    parser.add_argument("--trigcol1name", type=str, default="LO_RES_PH", help="The colomn used for trrigger condition, default is LO_RES_PH > CLIPTHRES")
+    parser.add_argument("--trigcol2name", type=str, default="ITYPE", help="trigger column 2")
+    parser.add_argument("--trigcol3name", type=str, default="RISE_TIME", help="trigger column 3")
+    parser.add_argument("--trigcol4name", type=str, default="PHA", help="trigger column 4")
+```
+
+の4つのコラムの相関図を自動で生成する。
+
+``` bash:
+subset_xa097093500rsl_a0pxpr_uf_fillprenext_PIXEL23.png
+comptcols_subset_xa097093500rsl_a0pxpr_uf_fillprenext_PIXEL23.png
+comp_subset_xa097093500rsl_a0pxpr_uf_fillprenext_PIXEL23.png
+```
+
+`subset_xa097093500rsl_a0pxpr_uf_fillprenext_PIXEL23.png` は、grouping を行い、
+
+- grouping に適合した event を、TIME vs. PREV_INTERVAL で表示
+- grouping の長さ
+- grouping に適合した NEXT_INTERVAL のヒストグラムの生成
+
+の図を生成する。
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh
+
+は全pixelに対して、`resolve_ana_pixel_Ls_mksubgroup_using_saturatedflags.py evtfile LO_RES_PH NEXT_INTERVAL` を一気に行う。
+
+``` bash: 
+resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh xa097093500rsl_a0pxpr_uf_fillprenext.evt
+``` 
+
+
+
 ## uf.evt と pr.evt に prev/next interval をつけて、cl.gti でカットする方法
 
 uf.evt, pr.evt, cl.evt の3つが同じディレクトリにある状態、例えば、
@@ -168,8 +214,12 @@ resolve_util_screen_20240508.sh xa300049010rsl_a0pxpr_uf_fillprenext_cutclgti.fi
 # 生波形
 resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits
 # boxcar後の微分波形
-resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --prevflag 
+resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --deriv
+# prev_interval を表示する(波形の数が少ない時のみ使う)
+resolve_ana_pixel_pr_plot.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_itype_all_slope_b01_quick_b01_pixel_all.fits --prevflag
 ``` 
+
+
 
 ## 微分波形 pr.evt の 6x6 のプロット方法 + quick double で step を変更して確認する方法
 

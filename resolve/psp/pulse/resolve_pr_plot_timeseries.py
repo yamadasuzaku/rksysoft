@@ -94,7 +94,7 @@ def get_itype_str(itype):
     itype_dict = {-1: 'all', 0: 'Hp', 1: 'Mp', 2: 'Ms', 3: 'Lp', 4: 'Ls', 5: 'BL', 6: 'EL', 7: '--'}
     return itype_dict.get(itype, 'unknown')
 
-def plot_fits(fname, pixel_list, itype_list, target_pulserec_mode, plot_flag, color_auto):
+def plot_fits(fname, pixel_list, itype_list, target_pulserec_mode, plot_flag, color_auto, offset1 = 10, offset2 = 10):
     """
     Process a FITS file and generate plots for the given pixels and itypes.
     If pixel_list is None, plot all pixels without filtering by pixel.
@@ -163,10 +163,10 @@ def plot_fits(fname, pixel_list, itype_list, target_pulserec_mode, plot_flag, co
                 print(i, onertime, oneitype, onepixel, onetrigtime)
                 color = icolor[oneitype] if not color_auto else None
                 if onepha == onelo or oneitype < 3:
-                    plt.errorbar(XADC_TIME + onertime, pulserec + 7 * onepixel + 10 * oneitype + 100 * i, fmt='-', color=color, alpha=0.6,
+                    plt.errorbar(XADC_TIME + onertime, pulserec + 7 * onepixel + offset1 * oneitype + offset2 * i, fmt='-', color=color, alpha=0.6,
                                  label=f"it={oneitype} nt={onent} lo={onelo} pha={onepha} der={onederivmax} rtime={onertime:.4f}")
                 else:
-                    plt.errorbar(XADC_TIME + onertime, pulserec + 7 * onepixel + 10 * oneitype + 100 * i, fmt='.-', color=color, alpha=0.8,
+                    plt.errorbar(XADC_TIME + onertime, pulserec + 7 * onepixel + offset1 * oneitype + offset2 * i, fmt='.-', color=color, alpha=0.8,
                                  label=f"[negative] it={oneitype} nt={onent} lo={onelo} pha={onepha} der={onederivmax} rtime={onertime:.4f}")
 
         plt.figtext(0.1, 0.9, f"{obsid} {target} {fname} All Pixels  pmode = {target_pulserec_mode}")
@@ -219,10 +219,10 @@ def plot_fits(fname, pixel_list, itype_list, target_pulserec_mode, plot_flag, co
                     print(i, onertime, oneitype, onepixel, onetrigtime)
                     color = icolor[oneitype] if not color_auto else None
                     if onepha == onelo or oneitype < 3:
-                        plt.errorbar(XADC_TIME + onertime, pulserec + 7 * target_pixel + 10 * oneitype + 100 * i, fmt='-', color=color, alpha=0.6,
+                        plt.errorbar(XADC_TIME + onertime, pulserec + 7 * target_pixel + offset1 * oneitype + offset2 * i, fmt='-', color=color, alpha=0.6,
                                      label=f"it={oneitype} nt={onent} lo={onelo} pha={onepha} der={onederivmax} rtime={onertime:.4f}")
                     else:
-                        plt.errorbar(XADC_TIME + onertime, pulserec + 7 * target_pixel + 10 * oneitype + 100 * i, fmt='.-', color=color, alpha=0.8,
+                        plt.errorbar(XADC_TIME + onertime, pulserec + 7 * target_pixel + offset1 * oneitype + offset2 * i, fmt='.-', color=color, alpha=0.8,
                                      label=f"[negative] it={oneitype} nt={onent} lo={onelo} pha={onepha} der={onederivmax} rtime={onertime:.4f}")
 
             plt.figtext(0.1, 0.9, f"{obsid} {target} {fname} PIXEL={target_pixel}  pmode = {target_pulserec_mode}")
@@ -237,101 +237,6 @@ def plot_fits(fname, pixel_list, itype_list, target_pulserec_mode, plot_flag, co
             if plot_flag:
                 plt.show()
 
-
-
-# def plot_fits(fname, pixel_list, itype_list, target_pulserec_mode, plot_flag, color_auto):
-#     """
-#     Process a FITS file and generate plots for the given pixels and itypes.
-
-#     Args:
-#     - fname (str): File name of the FITS file.
-#     - pixel_list (list): List of pixel numbers to plot.
-#     - itype_list (list): List of itype values to consider.
-#     - target_pulserec_mode (int): The pulserec_mode to filter by.
-#     - plot_flag (bool): Whether to display the plot interactively.
-#     - color_auto (bool): Whether to use automatic colors.
-#     """
-#     # Prepare output directory
-#     output_directory = fname.replace(".evt", "").replace(".gz", "") + "_plots"
-#     os.makedirs(output_directory, exist_ok=True)
-
-#     # Load FITS data
-#     hdu = astropy.io.fits.open(fname)[1]
-#     data = hdu.data
-#     date_obs, date_end = hdu.header['DATE-OBS'], hdu.header['DATE-END']
-#     obsid = hdu.header["OBS_ID"]
-#     target = hdu.header["OBJECT"]
-
-#     # Extract relevant columns
-#     time_array = data["TIME"]
-#     itype_array = data["ITYPE"]
-#     pixel_array = data["PIXEL"]
-#     pha_array = data["PHA"]
-#     lo_array = data["LO_RES_PH"]    
-#     derivmax_array = data["DERIV_MAX"]        
-#     nt_array = data["NEXT_INTERVAL"]
-#     trigtime_array = data["TRIGTIME"]
-#     pulserec_mode_array = data["PULSEREC_MODE"]
-#     pulserec_array = data["PULSEREC"]
-
-#     for target_pixel in pixel_list:
-#         print("------------------------------------")
-#         print(f"Processing target_pixel = {target_pixel}")
-
-#         plt.figure(figsize=(11, 8))
-#         plt.subplots_adjust(right=0.6)  # make space for the legend
-
-#         t0 = time_array[0]
-#         trigtime0 = trigtime_array[0]
-
-#         event_count_per_itype = []
-#         for itype in itype_list:
-#             print(f"Processing itype = {itype}")
-#             itype_str = get_itype_str(itype)
-
-#             # Filter data by pixel, itype, and pulserec_mode
-#             filter_condition = (pixel_array == target_pixel) & (itype_array == itype) & (pulserec_mode_array == target_pulserec_mode)
-#             selected_indices = np.where(filter_condition)[0]
-
-#             selected_pulserec = pulserec_array[selected_indices]
-#             selected_times = time_array[selected_indices] - t0
-#             selected_trig_times = trigtime_array[selected_indices] - trigtime0
-#             selected_itype = itype_array[selected_indices]
-#             selected_pixel = pixel_array[selected_indices]
-#             selected_nt = nt_array[selected_indices]
-#             selected_lo = lo_array[selected_indices]
-#             selected_pha = pha_array[selected_indices]
-#             selected_derivmax = derivmax_array[selected_indices]
-
-#             event_count_per_itype.append(len(selected_times))
-
-
-#             for i, (pulserec, onertime, oneitype, onepixel, onetrigtime, onelo, onederivmax, onepha, onent) in enumerate(
-#                 zip(selected_pulserec, selected_times, selected_itype, selected_pixel, selected_trig_times, \
-#                     selected_lo, selected_derivmax, selected_pha, selected_nt
-#                     )):
-#                 print(i, onertime, oneitype, onepixel, onetrigtime)
-#                 color = icolor[oneitype] if not color_auto else None
-#                 if onepha == onelo or oneitype < 3:
-#                     plt.errorbar(XADC_TIME + onertime, pulserec + 7 * target_pixel + 10 * oneitype + 100 * i, fmt='-', color=color, alpha=0.6, \
-#                         label=f"it={oneitype} nt={onent} lo={onelo} pha={onepha} der={onederivmax} rtime={onertime:.4f}")
-#                 else:
-#                     plt.errorbar(XADC_TIME + onertime, pulserec + 7 * target_pixel + 10 * oneitype + 100 * i, fmt='.-', color=color, alpha=0.8, \
-#                         label=f"[negative] it={oneitype} nt={onent} lo={onelo} pha={onepha} der={onederivmax} rtime={onertime:.4f}")
-
-#         plt.figtext(0.1,0.9,f"{obsid} {target} {fname} PIXEL={target_pixel}  pmode = {target_pulserec_mode}")
-#         plt.figtext(0.1, 0.94, f"{date_obs} to {date_end}  # of events = {np.sum(event_count_per_itype)} ({','.join(map(str, event_count_per_itype))})")
-#         plt.ylabel('ADC (pulse) + offset')
-#         time0_datetime = compute_date_from_reference(time_array[0], REFERENCE_TIME)
-#         plt.xlabel(f'Time (s) from {time_array[0]} \n ({time0_datetime})')
-#         plt.grid(alpha=0.3, ls=':')
-#         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=8)
-#         plt.savefig(os.path.join(output_directory, f"{fname}_pixel{target_pixel:02d}_all.png"))
-
-#         if plot_flag:
-#             plt.show()
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Process FITS file and generate plots.")
     parser.add_argument("fname", type=str, help="File name to be processed.")
@@ -340,6 +245,8 @@ if __name__ == '__main__':
     parser.add_argument("--target_pulserec_mode", type=int, default=0, choices=[0, 1], help="Target pulserec_mode value.")
     parser.add_argument("--plot_flag", "-s", action="store_true", help="If set, will display plots.")
     parser.add_argument("--color_auto", "-c", action="store_true", help="If set, automatic color.")
+    parser.add_argument('--offset1', type=float, help='offset1 used for ITYPE', default=10)
+    parser.add_argument('--offset2', type=float, help='offset2 used for num pulse', default=100)
 
     args = parser.parse_args()
     itype_list = [int(itype) for itype in args.itypelist.split(',')]
@@ -349,4 +256,4 @@ if __name__ == '__main__':
     else:
         pixel_list = list(map(int, args.plotpixels.split(',')))
 
-    plot_fits(args.fname, pixel_list, itype_list, args.target_pulserec_mode, args.plot_flag, args.color_auto)
+    plot_fits(args.fname, pixel_list, itype_list, args.target_pulserec_mode, args.plot_flag, args.color_auto, offset1 = args.offset1, offset2 = args.offset2)
