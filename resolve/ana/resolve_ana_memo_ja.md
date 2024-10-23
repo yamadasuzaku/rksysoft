@@ -55,7 +55,20 @@ Example (2): plot spectral ratios from 2keV to 20 keV witn 400 eV bin, Hp only
 [resolve_ana_pixel_deltat_distribution.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_deltat_distribution.py) のコマンドを使用して、delta T 分布をチェックします：
 
 ```sh
-resolve_ana_pixel_deltat_distribution.py --fname xa000138000rsl_p0px1000_cl.evt
+resolve_ana_pixel_deltat_distribution.py xa000138000rsl_p0px1000_cl.evt
+```
+
+下記のように delta T 分布と、TIME vs. PHA のグラフが生成される。
+
+```
+deltaT_histogram_linear_linear_xa000109000rsl_p0px1000_cl_TIME.png
+deltaT_histogram_linear_linear_xa000109000rsl_p0px1000_cl_TIME_nearzero.png
+lightcurve_pha_all_PIXEL_Hp_xa000109000rsl_p0px1000_cl_TIME.png
+lightcurve_pha_all_PIXEL_Lp_xa000109000rsl_p0px1000_cl_TIME.png
+lightcurve_pha_all_PIXEL_Ls_xa000109000rsl_p0px1000_cl_TIME.png
+lightcurve_pha_all_PIXEL_Mp_xa000109000rsl_p0px1000_cl_TIME.png
+lightcurve_pha_all_PIXEL_Ms_xa000109000rsl_p0px1000_cl_TIME.png
+lightcurve_pha_all_PIXEL_all_types_xa000109000rsl_p0px1000_cl_TIME.png
 ```
 
 ## delta T vs risetime の分布のチェック
