@@ -10,11 +10,11 @@ check_file_exists() {
     done
 }
 
-# 引数のチェック (3つまたは4つを許可)
-if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+# 引数のチェック (3つから5つを許可)
+if [ $# -lt 3 ] || [ $# -gt 5 ]; then
     echo "[ERROR] Invalid number of arguments."
-    echo "Usage: $0 <ufevt> <minevent> <hkevent> [pixels]"
-    echo "Example: $0 xa300049010rsl_p0px5000_uf.evt 200 xa300049010rsl_a0.hk1 0,1,2,3"
+    echo "Usage: $0 <ufevt> <minevent> <hkevent> [maxdshift] [pixels]"
+    echo "Example: $0 xa300049010rsl_p0px5000_uf.evt 200 xa300049010rsl_a0.hk1 15 0,1,2,3 "
     exit 1
 fi
 
@@ -22,11 +22,13 @@ fi
 ufevt=$1
 minevent=$2
 hkevent=$3
-pixels=${4:-"0,17,18,35"}  # デフォルトは 0,17,18,35
+maxdshift=${4:-10}          # デフォルトは 10
+pixels=${5:-"0,17,18,35"}  # デフォルトは 0,17,18,35
 
-outghf="min${minevent}_${ufevt%.evt}.ghf"
-logfile="min${minevent}_${ufevt%.evt}.log"
-outdir=min${minevent}
+# 出力ファイル名とディレクトリ名を maxdshift を含めて作成
+outghf="min${minevent}_dshift${maxdshift}_${ufevt%.evt}.ghf"
+logfile="min${minevent}_dshift${maxdshift}_${ufevt%.evt}.log"
+outdir="min${minevent}_dshift${maxdshift}"
 
 # 不要なファイルの削除
 rm -f $outghf $logfile fe.gti
@@ -53,7 +55,7 @@ rslgain infile=${ufevt} outfile=${outghf} gainfile=./xa_rsl_gainpix_20190101v006
         broadening=1 gridprofile=no fitwidth=yes background=CONST spangti=no usemp=no \
         ckrisetime=yes ckclip=yes calcerr=yes writeerrfunc=yes ckant=yes ckctrec=yes ckctel=yes \
         ckctel2=no extrap=no avgwinrad=30 minwidth0=8 maxitcycle=5 r2tol=0.001 searchstepshift=2 \
-        maxdshift=10 bisectolshift=0.001 searchstepwidth=5 maxdwidth=10 bisectolwidth=0.001 \
+        maxdshift=${maxdshift} bisectolshift=0.001 searchstepwidth=5 maxdwidth=10 bisectolwidth=0.001 \
         minwidth=0.5 nerrshift=100 nerrwidth=100 shifterrfac=3 widtherrfac=4 buffer=-1 clobber=yes \
         chatter=2 logfile=${logfile} debug=no history=yes mode=hl
 
@@ -73,7 +75,7 @@ cd ${outdir}
 ln -fs ../${hkevent} .
 
 # GHFプロットスクリプトの実行
-resolve_ecal_plot_ghf_with_FWE.py  ${outghf} --hk1 ${hkevent}
+resolve_ecal_plot_ghf_with_FWE.py ${outghf} --hk1 ${hkevent}
 resolve_ecal_plot_ghf_detail.py ${outghf}
 resolve_ecal_plot_ghf_detail.py ${outghf} --pixels ${pixels} --detail
 
