@@ -458,6 +458,9 @@ python resolve_util_cut_eventfile.py mock_fits.evt --threshold 60000 --timewindo
 
 ## rslpipeline の使い方
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_run_rslpipeline.sh
+
+
 ``` bash
 resolve_util_run_rslpipeline.sh 300049010 20241023
 ```
