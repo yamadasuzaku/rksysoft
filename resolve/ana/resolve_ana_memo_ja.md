@@ -452,3 +452,17 @@ https://qiita.com/yamadasuzaku/items/08ab56fc8d5549089c78
 ``` bash:
 python resolve_util_cut_eventfile.py mock_fits.evt --threshold 60000 --timewindow 2
 ```
+
+
+# reprocess 関係
+
+## rslpipeline の使い方
+
+``` bash
+resolve_util_run_rslpipeline.sh 300049010 20241023
+```
+
+とすると、2024.10.23現在での pipepline のオプションでリプロセスを実行して、
+`repro_300049010_20241023` のようなディレクトリに生成物を全部生成し、`/cleanup_output` 以下に中間生成物を全て入れる(debug用です)。
+
+
