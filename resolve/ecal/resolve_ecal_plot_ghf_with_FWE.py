@@ -89,6 +89,7 @@ def parse_arguments():
     parser.add_argument('filename', help='The name of the FITS file to process.')
     parser.add_argument('--hk1', '-k', type=str, help='hk1file', default=None)
     parser.add_argument('--reverse_axes', '-r', action='store_false', help='Reverse x-axis to show only time instead of date and time')
+    parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
     return parser.parse_args()
 
 def open_fits_data(fname):
@@ -128,7 +129,7 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
         df.to_csv(csv_filename, index=False)
         print(f"Data for pixel {pixel_} saved to {csv_filename}")
 
-def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test"):
+def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test", show=False):
     fig, ax1 = plt.subplots(figsize=(11, 7))
     plt.subplots_adjust(right=0.85)  # make the right space bigger
 
@@ -185,7 +186,8 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
 
     ofname = f"fig_{outfname}"
     plt.savefig(ofname)
-    plt.show()
+    if show:
+        plt.show()
     print(f"..... {ofname} is created.")
 
 def main():
@@ -202,7 +204,7 @@ def main():
     # Save pixel data to CSV
     save_pixel_data_to_csv(pixel, time, temp_fit)
 
-    plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}")
+    plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}", show=args.show)
 
 if __name__ == "__main__":
     main()

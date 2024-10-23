@@ -119,14 +119,15 @@ def plot_ghf(ghf, dumpflag=False, plotflag=False, detailflag=False, selected_pix
                 valid_fitprof = fitprof[i][valid_indices]
                 ratio = np.abs(valid_spec / valid_fitprof)
 
-                fitinfo = fr"{time[i] - time[0]:0.1f}s, $\chi=${chisq[i]:0.1f} N={nevent[i]} Exp={exposure[i]:0.1f}"
+                fitinfo = fr"[{i}] {time[i] - time[0]:0.1f}s, $\chi=${chisq[i]:0.1f} N={nevent[i]} Exp={exposure[i]:0.1f}"
                 ax1.set_title(f"PIXEL{pixel:02d} time from {time[0]}")
                 ax1.errorbar(valid_binmesh, valid_spec + offset1 * i, color=color, yerr=np.sqrt(valid_spec), fmt=".", label=fitinfo, alpha=0.7)
                 ax1.plot(valid_binmesh, valid_fitprof + offset1 * i, "-", color=color, label=None, alpha=0.7)
                 ax1.set_ylabel('Intensity (counts/bin) + offset')
                 ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., handletextpad=0.5, labelspacing=0.5)
 
-                ax2.errorbar(valid_binmesh, ratio * (offset2 * (i + 1)), yerr=np.abs(np.sqrt(valid_spec) / valid_fitprof), fmt=".", color=color, label='SPECTRUM / FITPROF', alpha=0.7)
+                ax2.errorbar(valid_binmesh, ratio * (offset2 * (i + 1)), yerr=np.abs(np.sqrt(valid_spec) / valid_fitprof), \
+                                  fmt=".", color=color, label='SPECTRUM / FITPROF', alpha=0.7)
                 ax2.set_xlabel('BINMESH')
                 ax2.set_ylabel('Ratio + offset')
                 ax2.set_yscale('log')
