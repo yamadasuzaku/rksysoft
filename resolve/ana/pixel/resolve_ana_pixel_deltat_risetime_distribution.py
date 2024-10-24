@@ -3,6 +3,7 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams['font.family'] = 'serif'
 from astropy.time import Time
 import datetime
 import astropy.io.fits
@@ -16,7 +17,8 @@ typename = ["Hp", "Mp", "Ms", "Lp", "Ls"]
 icol = ["r","b","c", "m", "y"]
 ishape = [".","s","D", "*", "x"]
 
-def plot_dt_risetime(target_fname, dt, pha, rise_time, itype, xscale="linear", yscale="linear", bin_count=100000, range_min=1e-6, range_max=100, risetime_min = 0, risetime_max = 130, outfname="output.png", xlabel="TIME (sec) from the next event", PLOT_FLAG=True, TRIGTIME_FLAG=True):
+def plot_dt_risetime(target_fname, dt, pha, rise_time, itype, xscale="linear", yscale="linear", \
+                      bin_count=100000, range_min=1e-6, range_max=1, risetime_min = 0, risetime_max = 130, outfname="output.png", xlabel="TIME (sec) from the next event", PLOT_FLAG=True, TRIGTIME_FLAG=True):
     phacut = 1000
     mindt = 5e-6
     dt = dt + mindt 
@@ -32,7 +34,7 @@ def plot_dt_risetime(target_fname, dt, pha, rise_time, itype, xscale="linear", y
     plt.figtext(0.1, 0.95, "created from " + target_fname + " using all pixels")
     for i, one_typename in enumerate(typename):
         cut = (pha>phacut) & (itype == i)
-        plt.errorbar(dt[cut], rise_time[cut], alpha = 0.9, ms =3, \
+        plt.errorbar(dt[cut], rise_time[cut], alpha = 0.8, ms = 2, \
             fmt=ishape[i], color = icol[i], label=one_typename + " PHA>" + str(phacut) + " (N=" + str(len(dt[cut]))+ ")")
         plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left',ncol=3, borderaxespad=0.,fontsize=8)
 
@@ -49,7 +51,7 @@ def plot_dt_risetime(target_fname, dt, pha, rise_time, itype, xscale="linear", y
     plt.grid(alpha=0.8)
     for i, one_typename in enumerate(typename):
         cut = (pha<=phacut) & (itype == i)
-        plt.errorbar(dt[cut], rise_time[cut], alpha = 0.9, ms =3,\
+        plt.errorbar(dt[cut], rise_time[cut], alpha = 0.8, ms = 2,\
             fmt=ishape[i], color = icol[i], label=one_typename + " PHA<=" + str(phacut) + "(N=" + str(len(dt[cut]))+ ")")
     plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left',ncol=3, borderaxespad=0.,fontsize=8)
     
@@ -58,17 +60,109 @@ def plot_dt_risetime(target_fname, dt, pha, rise_time, itype, xscale="linear", y
 
     if PLOT_FLAG: plt.show()
 
-def plot_time_data(time, pha, range_min, range_max, outfname="output.png", PLOT_FLAG=True, TRIGTIME_FLAG=True):
+
+def plot_dt_pha(target_fname, dt, pha, rise_time, itype, xscale="linear", yscale="linear", \
+                 bin_count=100000, range_min=1e-6, range_max=1, risetime_min = 0, risetime_max = 130, \
+                 outfname="output.png", xlabel="TIME (sec) from the next event", PLOT_FLAG=True, TRIGTIME_FLAG=True):
+    phacut = 60000
+    mindt = 5e-6
+    dt = dt + mindt 
+    F = plt.figure(figsize=(10,8.))
+    plt.subplots_adjust(wspace=0.1, hspace=0.3)    
+    ax = plt.subplot(2,1,1)
+#    plt.ylim(risetime_min,risetime_max)
+    plt.xlim(range_min,range_max)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+    plt.ylabel("PHA")
+    plt.grid(alpha=0.8)
+    plt.figtext(0.1, 0.95, "created from " + target_fname + " using all pixels")
+    for i, one_typename in enumerate(typename):
+        cut = (pha>phacut) & (itype == i)
+        plt.errorbar(dt[cut], pha[cut], alpha = 0.8, ms = 2, \
+            fmt=ishape[i], color = icol[i], label=one_typename + " PHA>" + str(phacut) + " (N=" + str(len(dt[cut]))+ ")")
+        plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left',ncol=3, borderaxespad=0.,fontsize=8)
+
+    ax = plt.subplot(2,1,2)
+#    plt.ylim(risetime_min,risetime_max)
+    plt.xlim(range_min,range_max)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+    if TRIGTIME_FLAG:
+        plt.xlabel(r"TRIGTIME + 5 $\mu$s as an offset (sec) from the next event")
+    else:
+        plt.xlabel(xlabel)
+    plt.ylabel("PHA")
+    plt.grid(alpha=0.8)
+    for i, one_typename in enumerate(typename):
+        cut = (pha<=phacut) & (itype == i)
+        plt.errorbar(dt[cut], pha[cut], alpha = 0.8, ms = 2,\
+            fmt=ishape[i], color = icol[i], label=one_typename + " PHA<=" + str(phacut) + "(N=" + str(len(dt[cut]))+ ")")
+    plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left',ncol=3, borderaxespad=0.,fontsize=8)
+    
+    plt.savefig(outfname)
+    print("..... "  + outfname + " is created.")
+
+    if PLOT_FLAG: plt.show()
+
+
+
+def plot_pha_risetime(target_fname, dt, pha, rise_time, itype, xscale="linear", yscale="linear", \
+                          bin_count=100000, range_min=1e-6, range_max=100, risetime_min = 0, risetime_max = 130, \
+                          outfname="output.png", xlabel="PHA", PLOT_FLAG=True, TRIGTIME_FLAG=True):
+    tcut =  0.0020 # 2ms 
+    dtcut = 0.0002 # 2ms+/-0.2
+    F = plt.figure(figsize=(10,8.))
+    plt.subplots_adjust(wspace=0.1, hspace=0.3)    
+    ax = plt.subplot(2,1,1)
+#    plt.ylim(risetime_min,risetime_max)
+#    plt.xlim(range_min,range_max)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+    plt.ylabel("RISE_TIME")
+    plt.grid(alpha=0.8)
+    plt.figtext(0.1, 0.95, "created from " + target_fname + " using all pixels")
+    for i, one_typename in enumerate(typename):
+        cut = ( dt > tcut - dtcut ) & ( dt < tcut + dtcut ) & (itype == i)
+        plt.errorbar(pha[cut], rise_time[cut], alpha = 0.5, ms = 2, \
+            fmt=ishape[i], color = icol[i], label=f"{one_typename} delta T = {tcut}+/-{dtcut} (s) (N={len(dt[cut])})")
+        plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left',ncol=3, borderaxespad=0.,fontsize=8)
+
+    ax = plt.subplot(2,1,2)
+#    plt.ylim(risetime_min,risetime_max)
+#    plt.xlim(range_min,range_max)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+
+    plt.xlabel(xlabel)
+    plt.ylabel("RISE_TIME")
+    plt.grid(alpha=0.8)
+    for i, one_typename in enumerate(typename):
+        cut = (( dt <= tcut - dtcut ) | ( dt >= tcut + dtcut )) & (itype == i)
+        plt.errorbar(pha[cut], rise_time[cut], alpha = 0.5, ms= 2 ,\
+            fmt=ishape[i], color = icol[i], label=f"{one_typename} delta T != {tcut}+/-{dtcut} (s) (N={len(dt[cut])})")
+    plt.legend(bbox_to_anchor=(0., 1.01, 1., 0.01), loc='lower left',ncol=3, borderaxespad=0.,fontsize=8)
+    
+    plt.savefig(outfname)
+    print("..... "  + outfname + " is created.")
+
+    if PLOT_FLAG: plt.show()
+
+
+def plot_time_data(time, data, range_min=None, range_max=None, outfname="output.png", PLOT_FLAG=True, TRIGTIME_FLAG=True, ylabel="PHA"):
     dtime = [reference_time.datetime + datetime.timedelta(seconds=float(date_sec)) for date_sec in time]
     fig = plt.figure(figsize=(12, 6))
     plt.grid(alpha=0.8)
     plt.figtext(0.1, 0.95, outfname)
-    plt.errorbar(dtime, pha, fmt=".", ms=1)
+    plt.errorbar(dtime, data, fmt=".", ms=1)
+    if not range_min == None:
+        plt.ylim(range_min,range_max)
+
     if TRIGTIME_FLAG:
         plt.xlabel("TRIGTIME from " + str(dtime[0]))
     else:
         plt.xlabel("TIME from " + str(dtime[0]))
-    plt.ylabel("PHA")
+    plt.ylabel(ylabel)
     plt.savefig(outfname)
     print("..... "  + outfname + " is created.")
     if PLOT_FLAG: plt.show()
@@ -112,13 +206,26 @@ def main(target_fname, xscale, yscale, PLOT_FLAG, TRIGTIME_FLAG):
     
     outfname_dt = f"deltaT_risetime_{xscale}_{yscale}_" + fname_tag + trigtime_suffix + ".png"
     plot_dt_risetime(target_fname, dt, pha, rise_time, itype, xscale=xscale, yscale=yscale, outfname=outfname_dt, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG)
+
+    outfname_dt = f"deltaT_pha_wide_{xscale}_{yscale}_" + fname_tag + trigtime_suffix + ".png"
+    plot_dt_pha(target_fname, dt, pha, rise_time, itype, xscale=xscale, yscale=yscale, outfname=outfname_dt, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG)
+
+    outfname_dt = f"deltaT_pha_narrow_{xscale}_{yscale}_" + fname_tag + trigtime_suffix + ".png"
+    plot_dt_pha(target_fname, dt, pha, rise_time, itype, range_min=0, range_max=0.020, xscale=xscale, yscale=yscale, outfname=outfname_dt, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG)
+
+    outfname_dt = f"pha_risetime_{xscale}_{yscale}_" + fname_tag + trigtime_suffix + ".png"
+    plot_pha_risetime(target_fname, dt, pha, rise_time, itype, xscale=xscale, yscale=yscale, outfname=outfname_dt, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG)
     
-    outfname_time_data = "lightcurve_all_PIXEL_all_types_" + fname_tag + trigtime_suffix + ".png"
-    plot_time_data(time, pha, 0, 70000, outfname=outfname_time_data, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG)
+    outfname_time_data = "lightcurve_dt_all_PIXEL_all_types_" + fname_tag + trigtime_suffix + ".png"
+    plot_time_data(time, dt, range_min=-0.001, range_max=0.010, outfname=outfname_time_data, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG, ylabel="Time to the next event (s)")
+
+    outfname_time_data = "lightcurve_rt_all_PIXEL_all_types_" + fname_tag + trigtime_suffix + ".png"
+    plot_time_data(time, rise_time, outfname=outfname_time_data, PLOT_FLAG=PLOT_FLAG, TRIGTIME_FLAG=TRIGTIME_FLAG, ylabel="RISE_TIME")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some pixel data')
-    parser.add_argument('--fname', type=str, required=True, help='Target fits file name')
+    parser.add_argument('fname', help='Target fits file name')
     parser.add_argument('--xscale', type=str, choices=['log', 'linear'], default='linear', help='X-axis scale: log or linear')
     parser.add_argument('--yscale', type=str, choices=['log', 'linear'], default='linear', help='Y-axis scale: log or linear')
     parser.add_argument('--plot', action='store_true', default=False, help='Flag to display plot')

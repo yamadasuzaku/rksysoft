@@ -4,16 +4,25 @@ import glob
 import os
 import shutil
 from datetime import datetime
+import sys
 
 def generate_html_for_pngs(obsid, output_dir):
     # ディレクトリを作成
     os.makedirs(output_dir, exist_ok=True)
     
     # OBSIDディレクトリ以下のPNGファイルを収集
+    # PNGファイルの取得と生成時刻でソート
     png_files = glob.glob(os.path.join(f"./{obsid}", "**", "*.png"), recursive=True)
-    
+    png_files = sorted(png_files, key=os.path.getctime)
+    # パス全体に "check" が含まれるものだけをフィルタリング
+    png_files = [f for f in png_files if "check" in f]
+
+    if len(png_files) == 0:
+        print("[ERROR] No png files are found", png_files)
+        sys.exit()
+
     # 出力HTMLファイルのパスを作成
-    output_html = os.path.join(output_dir, f"QLhtml_{obsid}.html")
+    output_html = os.path.join(output_dir, f"A_QL_html_{obsid}.html")
 
     # 現在の日付を秒まで取得
     current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
@@ -75,7 +84,7 @@ def generate_html_for_pngs(obsid, output_dir):
 def main():
     parser = argparse.ArgumentParser(description="Generate HTML for PNG files")
     parser.add_argument('obsid', help='OBSID to define the directory name')
-    parser.add_argument('--output-dir', default='QLhtml', help='Output directory (default: QLhtml)')
+    parser.add_argument('--output-dir', default='A_QL_html', help='Output directory (default: QLhtml)')
     
     args = parser.parse_args()
     

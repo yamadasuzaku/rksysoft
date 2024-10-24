@@ -73,11 +73,24 @@ lightcurve_pha_all_PIXEL_all_types_xa000109000rsl_p0px1000_cl_TIME.png
 
 ## delta T vs risetime の分布のチェック
 
+ここでの delta T は、全pixelを使った deltaT なので、pixel 毎ではないことに注意。frame event のような多画素同時イベントの解析が主目的です。
+(pixel毎はPREV/NEXT_INTERVALを使うことにする。)
+
 [resolve_ana_pixel_deltat_risetime_distribution.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_deltat_risetime_distribution.py) のコマンドを使用して、delta T vs risetime の分布をチェックします：
 
 ```sh
 resolve_ana_pixel_deltat_risetime_distribution.py --fname xa000138000rsl_p0px1000_cl.evt
 ```
+
+``` bash:
+..... deltaT_risetime_linear_linear_xa000114000rsl_p0px1000_cl_TIME.png is created.
+..... deltaT_pha_wide_linear_linear_xa000114000rsl_p0px1000_cl_TIME.png is created.
+..... deltaT_pha_narrow_linear_linear_xa000114000rsl_p0px1000_cl_TIME.png is created.
+..... pha_risetime_linear_linear_xa000114000rsl_p0px1000_cl_TIME.png is created.
+..... lightcurve_dt_all_PIXEL_all_types_xa000114000rsl_p0px1000_cl_TIME.png is created.
+..... lightcurve_rt_all_PIXEL_all_types_xa000114000rsl_p0px1000_cl_TIME.png is created.
+``` 
+
 
 ## pixel 毎、grade 毎のカウント数のチェック
 

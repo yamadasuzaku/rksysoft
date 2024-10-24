@@ -31,8 +31,8 @@ def parse_args():
       description='Resolve calibration run. ',
       epilog='''
         Example 
-       (1) ND filter   : resolve_autorun_docal.py 300049010 --fwe ND -b 20 -l 2000 -x 9000 --progflags 0,0,1
-       (2) Open filter : resolve_autorun_docal.py 000109000          -b 20 -l 2000 -x 9000 --progflags 1,0,1
+       (1) ND filter   : resolve_autorun_docal.py 300049010 --fwe ND -b 20 -l 2000 -x 9000 --progflags 0,0,1,1
+       (2) Open filter : resolve_autorun_docal.py 000109000          -b 20 -l 2000 -x 9000 --progflags 1,0,1,1
       ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument('obsid', help='OBSID')
@@ -131,7 +131,10 @@ def main():
     procdic = {
         "qlmklc": bool(flag_values[0]),
         "qlmkspec": bool(flag_values[1]),
-        "spec6x6": bool(flag_values[2])
+        "spec6x6": bool(flag_values[2]),
+        "deltat": bool(flag_values[3]),
+        "deltat-rt-pha": bool(flag_values[4]),
+        "detxdety": bool(flag_values[5])                                          
     }
     print(f"procdic = {procdic}")    
     
@@ -179,8 +182,34 @@ def main():
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
-        
+
+    if procdic["deltat"]:
+        runprog="resolve_ana_pixel_deltat_distribution.py"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
+        arguments=f"{clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_deltat", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+    if procdic["deltat-rt-pha"]:
+        runprog="resolve_ana_pixel_deltat_risetime_distribution.py"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
+        arguments=f"{clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_deltat-rt-pha", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+    if procdic["detxdety"]:
+        runprog="/resolve_plot_detxdety.py"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
+        arguments=f"{clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        arguments=f"{clevt}  -min 60000 -max 65537"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        arguments=f"{clevt}  -min 0 -max 59999"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
     if genhtml:
+        print("..... create html file")
         runprog="resolve_autorun_png2html.py"                
         check_program_in_path(runprog)
         subprocess.run([runprog] + [obsid], check=True)
