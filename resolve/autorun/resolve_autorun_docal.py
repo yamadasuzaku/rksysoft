@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import argparse
 import time
+import sys
 
 topdir = os.getcwd()
 
@@ -81,6 +82,11 @@ def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
     check_program_in_path(runprog)
     
     gotodir = os.path.join(topdir, gdir)
+    # ディレクトリが存在するか確認
+    if not os.path.exists(gotodir):
+        print(f"Error: The directory '{gotodir}' does not exist.", file=sys.stderr)
+        sys.exit(1)  # エラーステータス1で終了
+    print(f"'{gotodir}' exists. Proceeding with the script.")
 
     # Change to the processing directory
     os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
@@ -198,7 +204,7 @@ def main():
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if procdic["detxdety"]:
-        runprog="/resolve_plot_detxdety.py"        
+        runprog="resolve_plot_detxdety.py"        
         print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        

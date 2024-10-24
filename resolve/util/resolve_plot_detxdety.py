@@ -24,7 +24,7 @@ pixel_fromdetxdety = [
     [ 5,  3,  1, 27, 29, 30]
 ]
 
-def plot_data(counts, pixel_fromdetxdety, fname, date_obs, itype, pha_range, show=False):
+def plot_data(counts, pixel_fromdetxdety, fname, date_obs, itype, pha_range, show=False, exposure=0.):
     """
     データをプロットする関数
     """
@@ -41,6 +41,13 @@ def plot_data(counts, pixel_fromdetxdety, fname, date_obs, itype, pha_range, sho
     fig, axs = plt.subplots(1, 2, figsize=(10, 4))
     filtermemo = f"PHA{pha_range[0]}-{pha_range[1]}" if pha_range else "no PHA cut"
     fig.suptitle(f"{fname} DATE: {date_obs} TYPE=" + str(typename[itype]) + " (" + filtermemo + ")" + f" #={total}",fontsize=10)
+
+    if exposure > 0:
+        fig.suptitle(f"{fname} DATE: {date_obs} TYPE=" + str(typename[itype]) + " (" + filtermemo + ")" + f" #={total}" + "\n"  + \
+                                  f"rate={total/exposure:0.2e} c/s (exp={exposure}s)",fontsize=10)
+    else:
+        fig.suptitle(f"{fname} DATE: {date_obs} TYPE=" + str(typename[itype]) + " (" + filtermemo + ")" + f" #={total}",fontsize=10)
+
 
     for ax, norm in zip(axs, [LogNorm(vmin=1, vmax=counts.max()), None]):
         pcm = ax.pcolormesh(xbins, ybins, counts.T, norm=norm, cmap="plasma")
@@ -81,6 +88,7 @@ def main():
     # FITSファイルを開く
     with astropy.io.fits.open(args.filename) as fits:
         date_obs = fits[1].header["DATE-OBS"]
+        exposure = fits[1].header["EXPOSURE"]
         data = fits[1].data
 
         times, pixel, detx, dety, pha, itype = (
@@ -106,7 +114,7 @@ def main():
                     if args.debug:
                         print(one_detx-1, one_detx, one_dety, one_pixel, one_count)
 
-            plot_data(counts, pixel_fromdetxdety, args.filename, date_obs, oneitype, pha_range, show=args.show)
+            plot_data(counts, pixel_fromdetxdety, args.filename, date_obs, oneitype, pha_range, show=args.show, exposure=exposure)
 
 if __name__ == "__main__":
     main()

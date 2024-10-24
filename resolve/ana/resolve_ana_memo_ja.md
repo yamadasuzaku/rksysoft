@@ -103,10 +103,16 @@ resolve_util_check_pixelrate.sh xa000138000rsl_p0px1000_cl.evt
 
 ## grade 毎の pixel map を生成します。
 
-[resolve_plot_detxdety_v1_alltypes.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_plot_detxdety_v1_alltypes.py) を利用して、カウント数が map の上に表示されます。
+[resolve_plot_detxdety.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_plot_detxdety.py) を利用して、カウント数が map の上に表示されます。
 
 ``` sh:
-resolve_plot_detxdety_v1_alltypes.py xa300049010rsl_p0px3000_cl.evt
+resolve_plot_detxdety.py xa300049010rsl_p0px3000_cl.evt
+```
+
+PHA のカットをかけられるようになっています。
+
+``` sh:
+resolve_plot_detxdety.py xa300049010rsl_p0px3000_cl.evt -min 60000 -max 65537
 ```
 
 # cal用のツール
