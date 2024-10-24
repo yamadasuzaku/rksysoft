@@ -7,9 +7,13 @@ if [ $# -eq 0 ]; then
 fi
 
 input_file=$1
-
-base_name=$(basename "$input_file" .evt)
 base_top=$(basename "$input_file" _uf.evt)
+
+echo "Running resolve_util_ftselect.sh to remove BL"
+resolve_util_ftselect.sh ${input_file} "ITYPE<5" noBL
+echo "Completed: resolve_util_ftselect.sh to remove BL"
+
+base_name=$(basename "$input_file" .evt)_noBL
 
 echo "Running resolve_tool_addcol_prev_next_interval.py..."
 resolve_tool_addcol_prev_next_interval.py "${base_name}.evt" -o "${base_name}_prevnext.evt"

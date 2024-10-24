@@ -13,6 +13,6 @@ for i in `seq 0 35`
 do
 echo ".............. start"  
 echo PIXEL = $i 
-resolve_ana_pixel_Ls_mksubgroup.py $input_file TIME PREV_INTERVAL -f "PIXEL==${i}"
+resolve_ana_pixel_Ls_mksubgroup.py $input_file TIME NEXT_INTERVAL -f "PIXEL==${i}"
 echo ".............. finish"  
 done

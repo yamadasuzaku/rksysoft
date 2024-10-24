@@ -133,7 +133,7 @@ resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py xa000102000rsl_p0px1000_cl
 cl.evt と uf.evt の２つが同じディレクトリにある状態、例えば、
 
 - xa300049010rsl_p0px3000_cl.evt
-- xa300049010rsl_p0px3000_cl.evt
+- xa300049010rsl_p0px3000_uf.evt
 
 の２つのファイルがある状態で、
 
@@ -500,4 +500,14 @@ resolve_util_run_rslpipeline.sh 300049010 20241023
 とすると、2024.10.23現在での pipepline のオプションでリプロセスを実行して、
 `repro_300049010_20241023` のようなディレクトリに生成物を全部生成し、`/cleanup_output` 以下に中間生成物を全て入れる(debug用です)。
 
+
+# utility 関係
+
+## ftselect 
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_ftselect.sh
+
+``` bash
+resolve_util_ftselect.sh xa000114000rsl_p0px1000_uf_prevnext_cutclgti.fits "ITYPE==0" itype0
+```
 
