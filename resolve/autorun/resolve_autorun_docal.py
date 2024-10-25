@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument('obsid', help='OBSID')
     # カンマ区切りの数値列を受け取る
     parser.add_argument('--progflags', type=str, help='Comma-separated flags for qlmklc, qlmkspec, spec6x6 (e.g. 0,1,0)')
+    parser.add_argument('--calflags', type=str, help='Comma-separated flags for cal operations (e.g. 0,1,0)')
     
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
@@ -122,6 +123,8 @@ def main():
     args, fwe_value = parse_args()
 
     progflags = args.progflags
+    calflags = args.calflags
+
     obsid = args.obsid
     timebinsize=args.timebinsize
     fwe = args.fwe
@@ -133,6 +136,8 @@ def main():
 
     # カンマで分割して、数値に変換
     flag_values = [int(x) for x in progflags.split(',')]
+    cal_values = [int(x) for x in calflags.split(',')]
+
     # 数値列をTrue/Falseに変換し、flagが1の時だけ実行
     procdic = {
         "qlmklc": bool(flag_values[0]),
@@ -140,12 +145,23 @@ def main():
         "spec6x6": bool(flag_values[2]),
         "deltat": bool(flag_values[3]),
         "deltat-rt-pha": bool(flag_values[4]),
-        "detxdety": bool(flag_values[5])                                          
+        "detxdety": bool(flag_values[5]),
+        "detxdety": bool(flag_values[5]),
     }
     print(f"procdic = {procdic}")    
+
+    caldic = {
+        "lsdist": bool(cal_values[0]),
+        "lsdetail": bool(cal_values[1]),
+        "specratio6x6": bool(cal_values[2]),        
+    }
+    print(f"caldic = {caldic}")    
+
     
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    
+    ufname = f"xa{obsid}rsl_p0px{fwe_value}_uf"
+    ufevt = f"{ufname}.evt"
 
     if procdic["qlmklc"]:
         runprog="resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py"        
@@ -212,6 +228,28 @@ def main():
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
         arguments=f"{clevt}  -min 0 -max 59999"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+    if caldic["lsdist"]:
+        runprog="resolve_ana_run_addprevnext_Lscheck.sh"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
+        arguments=f"{ufevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_lsdist", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+    if caldic["lsdetail"]:
+        runprog="resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")     
+        ufclgtievt=f"{ufname}_noBL_prevnext_cutclgti.evt"   
+        arguments=f"{ufclgtievt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_lsdetail", linkfiles=[f"../{ufclgtievt}"], gdir=f"{obsid}/resolve/event_uf/checkcal_lsdist")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+    if caldic["specratio6x6"]:
+        runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")     
+        arguments=f"{clevt} -r -y 0 -l 2000 -x 12000 -b 250 -c -g"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_specratio6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if genhtml:

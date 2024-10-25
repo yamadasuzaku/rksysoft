@@ -28,7 +28,7 @@ resolve_util_ftselect.sh "${base_name}_prevnext.evt" "gtifilter(\"${base_top}_cl
 echo "Completed: resolve_util_ftselect.sh"
 
 echo "Running resolve_run_ana_pixel_Ls_mksubgroup.sh..."
-resolve_run_ana_pixel_Ls_mksubgroup.sh "${base_name}_prevnext_cutclgti.fits"
+resolve_run_ana_pixel_Ls_mksubgroup.sh "${base_name}_prevnext_cutclgti.evt"
 echo "Completed: resolve_run_ana_pixel_Ls_mksubgroup.sh"
 
 echo "All tasks completed."
