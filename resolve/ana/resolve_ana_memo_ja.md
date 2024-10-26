@@ -2,6 +2,32 @@
 
 必要なプログラムに `PATH` が通っていることを前提にした書き方をしています。`PATH` を通さずに使う場合は、`chmod +x` で実行権限を与えてからの `./プログラム` で実行ください。ただし、`.sh` については `python` のプログラムへの `PATH` が通ってることが前提の書き方をしています。
 
+- PATH の設定方法
+
+rksysoft の場所を `RESOLVETOOLS` の環境変数にセットして、下記を `.bashrc` や `.zshrc` に書いておくと、resolve, xtend 関係のプログラムに PATH が通ります。これが設定されている状態で動作させることを想定しています。
+
+
+``` bash 
+# add for resolve tool                                                                                                          
+export RESOLVETOOLS=/Users/syamada/work/software/mytool/gitsoft/rksysoft
+# RESOLVETOOLS/resolve以下のすべてのディレクトリをPATHに追加                                                                    
+for dir in $(find "$RESOLVETOOLS/resolve" -type d); do
+  PATH="$dir:$PATH"
+done
+export PATH
+
+# RESOLVETOOLS/xtend以下のすべてのディレクトリをPATHに追加                                                                      
+for dir in $(find "$RESOLVETOOLS/xtend" -type d); do
+  PATH="$dir:$PATH"
+done
+export PATH
+```
+
+- ファイルの初期状態
+
+現時点では、ファイルは、gunzip してあるファイルをみることを前提としています。
+
+
 ## ライトカーブの作り方
 
 [resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py) のコマンドを使用して、ライトカーブを作成します：

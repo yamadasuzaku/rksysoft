@@ -146,7 +146,7 @@ def main():
         "deltat": bool(flag_values[3]),
         "deltat-rt-pha": bool(flag_values[4]),
         "detxdety": bool(flag_values[5]),
-        "detxdety": bool(flag_values[5]),
+        "temptrend": bool(flag_values[6]),
     }
     print(f"procdic = {procdic}")    
 
@@ -162,6 +162,7 @@ def main():
     clevt = f"{clname}.evt"    
     ufname = f"xa{obsid}rsl_p0px{fwe_value}_uf"
     ufevt = f"{ufname}.evt"
+    rsla0hk1 = f"xa{obsid}rsl_a0.hk1"
 
     if procdic["qlmklc"]:
         runprog="resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py"        
@@ -229,6 +230,14 @@ def main():
         arguments=f"{clevt}  -min 0 -max 59999"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
         print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+    if procdic["temptrend"]:
+        runprog="resolve_hk_plot_temptrend.sh"
+        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
+        arguments=f"{rsla0hk1}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_temptrend", linkfiles=[f"../{rsla0hk1}"], gdir=f"{obsid}/resolve/hk/")        
+        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
 
     if caldic["lsdist"]:
         runprog="resolve_ana_run_addprevnext_Lscheck.sh"        
