@@ -233,6 +233,9 @@ def main():
         runprog="resolve_ecal_plot_ghf_detail.py"
         arguments=f"{ghf}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotghf", linkfiles=[f"../{ghf}"], gdir=f"{obsid}/resolve/event_uf/")        
+        runprog="resolve_ecal_plot_ghf_with_FWE.py"
+        arguments=f"{ghf} --hk1 {rsla0hk1}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotghf", linkfiles=[f"../{ghf}",f"../../hk/{rsla0hk1}"], gdir=f"{obsid}/resolve/event_uf/")        
 
 ################### calibration ###################################################################
 
