@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 import sys
 
-def generate_html_for_pngs(obsid, output_dir):
+def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0"):
     # ディレクトリを作成
     os.makedirs(output_dir, exist_ok=True)
     
@@ -15,24 +15,24 @@ def generate_html_for_pngs(obsid, output_dir):
     png_files = glob.glob(os.path.join(f"./{obsid}", "**", "*.png"), recursive=True)
     png_files = sorted(png_files, key=os.path.getctime)
     # パス全体に "check" が含まれるものだけをフィルタリング
-    png_files = [f for f in png_files if "check" in f]
+    png_files = [f for f in png_files if keyword in f]
 
     if len(png_files) == 0:
         print("[ERROR] No png files are found", png_files)
         sys.exit()
 
     # 出力HTMLファイルのパスを作成
-    output_html = os.path.join(output_dir, f"A_QL_html_{obsid}.html")
+    output_html = os.path.join(output_dir, f"A_QL_html_{obsid}_{keyword}{ver}.html")
 
     # 現在の日付を秒まで取得
-    current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
+    current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     # HTMLのヘッダー部分を作成
     # HTMLのヘッダー部分を作成
     html_content = f"""
     <html>
     <head>
-        <title>XRISM QL : OBSID={obsid} - {current_date}</title>
+        <title>XRISM QL : OBSID={obsid} - {current_date} ({keyword} {ver})</title>
         <style>
             body {{
                 font-family: Arial, sans-serif;
@@ -45,8 +45,8 @@ def generate_html_for_pngs(obsid, output_dir):
         </style>
     </head>
     <body>
-    <h1>XRISM QL : OBSID={obsid}</h1>
-    <p>Generated on {current_date}</p>
+    <h1>XRISM QL : OBSID={obsid} </h1>
+    <p>Generated on {current_date} ({keyword} {ver})</p>
     """
     
     # PNGファイルをコピーして、HTMLに埋め込む
@@ -85,11 +85,13 @@ def main():
     parser = argparse.ArgumentParser(description="Generate HTML for PNG files")
     parser.add_argument('obsid', help='OBSID to define the directory name')
     parser.add_argument('--output-dir', default='A_QL_html', help='Output directory (default: QLhtml)')
-    
+    parser.add_argument('--keyword', default='A_QL_html', help='keyword for png (default: check_)')
+    parser.add_argument('--ver', default='A_QL_html', help='version (default: v0)')
+
     args = parser.parse_args()
     
     # HTMLファイルを生成
-    generate_html_for_pngs(args.obsid, args.output_dir + "_" + args.obsid)
+    generate_html_for_pngs(args.obsid, args.output_dir + "_" + args.obsid, keyword = args.keyword, ver=args.ver)
 
 if __name__ == "__main__":
     main()

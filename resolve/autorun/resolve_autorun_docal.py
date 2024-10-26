@@ -77,6 +77,8 @@ def parse_args():
 
 def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
           subdir="check_lc", linkfiles=["cl.evt"], timebinsize=100, use_flist=False, gdir=f"000108000/resolve/event_cl/"):
+
+    print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
     # Define directory and file names based on obsid and other parameters
 
     # check if runprog exist in PATH
@@ -114,12 +116,13 @@ def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
         print(f"Error occurred: {e}")
 
     os.chdir(topdir)
-                
+
+    print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
 # メイン関数
 def main():
-    """
-    スクリプトを実行するメイン関数。
-    """
+
+################### setting for arguments ###################################################################
     args, fwe_value = parse_args()
 
     progflags = args.progflags
@@ -147,6 +150,7 @@ def main():
         "deltat-rt-pha": bool(flag_values[4]),
         "detxdety": bool(flag_values[5]),
         "temptrend": bool(flag_values[6]),
+        "plotghf": bool(flag_values[7]),        
     }
     print(f"procdic = {procdic}")    
 
@@ -157,26 +161,27 @@ def main():
     }
     print(f"caldic = {caldic}")    
 
+################### setting for input files ###################################################################
     
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    
     ufname = f"xa{obsid}rsl_p0px{fwe_value}_uf"
     ufevt = f"{ufname}.evt"
     rsla0hk1 = f"xa{obsid}rsl_a0.hk1"
+    ghf = f"xa{obsid}rsl_000_fe55.ghf"
+
+################### standard process ###################################################################
 
     if procdic["qlmklc"]:
         runprog="resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         if args.show:
             arguments=f"{clevt} --timebinsize {timebinsize} -d"
         else:
             arguments=f"{clevt} --timebinsize {timebinsize}"        
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmklc", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if procdic["qlmkspec"]:
         runprog="resolve_ana_pixel_ql_plotspec.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         if args.show:
             arguments=f"{clevt} --rebin {bin_width} --emin {ene_min} --emax {ene_max} -d"
         else:
@@ -186,14 +191,10 @@ def main():
 
         # Fe check
         arguments=f"{clevt} --rebin 4 --emin 6100 --emax 7100"
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
-        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
-
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
     if procdic["spec6x6"]:
         runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         if args.show:
             arguments=f"{clevt} -l {ene_min} -x {ene_max} -b {bin_width} -c -p"
         else:
@@ -204,68 +205,61 @@ def main():
         arguments=f"{clevt} -l 6100 -x 7100 -b 4 -c"        
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
-
     if procdic["deltat"]:
         runprog="resolve_ana_pixel_deltat_distribution.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_deltat", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if procdic["deltat-rt-pha"]:
         runprog="resolve_ana_pixel_deltat_risetime_distribution.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_deltat-rt-pha", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if procdic["detxdety"]:
         runprog="resolve_plot_detxdety.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
         arguments=f"{clevt}  -min 60000 -max 65537"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
         arguments=f"{clevt}  -min 0 -max 59999"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if procdic["temptrend"]:
         runprog="resolve_hk_plot_temptrend.sh"
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         arguments=f"{rsla0hk1}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_temptrend", linkfiles=[f"../{rsla0hk1}"], gdir=f"{obsid}/resolve/hk/")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
+    if procdic["plotghf"]:
+        runprog="resolve_ecal_plot_ghf_detail.py"
+        arguments=f"{ghf}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotghf", linkfiles=[f"../{ghf}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+################### calibration ###################################################################
 
     if caldic["lsdist"]:
         runprog="resolve_ana_run_addprevnext_Lscheck.sh"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
         arguments=f"{ufevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_lsdist", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if caldic["lsdetail"]:
         runprog="resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")     
         ufclgtievt=f"{ufname}_noBL_prevnext_cutclgti.evt"   
         arguments=f"{ufclgtievt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_lsdetail", linkfiles=[f"../{ufclgtievt}"], gdir=f"{obsid}/resolve/event_uf/checkcal_lsdist")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
 
     if caldic["specratio6x6"]:
         runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
-        print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")     
         arguments=f"{clevt} -r -y 0 -l 2000 -x 12000 -b 250 -c -g"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_specratio6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
-        print(f"[END:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<\n")
+
+################### create HTML ###################################################################
 
     if genhtml:
         print("..... create html file")
         runprog="resolve_autorun_png2html.py"                
         check_program_in_path(runprog)
-        subprocess.run([runprog] + [obsid], check=True)
+        subprocess.run([runprog] + [obsid] + ["--keyword"] + ["check_"] + ["--ver"] +  ["v0"], check=True)
+        subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkcal_"] + ["--ver"] +  ["v0"], check=True)
                         
 if __name__ == "__main__":
     main()
