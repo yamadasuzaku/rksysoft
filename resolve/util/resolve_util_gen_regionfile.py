@@ -15,7 +15,7 @@ pixel_fromdetxdety = [
     [ 5,  3,  1, 27, 29, 30]
 ]
 
-def generate_region_file(pixels: str):
+def generate_region_file(pixels: str, name: str):
     pixel_list = [int(p) for p in pixels.split(",")]
     box_lines = []
 
@@ -25,7 +25,7 @@ def generate_region_file(pixels: str):
             if pixel in pixel_list:
                 box_lines.append(f"+box({one_detx},{one_dety},1,1)")
 
-    filename = f"region_{''.join(f'{p:02d}' for p in pixel_list)}.reg"
+    filename = f"{name}.reg"
 
     with open(filename, 'w') as fout:
         fout.write("physical\n")
@@ -66,8 +66,8 @@ def main():
         description="Generate DS9 region files and plot them using matplotlib.",
         epilog=(
             "Examples:\n"
-            "  resolve_util_gen_regionfile.py 0,17,18,35\n"
-            "  resolve_util_gen_regionfile.py 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34\n"
+            "  resolve_util_gen_regionfile.py 0,17,18,35 inner\n"
+            "  resolve_util_gen_regionfile.py 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34 outer\n"
             "Use --show to display the plot in a GUI window."
         ),
         formatter_class=argparse.RawTextHelpFormatter
@@ -76,11 +76,14 @@ def main():
         "pixels", type=str, help="Comma-separated list of pixel numbers (e.g., '0,17,18,35')."
     )
     parser.add_argument(
+        "name", type=str, help="Short name for the output files (e.g., 'inner')."
+    )    
+    parser.add_argument(
         "--show", "-s", action="store_true", help="Display the plot in a GUI window."
     )
 
     args = parser.parse_args()
-    region_file = generate_region_file(args.pixels)
+    region_file = generate_region_file(args.pixels, args.name)
     parse_and_plot_region_file(region_file, args.show)
 
 if __name__ == "__main__":
