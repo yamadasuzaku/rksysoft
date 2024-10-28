@@ -173,7 +173,12 @@ EOF
         if args.clobber == "no" and os.path.exists(arf_file):
             print(color_text(f"Skipping: {arf_file} already exists.", "yellow"))
         else:        
-            xaarfgen_cmd = f'xaarfgen xrtevtfile=raytrace_ptsrc_{typename}.fits source_ra={ra_source} source_dec={dec_source} ' \
+            xrtevtfile="raytrace_pointsource.fits" # this should be used for any types, any pixels. 
+            if os.path.exists(xrtevtfile):
+                print(color_text(f"Skip raytracing: {xrtevtfile} is used instead of creating a new one.", "yellow"))
+            else:
+                print(color_text(f"Do raytracing: {xrtevtfile} is created", "yellow"))                                
+            xaarfgen_cmd = f'xaarfgen xrtevtfile={xrtevtfile} source_ra={ra_source} source_dec={dec_source} ' \
                            f'telescop=XRISM instrume=RESOLVE emapfile={expomap} regmode=DET regionfile={args.regfile} sourcetype=POINT ' \
                            f'rmffile={rmf_file} erange="0.3 18.0 0 0" outfile={arf_file} numphoton=300000 minphoton=100 teldeffile=CALDB ' \
                            f'qefile=CALDB contamifile=CALDB obffile=CALDB fwfile=CALDB gatevalvefile=CALDB onaxisffile=CALDB onaxiscfile=CALDB ' \
@@ -200,6 +205,10 @@ EOF
         EOF
         """
         run_shell_script(grppha_script, f"run_grppha_{typename}.sh")
-        
+
+        check_command_exists("resolve_spec_rebin_30_10.sh")
+        subprocess.run(f"resolve_spec_rebin_30_10.sh rsl_source_{typename}.pha rsl_source_{typename}_r3010.pha", shell=True, check=True)
+
+
 if __name__ == "__main__":
     main()

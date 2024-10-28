@@ -200,6 +200,7 @@ def main():
 
     anadic = {
         "genpharmfarf": bool(ana_values[0]),
+        "qlfit": bool(ana_values[1]),        
     }
     print(f"anadic = {anadic}")    
 
@@ -358,6 +359,19 @@ def main():
         runprog="resolve_auto_gen_phaarfrmf.py"        
         arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} -g {gmin}" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+    if anadic["qlfit"]:
+        runprog="resolve_spec_qlfit.py"        
+        phafile="rsl_source_Hp_r3010.pha"
+        rmffile="rsl_source_Hp.rmf"
+        arffile="rsl_source_Hp.arf"
+
+        arguments=f"{phafile}" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
+        arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
 
 ################### create HTML ###################################################################
 
