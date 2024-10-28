@@ -340,6 +340,16 @@ resolve_util_fplot.py $input_file TIME 7,6,6,6,6 XBOXA_TEMP3_CAL,HE_TANK2,JT_SHL
 
 ## fplot の使い方
 
+条件分岐の方法については、下記の記事を参考にしてください。
+
+- PythonでFITSファイルを効率的にフィルタリングする方法（不等号条件にも対応）
+
+https://qiita.com/yamadasuzaku/items/a4a4343698d90ab6ff20
+
+- numpy.isin でデータを一気にフィルタリングする方法
+
+https://qiita.com/yamadasuzaku/items/03310c063a1675abab25
+
 - NEXT/PREV_INTERVAL の確認の例
 
 ``` bash:

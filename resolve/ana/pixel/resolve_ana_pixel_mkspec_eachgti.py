@@ -52,6 +52,7 @@ def parse_arguments():
     parser.add_argument('--plotpixels', '-p', type=str, help='Comma-separated list of pixels to plot', default=','.join(map(str, range(36))))
     parser.add_argument('--specoffset', '-t', action='store_true', help='Offset for the spectrum')    
     parser.add_argument('--specoffsetval', '-v', type=float, default=0.001, help='Offset value for the spectrum')    
+    parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
 
     return parser.parse_args()
 
@@ -81,14 +82,14 @@ def process_data(data, TRIGTIME_FLAG=False, AC_FLAG=False):
 
 def plot_pi(pi, itype, pixel, time, gtistart, gtistop, emin=0, emax=20000, ymin=None, ymax=None, rebin=10,
             outfname="mkpi.png", title="test", brcor=False, itypenames=[0], mgti=3,
-            plotpixels=[0], specoffset=True, specoffsetval=0.001):
+            plotpixels=[0], specoffset=True, specoffsetval=0.001, show=False):
     """Plot the PI spectrum."""
     pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
     ene_rebin = 0.5 * rebin  # dE = 0.5 * dPI
     binnum = int((pimax - pimin) / rebin)
     
     for itype_ in itypenames:
-        plt.figure(figsize=(11, 9))
+        plt.figure(figsize=(10, 8))
         plt.subplots_adjust(right=0.8)  # make the right space bigger
         plt.xscale("linear")
         plt.ylabel(f"Counts/{ene_rebin:.1f}eV/s")
@@ -162,10 +163,11 @@ def plot_pi(pi, itype, pixel, time, gtistart, gtistop, emin=0, emax=20000, ymin=
         if ymin is not None and ymax is not None:
             plt.ylim(ymin, ymax)
         outfname_with_pixels = f"{outfname.split('.')[0]}_{'-'.join(map(str, plotpixels))}.png"
-        ofname = f"fig_{g_typename[itype_]}_{outfname_with_pixels}"
+        ofname = f"fig_{g_typename[itype_]}_emin{emin}_emax{emax}_{outfname_with_pixels}"
         plt.tight_layout()
         plt.savefig(ofname)
-        plt.show()
+        if show:
+            plt.show()
         print(f"..... {ofname} is created.")
 
 def main():
@@ -186,7 +188,8 @@ def main():
             outfname=outfname, 
             title=f"Spectra of {args.filename}",
             itypenames=itypenames, plotpixels=plotpixels, mgti=args.mgti, 
-            specoffset=args.specoffset, specoffsetval=args.specoffsetval)
+            specoffset=args.specoffset, specoffsetval=args.specoffsetval, 
+            show=args.show)
 
 if __name__ == "__main__":
     main()

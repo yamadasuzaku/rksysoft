@@ -61,7 +61,7 @@ def fast_lc(tstart, tstop, binsize, x):
 
 
 def plot_fits_data(gtifiles, evtfiles, title, outfname, \
-                      plotflag = False, markers = "o", debug=True, markersize = 1, timebinsize = 100., usetime = False, lcfmt=".", lccol=None):
+                      plotflag = False, markers = "o", debug=False, markersize = 1, timebinsize = 100., usetime = False, lcfmt=".", lccol=None):
 
     # GTI データを格納する辞書
     gtidic = {}
@@ -163,8 +163,8 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
                         lcindex += 1
 
 
-    fig, axs = plt.subplots(1, 1, figsize=(12, 7))
-    plt.subplots_adjust(right=0.7)  # make the right space bigger
+    fig, axs = plt.subplots(1, 1, figsize=(13, 7))
+    plt.subplots_adjust(right=0.60)  # make the right space bigger
     colors = plt.cm.viridis(np.linspace(0, 1, index))    
 
     # 凡例用のリストを初期化
@@ -190,10 +190,10 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
 
         if usetime:
             for s,e in zip(data['start'], data['stop']):
-                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
+                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8, lw=1 + 0.1 * idx)
         else:
             for s,e in zip(sdate, edate):
-                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8)
+                axs.plot([s, e], [yval,yval], marker='o', ms=2, color=colors[idx],alpha=0.8, lw=1 + 0.1 * idx)
 
         shortfname = os.path.basename(data['file_name'])
         # 凡例要素を追加
@@ -205,14 +205,15 @@ def plot_fits_data(gtifiles, evtfiles, title, outfname, \
         colors = plt.cm.viridis(np.linspace(0, 1, lcindex))    
         ax2 = axs.twinx()  # Create a second y-axis
         for idx, data in lcdic.items():
-            print(f"Index: {idx}, File: {data['file_name']}, datetime: {data['datetime']}, y_lc: {data['y_lc']}, y_err: {data['y_err']}")
+            if debug: 
+                print(f"Index: {idx}, File: {data['file_name']}, datetime: {data['datetime']}, y_lc: {data['y_lc']}, y_err: {data['y_err']}")
             shortfname = os.path.basename(data['file_name'])
             if lccol is not None:
                 ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt=lcfmt, ms=2, color=lccol, label=shortfname)
             else:
                 ax2.errorbar(data['datetime'], data['y_lc'], yerr=data['y_err'], fmt=lcfmt, ms=2, color=colors[idx], label=shortfname)
         # 凡例をプロット
-        ax2.legend(bbox_to_anchor=(1.05, 0.5), loc='upper left', borderaxespad=0., fontsize=6)
+        ax2.legend(bbox_to_anchor=(1.08, 0.25), loc='upper left', borderaxespad=0., fontsize=6)
         ax2.set_ylabel(f"c/s (binsize={timebinsize}s), ITYPE < 5")
 
     objset = set(objlist)

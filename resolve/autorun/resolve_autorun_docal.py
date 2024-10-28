@@ -9,6 +9,10 @@ import sys
 
 topdir = os.getcwd()
 
+def write_to_file(filename, content):
+    with open(filename, 'w') as f:
+        f.write(content + '\n')
+
 def check_program_in_path(program_name):
     # $PATH内でプログラムを探す
     program_path = shutil.which(program_name)
@@ -39,8 +43,8 @@ def parse_args():
     parser.add_argument('obsid', help='OBSID')
     # カンマ区切りの数値列を受け取る
     parser.add_argument('--progflags', type=str, help='Comma-separated flags for qlmklc, qlmkspec, spec6x6 (e.g. 0,1,0)')
-    parser.add_argument('--calflags', type=str, help='Comma-separated flags for cal operations (e.g. 0,1,0)')
-    
+    parser.add_argument('--calflags', type=str, help='Comma-separated flags for cal operations (e.g. 0,1,0)')    
+    parser.add_argument('--anaflags', type=str, help='Comma-separated flags for ana operations (e.g. 1,0,0)')    
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
     parser.add_argument('--plotpixels', '-p', type=str, help='プロットするピクセルのカンマ区切りリスト', default=','.join(map(str, range(36))))
@@ -95,8 +99,17 @@ def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
     os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
     os.chdir(os.path.join(gotodir, subdir))
 
+
+
     # Create symbolic links for the necessary files
     for fname in linkfiles:
+
+        link_fname = os.path.basename(fname)
+        # 既存のリンクがある場合は削除
+        if os.path.islink(link_fname):
+            os.remove(link_fname)
+            print(f"Removed existing link: {link_fname}")
+
         try:
             os.symlink(fname, os.path.basename(fname))
         except FileExistsError:
@@ -127,6 +140,7 @@ def main():
 
     progflags = args.progflags
     calflags = args.calflags
+    anaflags = args.anaflags
 
     obsid = args.obsid
     timebinsize=args.timebinsize
@@ -136,10 +150,29 @@ def main():
     ene_min = args.ene_min
     ene_max = args.ene_max
     genhtml = args.genhtml
+    itypenames = list(map(int, args.itypenames.split(',')))
+    plotpixels = list(map(int, args.plotpixels.split(',')))
 
     # カンマで分割して、数値に変換
+    # ユーザーの入力をパースし、整数に変換
+    progflags = progflags or ""
     flag_values = [int(x) for x in progflags.split(',')]
+    # 12個未満の場合は、0 で埋める
+    if len(flag_values) < 12:
+        flag_values += [0] * (12 - len(flag_values))    
+
+    calflags = calflags or ""
     cal_values = [int(x) for x in calflags.split(',')]
+    # 3個未満の場合は、0 で埋める
+    if len(flag_values) < 3:
+        flag_values += [0] * (3 - len(flag_values))    
+
+    anaflags = anaflags or ""
+    ana_values = [int(x) for x in anaflags.split(',')]
+    # 1個未満の場合は、0 で埋める
+    if len(ana_values) < 1:
+        ana_values += [0] * (1 - len(flag_values))    
+
 
     # 数値列をTrue/Falseに変換し、flagが1の時だけ実行
     procdic = {
@@ -151,6 +184,10 @@ def main():
         "detxdety": bool(flag_values[5]),
         "temptrend": bool(flag_values[6]),
         "plotghf": bool(flag_values[7]),        
+        "plotgti": bool(flag_values[8]),        
+        "spec-eachgti": bool(flag_values[9]),                
+        "lc-eachgti": bool(flag_values[10]),                        
+        "mkbratio": bool(flag_values[11]),
     }
     print(f"procdic = {procdic}")    
 
@@ -161,15 +198,26 @@ def main():
     }
     print(f"caldic = {caldic}")    
 
+    anadic = {
+        "genpharmfarf": bool(ana_values[0]),
+    }
+    print(f"anadic = {anadic}")    
+
 ################### setting for input files ###################################################################
-    
+
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    
     ufname = f"xa{obsid}rsl_p0px{fwe_value}_uf"
     ufevt = f"{ufname}.evt"
     rsla0hk1 = f"xa{obsid}rsl_a0.hk1"
     ghf = f"xa{obsid}rsl_000_fe55.ghf"
-
+    telgti = f"xa{obsid}rsl_tel.gti"
+    uf50evt = f"xa{obsid}rsl_p0px5000_uf.evt"
+    cl50evt = f"xa{obsid}rsl_p0px5000_cl.evt"
+    ufacevt = f"xa{obsid}rsl_a0ac_uf.evt"
+    elgti= f"xa{obsid}rsl_el.gti"
+    expgti = f"xa{obsid}rsl_px{fwe_value}_exp.gti"
+    ehk = f"xa{obsid}.ehk"
 ################### standard process ###################################################################
 
     if procdic["qlmklc"]:
@@ -237,6 +285,54 @@ def main():
         arguments=f"{ghf} --hk1 {rsla0hk1}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotghf", linkfiles=[f"../{ghf}",f"../../hk/{rsla0hk1}"], gdir=f"{obsid}/resolve/event_uf/")        
 
+    if procdic["plotgti"]:
+        runprog="resolve_util_gtiplot.py"
+
+        arguments=f"{uf50evt},{ufacevt} -p -e {uf50evt},{ufacevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{uf50evt}",f"../{ufacevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+        arguments=f"{uf50evt} -e {cl50evt},{uf50evt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{uf50evt}",f"../../event_cl/{cl50evt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+        arguments=f"{telgti},{ufevt} -e {clevt},{ufevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{ufevt}",f"../{telgti}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+        arguments=f"{clevt},{uf50evt} -e {clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{uf50evt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+        arguments=f"{clevt},{elgti} -e {ufacevt} -c r -l -" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{ufacevt}",f"../{elgti}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+    if procdic["spec-eachgti"]:
+        runprog="resolve_ana_pixel_mkspec_eachgti.py"
+
+        arguments=f"{clevt} -i 6000 -x 9000 -y 0 -m 5 -r 5 -t -v 0.002" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec-eachgti", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+        arguments=f"{clevt} -i 2000 -x 10000 -y 0 -m 5 -r 10 -t -v 0.002" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec-eachgti", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+        arguments=f"{clevt} -i 3000 -x 5000 -y 0 -m 5 -r 10 -t -v 0.002" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec-eachgti", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+    if procdic["lc-eachgti"]:
+        runprog="resolve_ana_pixel_mklc_branch.py"
+        gotodir = f"{obsid}/resolve/event_cl/"
+        subdir = "check_lc-eachgti"
+        arguments=f"f.list -l -u -y 0 -p 0,17,18,35 -t 256 -o p0_17_18_35" 
+        os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
+        write_to_file(f"{gotodir}/{subdir}/f.list", clevt)
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir=subdir, linkfiles=[f"../{clevt}"], gdir=gotodir)        
+
+    if procdic["mkbratio"]:
+        runprog="resolve_ana_pixel_mklc_branch.py"
+        gotodir = f"{obsid}/resolve/event_cl/"
+        subdir = "check_mkbratio"
+        arguments=f"f.list -g -u -t 256" 
+        os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
+        write_to_file(f"{gotodir}/{subdir}/f.list", clevt)
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir=subdir, linkfiles=[f"../{clevt}"], gdir=gotodir)        
+
 ################### calibration ###################################################################
 
     if caldic["lsdist"]:
@@ -255,6 +351,14 @@ def main():
         arguments=f"{clevt} -r -y 0 -l 2000 -x 12000 -b 250 -c -g"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_specratio6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
+
+################### analysis ###################################################################
+
+    if anadic["genpharmfarf"]:
+        runprog="resolve_auto_gen_phaarfrmf.py"        
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti}" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+
 ################### create HTML ###################################################################
 
     if genhtml:
@@ -263,6 +367,7 @@ def main():
         check_program_in_path(runprog)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["check_"] + ["--ver"] +  ["v0"], check=True)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkcal_"] + ["--ver"] +  ["v0"], check=True)
+        subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkana_"] + ["--ver"] +  ["v0"], check=True)
                         
 if __name__ == "__main__":
     main()

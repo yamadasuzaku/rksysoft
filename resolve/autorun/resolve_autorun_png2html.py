@@ -18,7 +18,7 @@ def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0"):
     png_files = [f for f in png_files if keyword in f]
 
     if len(png_files) == 0:
-        print("[ERROR] No png files are found", png_files)
+        print(f"[Finish] No png files are found", png_files)
         sys.exit()
 
     # 出力HTMLファイルのパスを作成
