@@ -357,7 +357,15 @@ def main():
 
     if anadic["genpharmfarf"]:
         runprog="resolve_auto_gen_phaarfrmf.py"        
-        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} -g {gmin}" 
+
+        # all pixel 
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        # centeral 4 pixels 
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname inner --pixels 0,17,18,35" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        # outer 31 pixels
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname outer --pixels 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
 
     if anadic["qlfit"]:

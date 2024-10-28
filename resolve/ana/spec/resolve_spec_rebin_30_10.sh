@@ -7,8 +7,12 @@ fi
 
 infile=$1
 outfile=$2
+
+echo "...... start resolve_spec_rebin_30_10.sh"
+
 rm -f $outfile
-grppha << EOF
+rm -f grppha_rebin_30_10.log
+grppha chatter=1 > grppha_rebin_30_10.log  << EOF
 $infile
 $outfile
 group            0            9           10
@@ -6526,3 +6530,5 @@ group        60000        60005            3
 exit
 quit
 EOF
+
+echo "...... end resolve_spec_rebin_30_10.sh, outfile = " $outfile
