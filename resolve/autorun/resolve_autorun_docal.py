@@ -288,7 +288,7 @@ def main():
     if procdic["plotgti"]:
         runprog="resolve_util_gtiplot.py"
 
-        arguments=f"{uf50evt},{ufacevt} -p -e {uf50evt},{ufacevt}"
+        arguments=f"{uf50evt},{ufacevt} -e {uf50evt},{ufacevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{uf50evt}",f"../{ufacevt}"], gdir=f"{obsid}/resolve/event_uf/")        
 
         arguments=f"{uf50evt} -e {cl50evt},{uf50evt}"
