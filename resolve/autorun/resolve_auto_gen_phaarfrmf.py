@@ -47,7 +47,7 @@ def run_shell_script(script_content, script_name):
         script_file.write(script_content)
     os.chmod(script_name, 0o755)
     subprocess.run(f"./{script_name}", shell=True)
-    os.remove(script_name)
+#    os.remove(script_name)
 
 def main():
     parser = argparse.ArgumentParser(description="")
