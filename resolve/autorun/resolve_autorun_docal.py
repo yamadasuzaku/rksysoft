@@ -55,11 +55,11 @@ def parse_args():
     parser.add_argument('--ene_min', '-l', type=float, default=6300, help='Minimum energy')
     parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
     parser.add_argument('--genhtml', '-html', action='store_false', help='stop generate html')
+    parser.add_argument('--gmin', type=int, help='grppha min value', default=30)
 
     # Define the fwe option with choices OPEN or ND
     parser.add_argument('--fwe', choices=['OPEN', 'ND'], default="OPEN", help='Choose OPEN for 1000 or ND for 3000')
     args = parser.parse_args()
-    
     # Set fwe based on the chosen option
     if args.fwe == 'OPEN':
         fwe_value = 1000
@@ -152,6 +152,7 @@ def main():
     genhtml = args.genhtml
     itypenames = list(map(int, args.itypenames.split(',')))
     plotpixels = list(map(int, args.plotpixels.split(',')))
+    gmin = args.gmin    
 
     # カンマで分割して、数値に変換
     # ユーザーの入力をパースし、整数に変換
@@ -172,7 +173,6 @@ def main():
     # 1個未満の場合は、0 で埋める
     if len(ana_values) < 1:
         ana_values += [0] * (1 - len(flag_values))    
-
 
     # 数値列をTrue/Falseに変換し、flagが1の時だけ実行
     procdic = {
@@ -356,7 +356,7 @@ def main():
 
     if anadic["genpharmfarf"]:
         runprog="resolve_auto_gen_phaarfrmf.py"        
-        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti}" 
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} -g {gmin}" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
 
 ################### create HTML ###################################################################

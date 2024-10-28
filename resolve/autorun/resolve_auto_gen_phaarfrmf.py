@@ -68,10 +68,11 @@ def main():
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト (e.g., -y 0,1)', default='0')
     parser.add_argument('--clobber', '-c', choices=["yes", "no"], default="no", 
                     help='Flag to skip if the output exists (yes or no)')
+    parser.add_argument('--gmin', '-g', type=int, help='grppha min value', default=30)
 
     args = parser.parse_args()
     itypenames = list(map(int, args.itypenames.split(',')))
-
+    gmin = args.gmin
     # 自動生成された region ファイルを確認・生成
     if not os.path.exists(args.regfile):
         print(color_text(f"Generating region file: {args.regfile}", "green"))
@@ -184,25 +185,21 @@ EOF
         print(color_text(f"Stage 6: Updating header keywords for {typename}", "blue"))
         subprocess.run(f"fparkey {rmf_file} rsl_source_{typename}.pha RESPFILE", shell=True, check=True)
         subprocess.run(f"fparkey {arf_file} rsl_source_{typename}.pha ANCRFILE", shell=True, check=True)
-        subprocess.run(f"mv rsl_source_{typename}.pha rsl_source_{typename}_v0.pha", shell=True, check=True)
+#        subprocess.run(f"mv rsl_source_{typename}.pha rsl_source_{typename}_v0.pha", shell=True, check=True)
 
         # grppha commands
         print(color_text(f"Stage 7: Running grppha for {typename}", "blue"))
         grppha_script = f"""
         #!/bin/sh
-        rm -rf rsl_source_{typename}_v1.pha
+        rm -rf rsl_source_{typename}_gmin{gmin}.pha
         grppha <<EOF
-        rsl_source_{typename}_v0.pha
-        rsl_source_{typename}_v1.pha
-        group min 30
+        rsl_source_{typename}.pha
+        rsl_source_{typename}_gmin{gmin}.pha
+        group min {gmin}
         exit
         EOF
         """
         run_shell_script(grppha_script, f"run_grppha_{typename}.sh")
         
-if __name__ == "__main__":
-    main()
-
-
 if __name__ == "__main__":
     main()

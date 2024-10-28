@@ -44,7 +44,10 @@ def main():
     parser.add_argument("--pix_gti_file", default="xa300049010rsl_px3000_exp.gti", help="Path to the pixel GTI file")
     parser.add_argument("--bad_pixel_image_file", default="NONE", help="Path to the bad pixel image file")
     parser.add_argument("--flickering_pixel_file", default="NONE", help="Path to the flickering pixel file")
+    parser.add_argument('--clobber', '-c', default="yes", help='Flag to skip when the output already exist (yes or no)')
+
     args = parser.parse_args()
+    clobber=args.clobber
 
     # Check if necessary files and commands exist
     check_file_exists(args.eventfile)
@@ -115,13 +118,13 @@ EOF
         print(color_text(f"Stage 3: Creating RMF file for {typename}", "blue"))
         rmf_file = f"rsl_source_{typename}.rmf"
         rslmkrmf_cmd = f'rslmkrmf infile=rsl_source_{typename}.evt outfileroot=rsl_source_{typename} resolist={itypelist[n]} ' \
-                       f'regmode=DET regionfile={args.regfile} clobber=yes logfile="rslmkrmf_{typename}.log"'
+                       f'regmode=DET regionfile={args.regfile} clobber={clobber} logfile="rslmkrmf_{typename}.log"'
         subprocess.run(rslmkrmf_cmd, shell=True, check=True)
 
         # xaexpmap command
         print(color_text(f"Stage 4: Creating exposure map for {typename}", "blue"))
         expomap = "rsl_cl_evt.expo"
-        xaexpmap_cmd = f'xaexpmap ehkfile={args.ehkfile} gtifile=rsl_source_{typename}.evt instrume=RESOLVE badimgfile={args.bad_pixel_image_file} ' \
+        xaexpmap_cmd = f'xaexpmap ehkfile={args.ehkfile} gtifile=rsl_source_{typename}.evt instrume=RESOLVE badimgfile=None ' \
                        f'pixgtifile={args.pix_gti_file} outfile={expomap} outmaptype=EXPOSURE delta=20.0 numphi=1 stopsys=SKY instmap=CALDB ' \
                        f'qefile=CALDB contamifile=CALDB vigfile=CALDB obffile=CALDB fwfile=CALDB gvfile=CALDB maskcalsrc=yes ' \
                        f'fwtype=FILE specmode=MONO specfile=spec.fits specform=FITS evperchan=DEFAULT abund=1 cols=0 covfac=1 clobber=yes ' \
