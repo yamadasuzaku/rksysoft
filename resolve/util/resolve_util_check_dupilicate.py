@@ -31,20 +31,21 @@ def load_fits_data(fits_file):
     print("Data successfully loaded.")
     return df
 
-def find_duplicates(df):
+def find_duplicates_by_pixel(df):
     """
-    Identify rows where the 'TIME' column contains duplicate values.
+    Identify duplicate 'TIME' rows within each 'PIXEL' group.
     
     Parameters:
     - df (DataFrame): A DataFrame containing event data.
     
     Returns:
-    - DataFrame: A DataFrame with only the duplicated rows based on 'TIME'.
+    - DataFrame: A DataFrame with duplicated rows based on 'TIME' within each 'PIXEL' group.
     """
-    print("Checking for duplicate rows based on the 'TIME' column...")
-    duplicate_times = df[df.duplicated('TIME', keep=False)]  # Keep all duplicates
-    print(f"Found {len(duplicate_times)} duplicated rows." if not duplicate_times.empty else "No duplicates found.")
-    return duplicate_times
+    print("Checking for duplicate rows based on the 'TIME' column within each 'PIXEL' group...")
+    # Find duplicates within each PIXEL group
+    duplicate_df = df.groupby('PIXEL').apply(lambda x: x[x.duplicated('TIME', keep=False)]).reset_index(drop=True)
+    print(f"Found {len(duplicate_df)} duplicated rows." if not duplicate_df.empty else "No duplicates found.")
+    return duplicate_df
 
 def save_fits_from_dataframe(df, output_file):
     """
@@ -68,15 +69,20 @@ def save_fits_from_dataframe(df, output_file):
 
 def analyze_duplicates(duplicate_df):
     """
-    Analyze the distribution of the 'ITYPE' column within the duplicated rows.
+    Analyze the distribution of the 'ITYPE' column within the duplicated rows,
+    grouped by 'PIXEL'.
     
     Parameters:
     - duplicate_df (DataFrame): A DataFrame containing the duplicated rows.
     """
-    print("Analyzing the distribution of 'ITYPE' values in duplicated rows...")
-    distribution = duplicate_df.groupby('ITYPE').size()
-    print("ITYPE distribution in duplicated rows:")
-    print(distribution)
+    print("Analyzing the distribution of 'ITYPE' values in duplicated rows by PIXEL...")
+
+    # Group by 'PIXEL' and calculate the distribution of 'ITYPE' within each group
+    grouped_distribution = duplicate_df.groupby('PIXEL')['ITYPE'].value_counts()
+
+    for pixel, distribution in grouped_distribution.groupby(level=0):
+        print(f"\nPIXEL {pixel}:")
+        print(distribution)
 
 def main(fits_file, output_file):
     """
@@ -93,8 +99,8 @@ def main(fits_file, output_file):
     # Load data from the FITS file
     df = load_fits_data(fits_file)
 
-    # Find duplicate rows based on 'TIME'
-    duplicate_df = find_duplicates(df)
+    # Find duplicate rows within each PIXEL group based on 'TIME'
+    duplicate_df = find_duplicates_by_pixel(df)
 
     if not duplicate_df.empty:
         # Analyze the distribution of 'ITYPE' values in the duplicated rows
@@ -107,7 +113,7 @@ def main(fits_file, output_file):
 
 if __name__ == '__main__':
     # Set up argument parser to handle command-line arguments
-    parser = argparse.ArgumentParser(description='Find and analyze duplicate rows in a FITS file.')
+    parser = argparse.ArgumentParser(description='Find and analyze duplicate rows in a FITS file by PIXEL group.')
     parser.add_argument('fits_file', help='Path to the input FITS file')
     parser.add_argument('output_file', help='Path to save the duplicated rows as a FITS file')
     args = parser.parse_args()
