@@ -568,6 +568,7 @@ resolve_util_stat_status_itype_fast.py xa300049010rsl_p0px5000_uf.evt
 
 - 高速化をしたバージョン
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_stat_status_itype_fast.py
 
 
 ```
