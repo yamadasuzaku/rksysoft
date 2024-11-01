@@ -127,6 +127,15 @@ resolve_ana_pixel_deltat_risetime_distribution.py --fname xa000138000rsl_p0px100
 resolve_util_check_pixelrate.sh xa000138000rsl_p0px1000_cl.evt
 ```
 
+
+## pixel毎、全gradeの数と割合を表示する
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_stat_itype.py
+
+``` bash:
+resolve_util_stat_itype.py xa300049010rsl_p0px5000_uf.evt
+```
+
 ## grade 毎の pixel map を生成します。
 
 [resolve_plot_detxdety.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_plot_detxdety.py) を利用して、カウント数が map の上に表示されます。
@@ -546,4 +555,5 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_fts
 ``` bash
 resolve_util_ftselect.sh xa000114000rsl_p0px1000_uf_prevnext_cutclgti.fits "ITYPE==0" itype0
 ```
+
 
