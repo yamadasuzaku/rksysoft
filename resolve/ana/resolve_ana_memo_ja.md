@@ -563,16 +563,16 @@ resolve_util_ftselect.sh xa000114000rsl_p0px1000_uf_prevnext_cutclgti.fits "ITYP
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_stat_status_itype.py
 
 ```
-resolve_util_stat_status_itype_fast.py xa300049010rsl_p0px5000_uf.evt 
+resolve_util_stat_status_itype.py xa300049010rsl_p0px5000_uf.evt 
 ```
 
-- 高速化をしたバージョン
+- 高速化したバージョン
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_stat_status_itype_fast.py
 
 
 ```
-resolve_util_stat_status_itype.py xa300049010rsl_p0px5000_uf.evt 
+resolve_util_stat_status_itype_fast.py xa300049010rsl_p0px5000_uf.evt 
 ```
 
 

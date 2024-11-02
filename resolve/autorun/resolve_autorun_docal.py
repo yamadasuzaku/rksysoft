@@ -195,6 +195,8 @@ def main():
         "lsdist": bool(cal_values[0]),
         "lsdetail": bool(cal_values[1]),
         "specratio6x6": bool(cal_values[2]),        
+        "statusitype": bool(cal_values[3]),
+        "statitype": bool(cal_values[4])
     }
     print(f"caldic = {caldic}")    
 
@@ -351,6 +353,31 @@ def main():
         runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
         arguments=f"{clevt} -r -y 0 -l 2000 -x 12000 -b 250 -c -g"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_specratio6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+    if caldic["statusitype"]:
+        runprog="resolve_util_stat_status_itype_fast.py"        
+        arguments=f"{clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+        arguments=f"{ufevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{ufevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+    if caldic["statusitype"]:
+        runprog="resolve_util_stat_status_itype_fast.py"        
+
+        arguments=f"{clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+        arguments=f"{ufevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{ufevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+
+    if caldic["statitype"]:
+        runprog="resolve_util_stat_itype.py"        
+        arguments=f"{clevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
+
+
+
 
 
 ################### analysis ###################################################################

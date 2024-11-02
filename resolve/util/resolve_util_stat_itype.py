@@ -46,6 +46,12 @@ def plot_itype_distribution_per_pixel(counts_per_pixel, ratios_per_pixel, fits_f
         ratios = ratios_per_pixel[pixel]
         total = np.sum(counts)
 
+        if total > 0:
+            print(f"..... pixel = {pixel}, total counts = {total}")
+        else:
+            print(f"[SKIP] ..... pixel = {pixel}, total counts = {total}")
+            continue 
+
         labels = [f'{g_typename[i]}' for i in range(itypemax)]
         
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
