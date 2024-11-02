@@ -557,7 +557,7 @@ resolve_util_ftselect.sh xa000114000rsl_p0px1000_uf_prevnext_cutclgti.fits "ITYP
 ```
 
 
-## STATUS の分離
+## STATUS を grade ごとに分離してプロットする
 
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_stat_status_itype.py
