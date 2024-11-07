@@ -576,3 +576,22 @@ resolve_util_stat_status_itype_fast.py xa300049010rsl_p0px5000_uf.evt
 ```
 
 
+## uf イベントから、イベントセレクションをかけて cl イベントに徐々に近づけたイベントを生成する
+
+`xa300049010rsl_p0px3000_uf.evt` と `xa300049010rsl_p0px3000_cl.evt` の２つが存在する状態で、
+
+``` bash
+resolve_util_screen_ufcl_std.sh xa300049010rsl_p0px3000_uf.evt
+```
+
+を実行する。ただし、gti カットは ftselect を使っているので、exposure は補正されてないことに注意。cal 用である。
+
+
+## イベントのファイルのリストから、1D ヒストグラムを生成する方法
+
+``` 
+resolve_ana_pixel_hist1d_many_eventfiles.py f.list --x_col PI -p --xmin 0 --xmax 20000 --rebin 250 -i 0 --filters "PIXEL==0" -o pixel0pi
+``` 
+
+f.list にイベントファイル名のリストを入れて、コラムと範囲を指定すると、そのヒストグラムと、全subとの比をプロットする。
+
