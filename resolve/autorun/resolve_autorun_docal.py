@@ -416,6 +416,14 @@ def main():
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
 
 
+    if anadic["compcluf"]:
+
+        # all pixel 
+        runprog="resolve_util_screen_ufcl_std.sh"
+        arguments=f"{ufevt}" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_compcluf", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+
 ################### create HTML ###################################################################
 
     if genhtml:
