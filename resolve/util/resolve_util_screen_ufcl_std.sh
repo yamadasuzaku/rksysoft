@@ -25,6 +25,7 @@ check_program_in_path "resolve_util_ftmgtime.sh"
 check_program_in_path "resolve_util_ftselect.sh"
 check_program_in_path "ftlist"
 check_program_in_path "ftcopy"
+check_program_in_path "xselect"
 
 # Usage message
 usage() {
@@ -41,13 +42,13 @@ fi
 ufevt=$1
 ufclgtievt="${ufevt%.evt}_clgti.evt"
 output1="${ufevt%.evt}_clgti_stdufcut1.evt"
+output1_wo_st3="${ufevt%.evt}_clgti_stdufcut1_wo_st3.evt"
+output1_wo_st3qd="${ufevt%.evt}_clgti_stdufcut1_wo_st3qd.evt"
 output2="${ufevt%.evt}_clgti_stdufcut2.evt"
-
 output_st2="${ufevt%.evt}_clgti_st2.evt"
 output_st3="${ufevt%.evt}_clgti_st3.evt"
 output_st4="${ufevt%.evt}_clgti_st4.evt"
 output_st6="${ufevt%.evt}_clgti_st6.evt"
-
 
 # Base file name
 base_top=$(basename "$ufevt" _uf.evt)
@@ -71,11 +72,40 @@ printf "${CYAN}Running resolve_util_ftmgtime.sh...${RESET}\n"
 resolve_util_ftmgtime.sh "$clevt"
 printf "${GREEN}Completed: resolve_util_ftmgtime.sh${RESET}\n"
 
-printf "${CYAN}Running resolve_util_ftselect.sh...${RESET}\n"
-resolve_util_ftselect.sh "$ufevt" "gtifilter(\"$outgti\")" clgti
-printf "${GREEN}Completed: resolve_util_ftselect.sh${RESET}\n"
 
+printf "${CYAN}Running xselect with $outgti...${RESET}\n"
+
+rm -rf ${ufclgtievt}
+
+xselect << EOF
+xsel
+read event
+./
+$ufevt
+
+filter time file $outgti
+
+show filter 
+
+yes
+
+extract event 
+
+save events ${ufclgtievt}
+
+
+exit 
+no
+
+EOF
+
+printf "${GREEN}Completed: xselect ${RESET}\n"
+
+# printf "${CYAN}Running resolve_util_ftselect.sh...${RESET}\n"
+# resolve_util_ftselect.sh "$ufevt" "gtifilter(\"$outgti\")" clgti
+# printf "${GREEN}Completed: resolve_util_ftselect.sh${RESET}\n"
 # Display input and output file paths
+
 printf "${CYAN}Input file:${RESET} %s\n" "$ufevt"
 printf "${CYAN}Output file 1:${RESET} %s\n" "$output1"
 printf "${CYAN}Output file 2:${RESET} %s\n" "$output2"
@@ -89,6 +119,19 @@ printf "${CYAN}>>>>>>>>>>>> Generating output : 1 ${output1} >>>>>>>>>>>>>>>${RE
 ftcopy infile="${ufclgtievt}[EVENTS][(ITYPE<5)&&((SLOPE_DIFFER==b0||PI>22000))&&(QUICK_DOUBLE==b0)&&(STATUS[3]==b0)&&(STATUS[6]==b0)&&(STATUS[2]==b0)&&(PI>200)&&(RISE_TIME<127)&&(PIXEL!=12)&&(TICK_SHIFT>-8&&TICK_SHIFT<7)]" \
        outfile="$output1" copyall=yes clobber=yes history=yes chatter=5
 ftlist "$output1" H
+
+# Generate output 1 w/o STATUS3
+printf "${CYAN}>>>>>>>>>>>> Generating output : 1 ${output1} >>>>>>>>>>>>>>>${RESET}\n"
+ftcopy infile="${ufclgtievt}[EVENTS][(ITYPE<5)&&((SLOPE_DIFFER==b0||PI>22000))&&(QUICK_DOUBLE==b0)&&(STATUS[6]==b0)&&(STATUS[2]==b0)&&(PI>200)&&(RISE_TIME<127)&&(PIXEL!=12)&&(TICK_SHIFT>-8&&TICK_SHIFT<7)]" \
+       outfile="$output1_wo_st3" copyall=yes clobber=yes history=yes chatter=5
+ftlist "$output1_wo_st3" H
+
+# Generate output 1 w/o STATUS3 w/o QD
+printf "${CYAN}>>>>>>>>>>>> Generating output : 1 ${output1} >>>>>>>>>>>>>>>${RESET}\n"
+ftcopy infile="${ufclgtievt}[EVENTS][(ITYPE<5)&&((SLOPE_DIFFER==b0||PI>22000))&&(STATUS[6]==b0)&&(STATUS[2]==b0)&&(PI>200)&&(RISE_TIME<127)&&(PIXEL!=12)&&(TICK_SHIFT>-8&&TICK_SHIFT<7)]" \
+       outfile="$output1_wo_st3qd" copyall=yes clobber=yes history=yes chatter=5
+ftlist "$output1_wo_st3qd" H
+
 
 # Generate output 2
 printf "${CYAN}>>>>>>>>>>>> Generating output 2 : ${output2} >>>>>>>>>>>>>>>${RESET}\n"

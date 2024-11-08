@@ -578,7 +578,7 @@ resolve_util_stat_status_itype_fast.py xa300049010rsl_p0px5000_uf.evt
 
 ## uf イベントから、イベントセレクションをかけて cl イベントに徐々に近づけたイベントを生成する
 
-`xa300049010rsl_p0px3000_uf.evt` と `xa300049010rsl_p0px3000_cl.evt` の２つが存在する状態で、
+`xa300049010rsl_p0px3000_uf.evt` と `xa300049010rsl_p0px3000_cl.evt` の２つが存在する状態で、uf.evt の方を指定するだけでよい。
 
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_screen_ufcl_std.sh

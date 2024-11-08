@@ -203,6 +203,7 @@ def main():
     anadic = {
         "genpharmfarf": bool(ana_values[0]),
         "qlfit": bool(ana_values[1]),        
+        "compcluf": bool(ana_values[2]),
     }
     print(f"anadic = {anadic}")    
 
