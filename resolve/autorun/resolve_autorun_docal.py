@@ -79,8 +79,8 @@ def parse_args():
 
     return args, fwe_value
 
-def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
-          subdir="check_lc", linkfiles=["cl.evt"], timebinsize=100, use_flist=False, gdir=f"000108000/resolve/event_cl/"):
+def dojob(obsid, runprog, arguments=None, fwe=3000, \
+          subdir="check_lc", linkfiles=None, timebinsize=100, use_flist=False, gdir=f"000108000/resolve/event_cl/"):
 
     print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
     # Define directory and file names based on obsid and other parameters
@@ -102,18 +102,21 @@ def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
 
 
     # Create symbolic links for the necessary files
-    for fname in linkfiles:
+    if linkfiles == None:
+        pass
+    else:
+        for fname in linkfiles:
 
-        link_fname = os.path.basename(fname)
-        # 既存のリンクがある場合は削除
-        if os.path.islink(link_fname):
-            os.remove(link_fname)
-            print(f"Removed existing link: {link_fname}")
+            link_fname = os.path.basename(fname)
+            # 既存のリンクがある場合は削除
+            if os.path.islink(link_fname):
+                os.remove(link_fname)
+                print(f"Removed existing link: {link_fname}")
 
-        try:
-            os.symlink(fname, os.path.basename(fname))
-        except FileExistsError:
-            print(f"Link {fname} already exists, skipping.")
+            try:
+                os.symlink(fname, os.path.basename(fname))
+            except FileExistsError:
+                print(f"Link {fname} already exists, skipping.")
 
     # Optionally, create a file list
     if use_flist:
@@ -123,8 +126,12 @@ def dojob(obsid, runprog, arguments="cl.evt", fwe=3000, \
     # Run the program with the necessary arguments
     try:
         # Print the command that will be executed
-        print(f"Executing command: {runprog} {' '.join(arguments.split())}")        
-        subprocess.run([runprog] + arguments.split(), check=True)
+        if arguments == None:
+            print(f"Executing command: {runprog}")        
+            subprocess.run([runprog], check=True)
+        else:            
+            print(f"Executing command: {runprog} {' '.join(arguments.split())}")        
+            subprocess.run([runprog] + arguments.split(), check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error occurred: {e}")
 
@@ -386,19 +393,19 @@ def main():
     if anadic["genpharmfarf"]:
         runprog="resolve_auto_gen_phaarfrmf.py"        
 
-        # # all pixel 
-        # arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
-        # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
-        # # centeral 4 pixels 
-        # arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname inner --pixels 0,17,18,35" 
-        # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
-        # # outer 31 pixels
-        # arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname outer --pixels 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34" 
-        # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        # all pixel 
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        # centeral 4 pixels 
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname inner --pixels 0,17,18,35" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        # outer 31 pixels
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname outer --pixels 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-        # only for Cyg X-1
-        arguments=f"-eve {clgcorevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clgcorevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl_rslgain/")        
+        # # only for Cyg X-1
+        # arguments=f"-eve {clgcorevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
+        # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clgcorevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl_rslgain/")        
 
 
     if anadic["qlfit"]:
@@ -418,10 +425,15 @@ def main():
 
     if anadic["compcluf"]:
 
+        # # all pixel 
+        # runprog="resolve_util_screen_ufcl_std.sh"
+        # arguments=f"{ufevt}" 
+        # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_compcluf", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
         # all pixel 
-        runprog="resolve_util_screen_ufcl_std.sh"
-        arguments=f"{ufevt}" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_compcluf", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+        runprog="run_resolve_ana_pixel_hist1d_many_eventfiles.sh"
+        arguments=f"" 
+        dojob(obsid, runprog, fwe = fwe, subdir="checkana_compcluf", gdir=f"{obsid}/resolve/event_uf/")        
 
 
 ################### create HTML ###################################################################
