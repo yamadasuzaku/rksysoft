@@ -140,7 +140,8 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, xmin, xmax, rebin, \
 
             log_data.append([file_name, obsid, target, ontime, event_number])            
             short_filename=os.path.basename(file_name)
-            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='.', ms=1, alpha=0.9, color=colors[i], label=f"{short_filename} {target}" + f"({event_number:d} c)")
+            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='o', ms=2, alpha=0.9, label=f"{short_filename} {target}" + f"({event_number:d} c)")
+#            axs[0].errorbar(xval, hist, yerr=np.sqrt(hist), fmt='o', ms=2, alpha=0.9, color=colors[i], label=f"{short_filename} {target}" + f"({event_number:d} c)")
     
     axs[0].set_ylabel(f"Counts/bin (binsize={realbinsize})")
     if ylin:
@@ -170,7 +171,7 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, xmin, xmax, rebin, \
     for i, (file_name, hist) in enumerate(histograms):
         ratio_hist = hist / total_hist  # Calculate ratio to the total histogram
         ratio_hist[total_hist == 0] = 0  # Avoid division by zero
-        axs[1].errorbar(xval, ratio_hist, fmt='.-', ms=1, alpha=0.9, color=colors[i], label=f"Ratio {os.path.basename(file_name)}")
+        axs[1].errorbar(xval, ratio_hist, fmt='o-', ms=2, alpha=0.9, label=f"Ratio {os.path.basename(file_name)}")
 
     axs[1].legend(loc="best", fontsize=7)
 
@@ -250,9 +251,9 @@ def main():
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None
     title = f"{args.file_names} : filtered with {args.filters}"
     if args.outname == None:
-        outfname = "hist1d_" + args.file_names.replace(",","_").replace(".","_p_") 
+        outfname = "rsl_hist1d_" + args.file_names.replace(",","_").replace(".","_p_") 
     else:
-        outfname = "hist1d_" + args.file_names.replace(",","_").replace(".","_p_") + "_" + args.outname
+        outfname = "rsl_hist1d_" + args.file_names.replace(",","_").replace(".","_p_") + "_" + args.outname
 
     plot_xhist(file_names, args.x_col, args.x_hdu, outfname, xmin, xmax, rebin, \
               plotflag=args.plot, debug=True, filters=filter_conditions, ylin=args.ylin, calout = args.calout, itype_cut = args.itype_cut)
