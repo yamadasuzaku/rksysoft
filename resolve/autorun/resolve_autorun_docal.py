@@ -36,8 +36,8 @@ def parse_args():
       description='Resolve calibration run. ',
       epilog='''
         Example 
-       (1) ND filter   : resolve_autorun_docal.py 300049010 --fwe ND -b 20 -l 2000 -x 9000 --progflags 0,0,1,1
-       (2) Open filter : resolve_autorun_docal.py 000109000          -b 20 -l 2000 -x 9000 --progflags 1,0,1,1
+       (1) ND filter (Cyg X-1)  : resolve_autorun_docal.py 300049010 -b 20 -l 2000 -x 9000 --progflags 1,1,1,1,1,1,1,1,1,1,1,1 --calflags 1,1,1,1,1 --anaflags 1,1,1 --fwe ND
+       (2) Open filter (Keper)  : 
       ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument('obsid', help='OBSID')
@@ -426,9 +426,9 @@ def main():
     if anadic["compcluf"]:
 
         # # all pixel 
-        # runprog="resolve_util_screen_ufcl_std.sh"
-        # arguments=f"{ufevt}" 
-        # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_compcluf", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+        runprog="resolve_util_screen_ufcl_std.sh"
+        arguments=f"{ufevt}" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_compcluf", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
 
         # all pixel 
         runprog="run_resolve_ana_pixel_hist1d_many_eventfiles.sh"
