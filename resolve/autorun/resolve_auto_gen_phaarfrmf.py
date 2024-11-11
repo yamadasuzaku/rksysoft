@@ -266,6 +266,11 @@ EOF
         """
         run_shell_script(grppha_script, f"run_grppha_{typename}.sh")
 
+        ftgrouppha_cmd = f'ftgrouppha infile=rsl_source_{typename}.pha outfile=rsl_source_{typename}_gopt.pha ' \
+                         f'grouptype=opt respfile={rmf_file} clobber=True'
+        print(f"run : {ftgrouppha_cmd}")
+        subprocess.run(ftgrouppha_cmd, shell=True, check=True)
+
         check_command_exists("resolve_spec_rebin_30_10.sh")
         subprocess.run(f"resolve_spec_rebin_30_10.sh rsl_source_{typename}.pha rsl_source_{typename}_r3010.pha", shell=True, check=True)
 

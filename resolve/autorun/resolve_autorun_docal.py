@@ -11,7 +11,11 @@ topdir = os.getcwd()
 
 def write_to_file(filename, content):
     with open(filename, 'w') as f:
-        f.write(content + '\n')
+        if isinstance(content, list): 
+            for one in content:
+                f.write(one + '\n')
+        else:
+            f.write(content + '\n')
 
 def check_program_in_path(program_name):
     # $PATH内でプログラムを探す
@@ -80,7 +84,7 @@ def parse_args():
     return args, fwe_value
 
 def dojob(obsid, runprog, arguments=None, fwe=3000, \
-          subdir="check_lc", linkfiles=None, timebinsize=100, use_flist=False, gdir=f"000108000/resolve/event_cl/"):
+          subdir=None, linkfiles=None, timebinsize=100, use_flist=False, gdir=f"000108000/resolve/event_cl/"):
 
     print(f"[START:{time.strftime('%Y-%m-%d %H:%M:%S')}] >>> {runprog} <<<")        
     # Define directory and file names based on obsid and other parameters
@@ -95,10 +99,13 @@ def dojob(obsid, runprog, arguments=None, fwe=3000, \
         sys.exit(1)  # エラーステータス1で終了
     print(f"'{gotodir}' exists. Proceeding with the script.")
 
-    # Change to the processing directory
-    os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
-    os.chdir(os.path.join(gotodir, subdir))
-
+    if subdir == None:
+        os.chdir(gotodir)
+        pass
+    else:
+        # Change to the processing directory
+        os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
+        os.chdir(os.path.join(gotodir, subdir))
 
 
     # Create symbolic links for the necessary files
@@ -394,7 +401,7 @@ def main():
         runprog="resolve_auto_gen_phaarfrmf.py"        
 
         # all pixel 
-        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
+        arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname all" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
         # centeral 4 pixels 
         arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname inner --pixels 0,17,18,35" 
@@ -412,15 +419,48 @@ def main():
 
         # all pixel 
         runprog="resolve_spec_qlfit.py"        
-        phafile="rsl_source_Hp_r3010.pha"
-        rmffile="rsl_source_Hp.rmf"
-        arffile="rsl_source_Hp.arf"
+        phafile="rsl_source_Hp_all_gopt.pha"
+        rmffile="rsl_source_Hp_all.rmf"
+        arffile="rsl_source_Hp_all.arf"
 
         arguments=f"{phafile}" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
 
         arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
+
+        # inner
+        phafile="rsl_source_Hp_inner_gopt.pha"
+        rmffile="rsl_source_Hp_inner.rmf"
+        arffile="rsl_source_Hp_inner.arf"
+
+        arguments=f"{phafile}" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
+        arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
+        # outer
+        phafile="rsl_source_Hp_outer_gopt.pha"
+        rmffile="rsl_source_Hp_outer.rmf"
+        arffile="rsl_source_Hp_outer.arf"
+
+        arguments=f"{phafile}" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
+        arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
+        # plot all, inner, and outer spec 
+        runprog="resolve_spec_qlfit_many.py"        
+        gotodir = f"{obsid}/resolve/event_cl/checkana_genpharmfarf/checkana_qlfit"
+        arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out" 
+        write_to_file(f"{gotodir}/f_gopt.list", ["rsl_source_Hp_all_gopt.pha","rsl_source_Hp_inner_gopt.pha","rsl_source_Hp_outer_gopt.pha"])
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
+
+        arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
 
 
     if anadic["compcluf"]:
