@@ -6,6 +6,8 @@ import argparse
 from astropy.io import fits
 import sys
 import matplotlib.pyplot as plt
+from pdf2image import convert_from_path
+
 
 def generate_xspec_data(flist):
     data_lines = '\n'.join([f"data {i+1}:{i+1} {pha}" for i, pha in enumerate(flist)])
@@ -91,9 +93,9 @@ def convert_ps_to_pdf(ps_file, output_pdf=None):
     except subprocess.CalledProcessError as e:
         print(f"変換失敗: {e.stderr}")
 
+
 def convert_pdf_to_png(pdf_file, output_png=None):
-    check_command_exists("convert")    
-    """PDF ファイルを PNG に変換し、背景を白に設定します。"""
+    """PDFファイルをPNGに変換します。背景は白で出力されます。"""
     if not os.path.exists(pdf_file):
         print(f"Error: {pdf_file} が見つかりません。")
         return
@@ -102,16 +104,37 @@ def convert_pdf_to_png(pdf_file, output_png=None):
         output_png = os.path.splitext(pdf_file)[0] + ".png"
 
     try:
-        # 背景を白にして PNG に変換
-        subprocess.run(
-            ["convert", "-density", "300", pdf_file, 
-             "-background", "white", "-alpha", "remove", 
-             "-alpha", "off", output_png],
-            check=True, capture_output=True, text=True
-        )
+        # PDFの最初のページのみを変換する場合
+        images = convert_from_path(pdf_file, dpi=300)
+
+        # 変換した画像を保存
+        images[0].save(output_png, 'PNG')
         print(f"PNG 変換成功: {output_png}")
-    except subprocess.CalledProcessError as e:
-        print(f"PNG 変換失敗: {e.stderr}")
+    except Exception as e:
+        print(f"PNG 変換失敗: {str(e)}")
+
+# convert is policy dependent, so we won't use convert. 
+# def convert_pdf_to_png(pdf_file, output_png=None):
+#     check_command_exists("convert")    
+#     """PDF ファイルを PNG に変換し、背景を白に設定します。"""
+#     if not os.path.exists(pdf_file):
+#         print(f"Error: {pdf_file} が見つかりません。")
+#         return
+
+#     if not output_png:
+#         output_png = os.path.splitext(pdf_file)[0] + ".png"
+
+#     try:
+#         # 背景を白にして PNG に変換
+#         subprocess.run(
+#             ["convert", "-density", "300", pdf_file, 
+#              "-background", "white", "-alpha", "remove", 
+#              "-alpha", "off", output_png],
+#             check=True, capture_output=True, text=True
+#         )
+#         print(f"PNG 変換成功: {output_png}")
+#     except subprocess.CalledProcessError as e:
+#         print(f"PNG 変換失敗: {e.stderr}")
 
 def read_xspec_log(filename):
     """テキストファイルから行ごとに読み込む"""
