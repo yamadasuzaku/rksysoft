@@ -603,3 +603,27 @@ resolve_ana_pixel_hist1d_many_eventfiles.py f.list --x_col PI -p --xmin 0 --xmax
 
 f.list にイベントファイル名のリストを入れて、コラムと範囲を指定すると、そのヒストグラムと、全subとの比をプロットする。
 
+
+
+## xspec の bug 対策
+
+xspec は、PIの範囲、数、がビシッと一致してないと表示できないので、
+それを補正するスクリプト。
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_mod_TLMIN1_TLMAX1_DETCHANS.sh
+
+
+```
+resolve_util_mod_TLMIN1_TLMAX1_DETCHANS.sh eventファイル
+```
+
+中身は、
+
+```
+fparkey 0 ${pha} TLMIN1 
+fparkey 59999 ${pha} TLMAX1 
+fparkey 60000 ${pha} DETCHANS
+ftselect ${pha} cut_${pha} '0<=CHANNEL&&CHANNEL<60000'
+```
+
+この４つの編集をするだけ。
