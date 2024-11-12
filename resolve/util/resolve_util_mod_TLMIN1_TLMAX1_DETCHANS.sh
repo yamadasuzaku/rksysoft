@@ -22,6 +22,7 @@ pha=$1
 fparkey 0 ${pha} TLMIN1 
 fparkey 59999 ${pha} TLMAX1 
 fparkey 60000 ${pha} DETCHANS
+ftselect ${pha} cut_${pha} '0<=CHANNEL&&CHANNEL<60000'
 
 #fkeyprint uf_ls_clgti.pha DETCHANS
 # DETCHANS=                60000 / total number possible channels
