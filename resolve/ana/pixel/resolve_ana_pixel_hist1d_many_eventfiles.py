@@ -74,6 +74,8 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, xmin, xmax, rebin, \
     if x_col == "PI":
         # convert Energy to PI (b/c user specify energy as arguments.) 
         pimin, pimax = ev_to_pi(xmin), ev_to_pi(xmax)
+    else:
+        pimin, pimax = xmin, xmax
 
     binnum = int((pimax - pimin) / rebin)
 
