@@ -627,3 +627,14 @@ ftselect ${pha} cut_${pha} '0<=CHANNEL&&CHANNEL<60000'
 ```
 
 この４つの編集をするだけ。
+
+
+## SAAの時期だけカットする
+
+
+
+`gtiinvert infile=${clgti}[STDGTI] outfile=${clinvgti}` を用いて、GTIの invert 条件の時期を取得する。
+
+``` bash:
+resolve_util_extract_saa_from_ufevt.sh xa000114000rsl_p0px1000_cl.evt xa000114000rsl_p0px1000_uf.evt
+```
