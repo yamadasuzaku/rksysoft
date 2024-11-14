@@ -636,5 +636,13 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_ext
 `gtiinvert infile=${clgti}[STDGTI] outfile=${clinvgti}` を用いて、GTIの invert 条件の時期を取得する。
 
 ``` bash:
-resolve_util_extract_saa_from_ufevt.sh xa000114000rsl_p0px1000_cl.evt xa000114000rsl_p0px1000_uf.evt
+reseolve_util_extract_saa_from_ufevt.sh xa000114000rsl_p0px1000_cl.evt xa000114000rsl_p0px1000_uf.evt
+```
+
+## uf.evt に cl.evt の GTI のカットだけかける。
+
+簡易的な ftselect を使ってるので、exposure を正しくつけたい場合は、xselect を使うこと。
+
+``` bash:
+resolve_util_extract_clgti_from_ufevt.sh xa000114000rsl_p0px1000_cl.evt xa000114000rsl_p0px1000_uf.evt
 ```
