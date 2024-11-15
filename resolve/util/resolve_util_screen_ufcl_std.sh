@@ -167,3 +167,9 @@ ftlist "$output_st6" H
 
 printf "${CYAN} [end] resolve_util_screen_ufcl_std.sh ${RESET}\n"
 
+rm -f flist_st34.list 
+ls ${output1} ${output1_wo_st3} ${output_st3} ${output_st4} > flist_st34.list 
+
+printf "${CYAN} flist_st34.list is created ${RESET}\n"
+
+
