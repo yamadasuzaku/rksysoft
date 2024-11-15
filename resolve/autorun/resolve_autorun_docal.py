@@ -210,7 +210,8 @@ def main():
         "lsdetail": bool(cal_values[1]),
         "specratio6x6": bool(cal_values[2]),        
         "statusitype": bool(cal_values[3]),
-        "statitype": bool(cal_values[4])
+        "statitype": bool(cal_values[4]),
+        "antico": bool(cal_values[5])        
     }
     print(f"caldic = {caldic}")    
 
@@ -393,6 +394,10 @@ def main():
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
+    if caldic["antico"]:
+        runprog="run_resolve_ana_pixel_hist1d_many_eventfiles.sh"        
+        arguments=f"{obsid}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_antico", linkfiles=[f"../{ufacevt}",f"../../../auxil/{ehk}"], gdir=f"{obsid}/resolve/event_uf/")
 
 
 ################### analysis ###################################################################
