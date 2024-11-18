@@ -18,16 +18,71 @@ import matplotlib.colors as cr
 from astropy.io import fits
 from astropy.wcs import WCS
 from scipy.signal import convolve
-
+import pandas as pd
 
 params = {'xtick.labelsize': 10, 'ytick.labelsize': 10, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
+# global variable for pileup estimateion
+target_values = [0.03, 0.01] # pileup fraction 3%, 1%
+target_lss = ["-", "--"] # pileup linestyle
+
+class ConsoleColors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def color_print(msg, color):
+    print(f"{color}{msg}{ConsoleColors.ENDC}")
+
 def calc_pileupfraction(r):
     r = np.asarray(r)  # convert numpy.array
     result = np.where(r < 0, 0.0, (1. - (1. + r) * np.exp(-r)) / (1. - np.exp(-r)))
     return result
+
+def generate_region_file(c_ra, c_dec, rin, rout, output_dir="."):
+    """
+    Generate a .reg file for DS9.
+
+    Parameters:
+        c_ra (float): Central RA coordinate.
+        c_dec (float): Central DEC coordinate.
+        rin (int): Inner radius.
+        rout (int): Outer radius.
+        output_dir (str): Directory to save the output file.
+    """
+    # Automatically generate the filename
+    filename = f"ds9_region_{int(rin)}_{int(rout)}.reg"
+    filepath = os.path.join(output_dir, filename)
+
+    # Template for DS9 format
+    if rin == 0:
+        content = (
+            "# Region file format: DS9 version 4.1\n"
+            "global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal roman\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1\n"
+            "fk5\n"
+            f"circle({c_ra},{c_dec},{rout}\")\n"
+        )
+    else:
+        content = (
+            "# Region file format: DS9 version 4.1\n"
+            "global color=green dashlist=8 3 width=1 font=\"helvetica 10 normal roman\" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1\n"
+            "fk5\n"
+            f"annulus({c_ra},{c_dec},{rin}\",{rout}\")\n"
+        )
+
+    # Write to file
+    with open(filepath, "w") as f:
+        f.write(content)
+    print(f"Generated: {filepath}")
+
 
 def interpolate_centers(radial_centers, radial_pileupfraction, target_values = [0.03, 0.01]):
 
@@ -76,8 +131,13 @@ class Fits:
         self.datamode = self.hdu.header["DATAMODE"]
         self.exposure = self.hdu.header["EXPOSURE"]
         self.lastdel = self.hdu.header["LASTDEL"]
-        print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}")
-        print(f"[init] ... exposure={self.exposure}, lastdel={self.lastdel} ....")
+        self.c_ra = self.hdu.header["RA_NOM"]
+        self.c_dec = self.hdu.header["DEC_NOM"]
+
+        color_print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}", ConsoleColors.OKGREEN)
+        color_print(f"[init] ... exposure={self.exposure}, lastdel={self.lastdel} ....", ConsoleColors.OKGREEN)
+        # print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}")
+        # print(f"[init] ... exposure={self.exposure}, lastdel={self.lastdel} ....")
 
         self._process_data()
 
@@ -88,7 +148,7 @@ class Fits:
 
     def _print_initialization_info(self):
         """Print initialization info for debugging purposes."""
-        print("[def _print_initialization_info]")
+        color_print("[def _print_initialization_info]", ConsoleColors.OKBLUE)
         print(f"      self.p2deg      = {self.p2deg} [deg/pixel]")
         print(f"      self.p2arcsec   = {self.p2arcsec} [arcsec/pixel]")
 
@@ -100,14 +160,14 @@ class Fits:
             self.wcs.printwcs()
 
     def plotwcs(self, x_center, y_center, vmin=1e-1, vmax=20, manual=False):
+
         """Plot the entire image with WCS."""
-        print("\n[def plotwcs]")
+        color_print("\n[def plotwcs]", ConsoleColors.OKBLUE)
         if not manual:
             vmin = np.amin(self.hdu.data[self.hdu.data > 0]) + 0.1  # Avoid vmin being too close to 0 for LogNorm
             vmax = np.amax(self.hdu.data)
-        print("     vmin = ", vmin, "vmax = ", vmax)
+        color_print(f"     vmin = {vmin}, vmax = {vmax}", ConsoleColors.OKCYAN)
 
-        print("vmin",vmin, "vmax",vmax)
         plt.figure(figsize=(12, 8))
         plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
@@ -123,15 +183,16 @@ class Fits:
 
         outputfigname = f"{self.dirname}_plotwcs.png"
         plt.savefig(outputfigname)
-        print(f"..... {outputfigname} is created.")
+        color_print(f"..... {outputfigname} is created.", ConsoleColors.OKGREEN)        
 
     def plotwcs_ps(self, x_center, y_center, search_radius=40, vmin=1e-1, vmax=20, manual=False):
         """Plot the enlarged image around the given center."""
-        print("\n[def plotwcs_ps]")
+
+        color_print("\n[def plotwcs_ps]", ConsoleColors.OKBLUE)
         if not manual:
             vmin = np.amin(self.hdu.data[self.hdu.data > 0]) + 0.1  # Avoid vmin being too close to 0 for LogNorm
             vmax = np.amax(self.hdu.data)
-        print("     vmin = ", vmin, "vmax = ", vmax)
+        color_print(f"     vmin = {vmin}, vmax = {vmax}", ConsoleColors.OKCYAN)
 
         pix_coords = np.array([[x_center, y_center]], np.float_)
         world_coords = self.wcs.all_pix2world(pix_coords, 1)
@@ -162,15 +223,15 @@ class Fits:
 
         outputfigname = f"{self.dirname}_plotwcs_ps_{x_center}_ycenter{y_center}.png"
         plt.savefig(outputfigname)
-        print(f"..... {outputfigname} is created.")
+        color_print(f"..... {outputfigname} is created.", ConsoleColors.OKGREEN)        
 
     def mk_radialprofile(self, x_center, y_center, search_radius=40, ndiv=20, vmin=1e-1, vmax=20, manual=False, cellsize=3*3):
         """Create the radial profiles."""
-        print("\n[def mk_radialprofile]")
+        color_print("\n[def mk_radialprofile]", ConsoleColors.OKBLUE)
         if not manual:
             vmin = np.amin(self.hdu.data[self.hdu.data > 0]) + 0.1  # Avoid vmin being too close to 0 for LogNorm
             vmax = np.amax(self.hdu.data)
-        print("     vmin = ", vmin, "vmax = ", vmax)
+        color_print(f"     vmin = {vmin}, vmax = {vmax}", ConsoleColors.OKCYAN)
 
         pix_coords = np.array([[x_center, y_center]], np.float_)
         world_coords = self.wcs.all_pix2world(pix_coords, 1)
@@ -186,8 +247,6 @@ class Fits:
                            exposure=self.exposure, search_radius=search_radius, ndiv=ndiv, cellsize=cellsize, lastdel = self.lastdel)
         pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize, lastdel = self.lastdel)
         
-        target_values = [0.03, 0.01] # pileup fraction 3%, 1%
-        target_lss = ["-", "--"] # pileup linestyle
         pileup_result = interpolate_centers(radial_centers, radial_pileupfraction, target_values = target_values) 
         # Plot images and radial profiles
         fig = plt.figure(figsize=(16, 8))
@@ -213,9 +272,10 @@ class Fits:
 
         ax6 = fig.add_subplot(2, 4, 7)
         self._plot_radial_profile(ax6, radial_centers, radial_pileupfraction, "(6) Pileup Fraction", 'radial distance (pixel)', 'fraction')
+
         for _target, _r, _ls in zip(target_values,pileup_result, target_lss):
             if _r > 0:
-                print(f"***** pileup fraction ={_target*100:.2f} % at {_r:.2f} pixel *****")
+                color_print(f"***** possible pileup : pileup fraction = {_target*100:.2f} % at {_r:.2f} pixel *****",ConsoleColors.WARNING)
                 ax6.axhline(y=_target, color='g', ls=_ls, alpha=0.5, label=f"plfrac={_target*100:.2f} % at {_r:.2f} pixel")
                 plt.legend(numpoints=1, frameon=True)
 
@@ -232,11 +292,13 @@ class Fits:
 
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
         plt.savefig(outputfigname)
-        print(f"..... {outputfigname} is created.")
+        color_print(f"..... {outputfigname} is created.", ConsoleColors.OKGREEN)        
 
         self._save_radial_profile(rc, rp, f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.txt")
         self._save_radial_profile(radial_centers, radial_pileupfraction, f"{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.txt")
         self._save_pileup_oneline(pileup_result, f"{self.dirname}_pileupfraction_xcenter{x_center}_ycenter{y_center}.csv")
+
+        return pileup_result
 
     def _pileup_image_vmin_vmax(self, data, x_center, y_center, search_radius=None):
         if search_radius is None:
@@ -291,13 +353,62 @@ class Fits:
         with open(outputcsv, "w") as fout:
             for _rc, _rcsec, _rp in zip(rc, rc * self.p2arcsec, rp):
                 fout.write(f"{_rc},{_rcsec},{_rp}\n")
-        print(f"..... {outputcsv} is created.")
+        color_print(f"..... {outputcsv} is created.", ConsoleColors.OKGREEN)        
 
-    def _save_pileup_oneline(self, pileup_result, outputcsv):
+    def _save_pileup_oneline(self, pileup_result, outputcsv, visualize = True):
         rough_rate = np.sum(self.data)/self.exposure
         with open(outputcsv, "w") as fout:
             fout.write(f"{self.obsid},{pileup_result[0]},{pileup_result[1]},{self.object},{self.datamode},{self.exposure},{self.lastdel},{rough_rate}\n")
-        print(f"..... {outputcsv} is created.")
+        color_print(f"..... {outputcsv} is created.", ConsoleColors.OKGREEN)        
+        if visualize:
+            self._load_visualize(outputcsv)
+
+    def _load_visualize(self, outputcsv):
+        csvdata = pd.read_csv(outputcsv, header=None, names=[
+            "obsid", "pileup_hi", "pileup_lo", "object", "datamode", "exposure", "lastdel", "rough_rate"])
+        print(f"CSV file '{outputcsv}' loaded successfully.")
+
+        for index, row in csvdata.iterrows():
+            obsid = row['obsid']
+            pileup_hi = row['pileup_hi']
+            pileup_lo = row['pileup_lo']
+            exposure = row['exposure']
+            rough_rate = row['rough_rate']
+            lastdel = row['lastdel']
+            rough_rate = row['rough_rate']
+
+            # Create a bar plot for pileup rate and error
+            plt.figure(figsize=(8, 6))
+            # Add labels and title
+            plt.plot(target_values, [pileup_hi,pileup_lo],"o")
+            plt.xlabel("Pileup Fraction")
+            plt.ylabel("Pileup Radius (pixel)")
+
+            plt.title(f"Visualization of pileup estimation for OBSID: {obsid}")
+            plt.legend()
+
+            # Add text to the plot
+            text_str = (f"Object: {self.object}\n"
+                        f"OBSID: {self.obsid}\n"
+                        f"filename: {self.filename}\n"
+                        f"Datamode: {self.datamode}\n"
+                        f"Exposure: {exposure:.2f}s\n"
+                        f"Lastdel: {lastdel:.6f}\n"
+                        f"rough_rate: {rough_rate:.4f}\n"
+                        f"----------------------------\n"
+                        f"Pileup : {pileup_hi:.2f} pixel at pileup fraction = {target_values[0]} %\n"
+                        f"Pileup : {pileup_lo:.2f} pixel at pileup fraction = {target_values[1]} %\n"
+                        )                       
+
+            plt.gcf().text(0.2, 0.5, text_str, fontsize=10, va='center', transform=plt.gcf().transFigure)
+
+            # Save the plot as PNG
+            output_path = outputcsv.replace(".csv","_result.png")
+            plt.savefig(output_path)
+            print(f"Visualization saved: {output_path}")
+            # Close the figure to free memory
+            plt.close()
+
 
 def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=10, exposure = 1e4, cellsize=3*3, debug=False, lastdel=4.0):
     """
@@ -444,9 +555,9 @@ def calc_center(data, x_center, y_center, search_radius=10):
     peak_idx = np.unravel_index(np.argmax(values), values.shape)
     peak_x, peak_y = x_indices[peak_idx], y_indices[peak_idx]
     peak_value = values[peak_idx]
-    
-    print(f"..... in calc_center: [simple peak] x_max, y_max, z_max = {peak_x}, {peak_y}, {peak_value}")
-    print(f"..... in calc_center: [total counts in search radius] total_counts = {total_counts}")
+
+    color_print(f"..... in calc_center: [simple peak] x_max, y_max, z_max = {peak_x}, {peak_y}, {peak_value}", ConsoleColors.OKCYAN)
+    color_print(f"..... in calc_center: [total counts in search radius] total_counts = {total_counts}", ConsoleColors.OKCYAN)
 
     if peak_value < 0:
         print("[ERROR] in calc_center: Peak value not found. Something went wrong.")
@@ -461,7 +572,7 @@ def main():
     """Setting for options"""
     usage = '%(prog)s fits.img'
     parser = argparse.ArgumentParser(usage=usage)
-
+    parser.add_argument('filename', help='Input FITS file')
     parser.add_argument('-o', '--auto_updated_center', action='store_false', help='Flag to automatically calculate center', default=True)
     parser.add_argument('-d', '--debug', action='store_true', help='Flag to show detailed information', default=False)
     parser.add_argument('-m', '--manual', action='store_true', help='Flag to use vmax, vmin', default=False)
@@ -469,40 +580,52 @@ def main():
     parser.add_argument('-y', '--y_center', type=int, help='y coordinate of center', default=1215)
 #   parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=3*3)
     parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=1 + 4 )
+    parser.add_argument('-r', '--rout', type=int, help='outer redius of the region', default=60)
     parser.add_argument('-a', '--vmax', type=float, help='VMAX', default=3e3)
     parser.add_argument('-i', '--vmin', type=float, help='VMIN', default=1)
     parser.add_argument('-s', '--search_radius', type=int, help='Search radius for data extraction', default=80)
     parser.add_argument('-n', '--numberOfDivision', type=int, help='Number of divisions for annulus', default=20)
-    parser.add_argument('filename', help='Input FITS file')
+    parser.add_argument("--output-dir", default="./regions", help="Directory to save region files.")
 
-    options = parser.parse_args()
+    args = parser.parse_args()
 
-    print(f"---------------------------------------------\n| START  :  {__file__}")
-    print(f"..... auto_updated_center {options.auto_updated_center}")
-    print(f"..... x_center {options.x_center} y_center {options.y_center}")
-    print(f"..... search_radius {options.search_radius} (bin of image) ndiv {options.numberOfDivision} cellsize {options.cellsize}")
-    print(f"..... debug {options.debug} manual {options.manual}")
-    print(f"..... vmax {options.vmax} vmin {options.vmin}")
+    print(f"---------------------------------------------\n>>>>> START  :  {__file__}")
+    print(f"..... auto_updated_center {args.auto_updated_center}")
+    print(f"..... x_center {args.x_center} y_center {args.y_center}")
+    print(f"..... search_radius {args.search_radius} (bin of image) ndiv {args.numberOfDivision} cellsize {args.cellsize}")
+    print(f"..... debug {args.debug} manual {args.manual}")
+    print(f"..... vmax {args.vmax} vmin {args.vmin}")
 
-    filename = options.filename
+    filename = args.filename
 
-    print(f"\n| Read each file and do process \n")
+    print(f"\n>>>>> Read each file and do process \n")
     print(f"START : {filename}")
-    eve = Fits(filename, options.debug)
+    eve = Fits(filename, args.debug)
 
-    if options.auto_updated_center:
-        print(".....(update calc_center).....")
-        x_center, y_center, _ = calc_center(eve.data, options.x_center, options.y_center, search_radius=options.search_radius)
+    if args.auto_updated_center:
+        color_print("[[update calc_center]]", ConsoleColors.OKBLUE)
+        x_center, y_center, _ = calc_center(eve.data, args.x_center, args.y_center, search_radius=args.search_radius)
         x_center, y_center = int(x_center), int(y_center)
-        print(f"(x_center, y_center) is updated from ({options.x_center}, {options.y_center}) to ({x_center}, {y_center}).")
+        color_print(f"(x_center, y_center) is updated from ({args.x_center}, {args.y_center}) to ({x_center}, {y_center}).", ConsoleColors.UNDERLINE)
 
-    eve.plotwcs(x_center, y_center, vmax=options.vmax, vmin=options.vmin, manual=options.manual)
-    eve.plotwcs_ps(x_center, y_center, search_radius=options.search_radius, vmax=options.vmax, vmin=options.vmin, manual=options.manual)
-    eve.mk_radialprofile(x_center, y_center, search_radius=options.search_radius, \
-                           ndiv=options.numberOfDivision, vmax=options.vmax, vmin=options.vmin, \
-                           manual=options.manual, cellsize=options.cellsize)
+    eve.plotwcs(x_center, y_center, vmax=args.vmax, vmin=args.vmin, manual=args.manual)
+    eve.plotwcs_ps(x_center, y_center, search_radius=args.search_radius, vmax=args.vmax, vmin=args.vmin, manual=args.manual)
+    pileup_result = eve.mk_radialprofile(x_center, y_center, search_radius=args.search_radius, \
+                           ndiv=args.numberOfDivision, vmax=args.vmax, vmin=args.vmin, \
+                           manual=args.manual, cellsize=args.cellsize)
 
-    print("| finish \n")
+    # Create the output directory
+    output_directory = args.output_dir
+    os.makedirs(output_directory, exist_ok=True)
+
+    # Generate files for each rin, rout pair
+    for _target, _r in zip(target_values, pileup_result):
+        if _r > 0:
+            _r_radec = eve.p2arcsec * _r
+            color_print(f">>>>> create a region file at pileup fraction = {_target*100:.2f} % at {_r:.2f} pixel (= {_r_radec:.2f} arcsec)",ConsoleColors.WARNING)
+            generate_region_file(eve.c_ra, eve.c_dec, _r_radec, args.rout, output_dir=output_directory)
+
+    print(">>>>> finish \n")
 
 if __name__ == '__main__':
     main()

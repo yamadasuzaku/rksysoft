@@ -49,6 +49,7 @@ def parse_args():
     parser.add_argument('--progflags', type=str, help='Comma-separated flags for qlmklc, qlmkspec, spec6x6 (e.g. 0,1,0)')
     parser.add_argument('--calflags', type=str, help='Comma-separated flags for cal operations (e.g. 0,1,0)')    
     parser.add_argument('--anaflags', type=str, help='Comma-separated flags for ana operations (e.g. 1,0,0)')    
+    parser.add_argument('--xtendflags', type=str, help='Comma-separated flags for xtend operations (e.g. 1,0,0)')        
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
     parser.add_argument('--plotpixels', '-p', type=str, help='プロットするピクセルのカンマ区切りリスト', default=','.join(map(str, range(36))))
@@ -221,6 +222,12 @@ def main():
         "compcluf": bool(ana_values[2]),
     }
     print(f"anadic = {anadic}")    
+
+    xtenddic = {
+        "xtendgenpharmfarf": bool(ana_values[0]),
+    }
+    print(f"xtenddic = {xtenddic}")    
+
 
 ################### setting for input files ###################################################################
 
@@ -395,7 +402,7 @@ def main():
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
     if caldic["antico"]:
-        runprog="run_resolve_ana_pixel_hist1d_many_eventfiles.sh"        
+        runprog="resolve_ana_antico_comp_ELVhilo.sh"        
         arguments=f"{obsid}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_antico", linkfiles=[f"../{ufacevt}",f"../../../auxil/{ehk}"], gdir=f"{obsid}/resolve/event_uf/")
 
@@ -480,6 +487,13 @@ def main():
         arguments=f"" 
         dojob(obsid, runprog, fwe = fwe, subdir="checkana_compcluf", gdir=f"{obsid}/resolve/event_uf/")        
 
+################### Xtend ###################################################################
+
+    if anadic["xtendgenpharmfarf"]:
+        #
+        runprog="xtend..."
+        arguments=f"{ufevt}" 
+        dojob(obsid, runprog, fwe = fwe, subdir="checkana_compcluf", gdir=f"{obsid}/resolve/event_uf/")        
 
 ################### create HTML ###################################################################
 
