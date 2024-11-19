@@ -16,7 +16,7 @@ def generate_region_file(c_ra, c_dec, rin, rout, output_dir="."):
         output_dir (str): Directory to save the output file.
     """
     # Automatically generate the filename
-    filename = f"ds9_region_{rin}_{rout}.reg"
+    filename = f"region_{rin}_{rout}.reg"
     filepath = os.path.join(output_dir, filename)
 
     # Template for DS9 format
