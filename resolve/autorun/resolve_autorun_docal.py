@@ -499,7 +499,7 @@ def main():
 
     if genhtml:
         print("..... create html file")
-        runprog="resolve_autorun_png2html.py"                
+        runprog="xrism_autorun_png2html.py"                
         check_program_in_path(runprog)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["check_"] + ["--ver"] +  ["v0"], check=True)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkcal_"] + ["--ver"] +  ["v0"], check=True)
