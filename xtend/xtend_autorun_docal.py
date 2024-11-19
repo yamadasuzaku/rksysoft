@@ -130,7 +130,7 @@ def extract_data_class_and_ccd(filename):
                 'CCD3,4'     : 2nd digit is '2'
                 'Unknown'    : Otherwise
     """
-    match = re.search(r'_p.(\d{8})', filename)
+    match = re.search(r'_p.([A-Za-z0-9]{8})', filename)
     if not match:
         color_print(f"Invalid filename format: {filename}", ConsoleColors.FAIL)
         return None, None

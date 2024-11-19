@@ -64,10 +64,13 @@ def plot_arf_files(show_plot, x_max):
 
     # Plot the ratio curves on the bottom subplot
     for file_path, (x, y) in data_dict.items():
+        if str(file_path).strip() == str(max_file).strip():
+            print(file_path, max_file)
+            continue
         # Avoid division by zero by setting invalid ratios to NaN
         with np.errstate(divide='ignore', invalid='ignore'):
             ratio = np.where(max_y > 0, y / max_y, np.nan)
-        ax2.plot(x, ratio, label=f"{file_path} / {max_file}")
+        ax2.plot(x, ratio, label=f"{file_path}")
 
     # Configure the top subplot
     ax1.set_ylabel("Effective Area (cm^2)")
@@ -77,7 +80,7 @@ def plot_arf_files(show_plot, x_max):
     # Configure the bottom subplot
     ax2.set_xlabel("Energy (keV)")
     ax2.set_ylabel("Ratio")
-    ax2.set_title("Ratio to Maximum Effective Area Curve")
+    ax2.set_title(f"Ratio to {max_file}")
     ax2.legend()
 
     # Apply x-axis limit
