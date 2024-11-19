@@ -474,6 +474,10 @@ def main():
         arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
 
+        runprog="xrism_util_plot_arf.py"        
+        arguments=""
+        dojob(obsid, runprog, arguments = arguments, subdir="checkana_qlfit", gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+
 
     if anadic["compcluf"]:
 
