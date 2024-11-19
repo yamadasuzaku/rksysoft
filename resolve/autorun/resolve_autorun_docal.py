@@ -179,15 +179,15 @@ def main():
 
     calflags = calflags or ""
     cal_values = [int(x) for x in calflags.split(',')]
-    # 3個未満の場合は、0 で埋める
-    if len(flag_values) < 3:
-        flag_values += [0] * (3 - len(flag_values))    
+    # 6個未満の場合は、0 で埋める
+    if len(flag_values) < 6:
+        flag_values += [0] * (6 - len(flag_values))    
 
     anaflags = anaflags or ""
     ana_values = [int(x) for x in anaflags.split(',')]
-    # 1個未満の場合は、0 で埋める
-    if len(ana_values) < 1:
-        ana_values += [0] * (1 - len(flag_values))    
+    # 3個未満の場合は、0 で埋める
+    if len(ana_values) < 3:
+        ana_values += [0] * (3 - len(flag_values))    
 
     # 数値列をTrue/Falseに変換し、flagが1の時だけ実行
     procdic = {
