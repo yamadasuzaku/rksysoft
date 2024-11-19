@@ -153,15 +153,18 @@ def main():
     parser.add_argument('obsid', help='OBSID')    
     parser.add_argument(
         '--steps', '-s', 
-        nargs='+', 
+        nargs='*', 
         type=int, 
-        choices=[1, 2, 3], 
-        default=[1, 2, 3],
+        choices=[1, 2, 3, 4], 
+        default=[1, 2, 3, 4],
         help="Specify which steps to execute (1: Check pileup, 2: Create region, 3: Create PHA, RMF, ARF). Default is all steps."
     )
+    parser.add_argument('--genhtml', '-html', action='store_false', help='stop generate html')
+
     args = parser.parse_args()
     obsid = args.obsid
     steps = args.steps 
+    genhtml = args.genhtml
 
     gdir=f"{obsid}/xtend/event_cl/"
     filenames = glob.glob(f"{gdir}/xa{obsid}*_cl.evt*")    
@@ -189,24 +192,35 @@ def main():
                 color_print("    Step 1: Check pileup", ConsoleColors.OKCYAN)
                 runprog="xtend_pileup_check_quick.sh"        
                 arguments=f"{clevt}"
-                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/xtend/event_cl/")        
+                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/xtend/event_cl/")        
             if 2 in steps:
                 color_print("    Step 2: Create region", ConsoleColors.OKCYAN)                
                 runprog="xtend_util_genregion.py"        
                 arguments=f"{clevt}"
-                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/xtend/event_cl/")        
+                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/xtend/event_cl/")        
 
             if 3 in steps:
                 color_print("    Step 3: Create PHA, RMF, ARF", ConsoleColors.OKCYAN)
                 runprog="xtend_auto_gen_phaarfrmf.py"        
                 arguments=f"{clevt} -e {ehk} -b {bimg}"
-                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{bimg}"], gdir=f"{obsid}/xtend/event_cl/")        
+                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{bimg}"], gdir=f"{obsid}/xtend/event_cl/")        
+
+            if 4 in steps:
+                color_print("    Step 4: Check PHA, RMF, ARF", ConsoleColors.OKCYAN)
+                runprog="xrism_util_plot_arf.py"        
+                arguments=""
+                dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", gdir=f"{obsid}/xtend/event_cl/")        
 
         else:
             color_print("  Skipping analysis.", ConsoleColors.WARNING)
 
-#    do_process(args.obsid, args.steps)
+    ################### create HTML ###################################################################
 
+    if genhtml:
+        print("..... create html file")
+        runprog="xrism_autorun_png2html.py"                
+        check_program_in_path(runprog)
+        subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkpileup_"] + ["--ver"] +  ["v0"], check=True)
 
 if __name__ == "__main__":
     main()
