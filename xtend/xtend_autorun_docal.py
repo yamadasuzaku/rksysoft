@@ -12,6 +12,14 @@ import sys
 
 topdir = os.getcwd()
 
+def write_to_file(filename, content):
+    with open(filename, 'w') as f:
+        if isinstance(content, list): 
+            for one in content:
+                f.write(one + '\n')
+        else:
+            f.write(content + '\n')
+
 def check_program_in_path(program_name):
     program_path = shutil.which(program_name)
     
@@ -147,6 +155,20 @@ def extract_data_class_and_ccd(filename):
 
     return data_class, included_ccds
 
+def get_sorted_pha_files(gotodir, nametag="gopt"):
+    # 指定ディレクトリのパス
+    # glob でファイルを取得
+    files = glob.glob(os.path.join(gotodir, f"*_{nametag}.pha"))
+
+    # ファイルが見つからない場合、エラーを吐く
+    if not files:
+        raise FileNotFoundError(f"No matching files found in directory: {gotodir}")
+
+    # 生成日時でソート
+    sorted_files = sorted(files, key=os.path.getctime)
+    file_names = [os.path.basename(file) for file in sorted_files]
+    return file_names
+
 # メイン関数
 def main():    
     parser = argparse.ArgumentParser(description="Process event files.")
@@ -157,7 +179,7 @@ def main():
         type=int, 
         choices=[1, 2, 3, 4], 
         default=[1, 2, 3, 4],
-        help="Specify which steps to execute (1: Check pileup, 2: Create region, 3: Create PHA, RMF, ARF). Default is all steps."
+        help="Specify which steps to execute (1: Check pileup, 2: Create region, 3: Create PHA, RMF, ARF), Step 4: Check PHA, RMF, ARF. Default is all steps."
     )
     parser.add_argument('--genhtml', '-html', action='store_false', help='stop generate html')
 
@@ -210,6 +232,16 @@ def main():
                 runprog="xrism_util_plot_arf.py"        
                 arguments=""
                 dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", gdir=f"{obsid}/xtend/event_cl/")        
+
+                # plot all, inner, and outer spec 
+                runprog="xrism_spec_qlfit_many.py"        
+                gotodir = f"{obsid}/xtend/event_cl/checkpileup_std"
+                arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out" 
+                write_to_file(f"{gotodir}/f_gopt.list", get_sorted_pha_files(gotodir))
+                dojob(obsid, runprog, arguments = arguments, gdir=gotodir)        
+
+                arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+                dojob(obsid, runprog, arguments = arguments, gdir=gotodir)        
 
         else:
             color_print("  Skipping analysis.", ConsoleColors.WARNING)

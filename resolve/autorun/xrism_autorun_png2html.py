@@ -25,10 +25,11 @@ def check_file_exists(filepath):
         print(color_text(f"Error: {filepath} does not exist.", "red"))
         sys.exit(1)
 
-
 def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkeyword="xspecfitlog", htmlfig="htmlfig"):
     # ディレクトリを作成
     os.makedirs(output_dir, exist_ok=True)
+    output_dir_htmlfig = output_dir + "/" + htmlfig
+    os.makedirs(output_dir_htmlfig, exist_ok=True)
     
     # OBSIDディレクトリ以下のPNGファイルを収集
     # PNGファイルの取得と生成時刻でソート
@@ -72,17 +73,16 @@ def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkey
     for png in png_files:
 
         file_name = os.path.basename(png)
-        destination_png = os.path.join(output_dir, file_name)
+        destination_png = os.path.join(output_dir_htmlfig, file_name)
         # ファイルを出力ディレクトリにコピー
-        os.makedirs(htmlfig, exist_ok=True)
-        shutil.copy(png, htmlfig + "/" + destination_png)
+        shutil.copy(png, destination_png)
 
         # find xspec log file 
         if fitkeyword in png:
             logfile=png.replace(".png",".txt")        
             logfile_name = os.path.basename(logfile)
             # ファイルを出力ディレクトリにコピー
-            destination_log = os.path.join(output_dir, logfile_name)
+            destination_log = os.path.join(output_dir_htmlfig, logfile_name)
             shutil.copy(logfile, destination_log)
             print("..... logfile is found", logfile)    
         else:
@@ -92,9 +92,9 @@ def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkey
             # コピーされたファイルをHTMLに埋め込む（クリックでフルサイズ画像が開くように）
             html_content += f'''
             <div>
-                <h5><a href="{file_name}">{png}</a></h5>
-                <a href="{file_name}" target="_blank">
-                    <img src="{file_name}" alt="{file_name}" style="max-width:600px; height:auto;">
+                <h5><a href="{htmlfig}/{file_name}">{png}</a></h5>
+                <a href="{htmlfig}/{file_name}" target="_blank">
+                    <img src="{htmlfig}/{file_name}" alt="{file_name}" style="max-width:600px; height:auto;">
                 </a>
             </div>\n
             '''        
@@ -102,10 +102,10 @@ def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkey
             # コピーされたファイルをHTMLに埋め込む（クリックでフルサイズ画像が開くように）
             html_content += f'''
             <div>
-                <h5><a href="{file_name}">{png}</a></h5>
-                <h5><a href="{logfile_name}">{logfile}</a></h5>
-                <a href="{logfile_name}" target="_blank">
-                    <img src="{file_name}" alt="{file_name}" style="max-width:600px; height:auto;">
+                <h5><a href="{htmlfig}/{file_name}">{png}</a></h5>
+                <h5><a href="{htmlfig}/{logfile_name}">{logfile}</a></h5>
+                <a href="{htmlfig}/{logfile_name}" target="_blank">
+                    <img src="{htmlfig}/{file_name}" alt="{file_name}" style="max-width:600px; height:auto;">
                 </a>
             </div>\n
             '''        
@@ -127,9 +127,9 @@ def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkey
 def main():
     parser = argparse.ArgumentParser(description="Generate HTML for PNG files")
     parser.add_argument('obsid', help='OBSID to define the directory name')
-    parser.add_argument('--output-dir', default='A_QL_html', help='Output directory (default: QLhtml)')
-    parser.add_argument('--keyword', default='A_QL_html', help='keyword for png (default: check_)')
-    parser.add_argument('--ver', default='A_QL_html', help='version (default: v0)')
+    parser.add_argument('--output-dir', '-o', default='A_XRISM_QL_html', help='Output directory (default: QLhtml)')
+    parser.add_argument('--keyword', '-k', default='check_', help='keyword for png (default: check_)')
+    parser.add_argument('--ver', default='v0', help='version (default: v0)')
 
     args = parser.parse_args()
     

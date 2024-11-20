@@ -273,7 +273,7 @@ class Fits:
         self._plot_radial_profile(ax5, rc, rp, "(5) Radial profile (pix)", 'radial distance (pixel)', 'c s$^{-1}$ pixel$^{-2}$')
 
         ax6 = fig.add_subplot(2, 4, 7)
-        self._plot_radial_profile(ax6, radial_centers, radial_pileupfraction, "(6) Pileup Fraction", 'radial distance (pixel)', 'fraction')
+        self._plot_radial_profile(ax6, radial_centers, radial_pileupfraction, "(6) Pileup Fraction", 'radial distance (pixel)', 'pileup fraction')
 
         for _target, _r, _ls in zip(target_values,pileup_result, target_lss):
             if _r > 0:
@@ -283,13 +283,13 @@ class Fits:
 
         ax7 = fig.add_subplot(2, 4, 4)
         pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, search_radius)
-        self._plot_image(ax7, pileupfraction_img, "(7) Pileup Fraction image", x_center, y_center, pileup_vmin, pileup_vmax, search_radius, label='fraction')
+        self._plot_image(ax7, pileupfraction_img, "(7) Pileup Fraction image", x_center, y_center, pileup_vmin, pileup_vmax, search_radius, label='pileup fraction')
         self._plot_contour(ax7, pileupfraction_img, x_center, y_center, search_radius, target_values, target_lss)
 
         ax8 = fig.add_subplot(2, 4, 8)
         zoom_in_range = int(search_radius/5)
         pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, zoom_in_range)
-        self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, pileup_vmin, pileup_vmax, zoom_in_range, label='fraction')
+        self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, pileup_vmin, pileup_vmax, zoom_in_range, label='pileup fraction')
         self._plot_contour(ax8, pileupfraction_img, x_center, y_center, zoom_in_range, target_values, target_lss)
 
         outputfigname = f"{self.dirname}_radialprofile_xcenter{x_center}_ycenter{y_center}.png"
