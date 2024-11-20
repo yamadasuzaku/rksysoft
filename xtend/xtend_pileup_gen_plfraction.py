@@ -44,7 +44,9 @@ def color_print(msg, color):
 
 def calc_pileupfraction(r):
     r = np.asarray(r)  # convert numpy.array
-    result = np.where(r < 0, 0.0, (1. - (1. + r) * np.exp(-r)) / (1. - np.exp(-r)))
+    result = np.zeros_like(r)
+    mask = (r > 0)
+    result[mask] = (1. - (1. + r[mask]) * np.exp(-r[mask])) / (1. - np.exp(-r[mask]))
     return result
 
 def generate_region_file(c_ra, c_dec, rin, rout, output_dir="."):
@@ -130,14 +132,14 @@ class Fits:
         self.object = self.hdu.header["OBJECT"]
         self.datamode = self.hdu.header["DATAMODE"]
         self.exposure = self.hdu.header["EXPOSURE"]
-        self.lastdel = self.hdu.header["LASTDEL"]
+        self.timedel = self.hdu.header["TIMEDEL"]
         self.c_ra = self.hdu.header["RA_NOM"]
         self.c_dec = self.hdu.header["DEC_NOM"]
 
         color_print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}", ConsoleColors.OKGREEN)
-        color_print(f"[init] ... exposure={self.exposure}, lastdel={self.lastdel} ....", ConsoleColors.OKGREEN)
+        color_print(f"[init] ... exposure={self.exposure}, timedel={self.timedel} ....", ConsoleColors.OKGREEN)
         # print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}")
-        # print(f"[init] ... exposure={self.exposure}, lastdel={self.lastdel} ....")
+        # print(f"[init] ... exposure={self.exposure}, timedel={self.timedel} ....")
 
         self._process_data()
 
@@ -169,7 +171,7 @@ class Fits:
         color_print(f"     vmin = {vmin}, vmax = {vmax}", ConsoleColors.OKCYAN)
 
         plt.figure(figsize=(12, 8))
-        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
+        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] timedel={self.timedel}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         img = plt.imshow(self.data, origin='lower', cmap=plt.cm.CMRmap, norm=cr.LogNorm(vmin=vmin, vmax=vmax))        
@@ -205,7 +207,7 @@ class Fits:
         print(f"ra, dec    = {ra}, {dec}")
 
         plt.figure(figsize=(12, 8))
-        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
+        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] timedel={self.timedel}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
         ax = plt.subplot(111, projection=self.wcs)
@@ -244,14 +246,14 @@ class Fits:
 
         rc, rp = calc_radial_profile(self.data, x_center, y_center, search_radius=search_radius, ndiv=ndiv, exposure=self.exposure)
         radial_centers, radial_pileupfraction = calc_radial_pileupfraction(self.data, x_center, y_center, \
-                           exposure=self.exposure, search_radius=search_radius, ndiv=ndiv, cellsize=cellsize, lastdel = self.lastdel)
-        pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize, lastdel = self.lastdel)
-        
+                           exposure=self.exposure, search_radius=search_radius, ndiv=ndiv, cellsize=cellsize, timedel = self.timedel)
+        print(f" radial_pileupfraction = {radial_pileupfraction}")
+        pileupfraction_img = calc_2d_pileupfraction(self.data, exposure=self.exposure, cellsize=cellsize, timedel = self.timedel)
         pileup_result = interpolate_centers(radial_centers, radial_pileupfraction, target_values = target_values) 
         # Plot images and radial profiles
         fig = plt.figure(figsize=(16, 8))
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.87, wspace=0.5, hspace=0.4)
-        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] lastdel={self.lastdel}")
+        plt.figtext(0.1, 0.95, f"OBSID={self.obsid} {self.object} mode={self.datamode} exp={self.exposure} unit={self.p2arcsec}[arcsec/pixel] timedel={self.timedel}")
         plt.figtext(0.1, 0.93, f"Input center [deg] (x, y, ra, dec) = ({x_center:.4f}, {y_center:.4f}, {ra:.4f}, {dec:.4f}) cellsize for pileup = {cellsize}")
         plt.figtext(0.05, 0.025, f"fname={self.filename}")
 
@@ -300,15 +302,20 @@ class Fits:
 
         return pileup_result
 
-    def _pileup_image_vmin_vmax(self, data, x_center, y_center, search_radius=None):
+    def _pileup_image_vmin_vmax(self, data, x_center, y_center, search_radius=None, debug=False):
+        if debug: print(f"data = {data}")        
         if search_radius is None:
             data_copy = data.copy()
         else:
             data_copy = data[y_center-search_radius:y_center+search_radius+1, x_center-search_radius:x_center+search_radius+1].copy()
-        
+
+        if debug: print(f"data_copy = {data_copy}")        
         clean_data = data_copy[~np.isnan(data_copy)]
+        if debug: print(f"clean_data = {clean_data}")
         finite_data = clean_data[np.isfinite(clean_data)]
+        if debug: print(f"finite_data = {finite_data}")
         positive_data = finite_data[finite_data > 0]
+        if debug: print(f"positive_data = {positive_data}")
         vmin = np.min(positive_data)
         vmax = np.max(positive_data)
 
@@ -358,14 +365,14 @@ class Fits:
     def _save_pileup_oneline(self, pileup_result, outputcsv, visualize = True):
         rough_rate = np.sum(self.data)/self.exposure
         with open(outputcsv, "w") as fout:
-            fout.write(f"{self.obsid},{pileup_result[0]},{pileup_result[1]},{self.object},{self.datamode},{self.exposure},{self.lastdel},{rough_rate}\n")
+            fout.write(f"{self.obsid},{pileup_result[0]},{pileup_result[1]},{self.object},{self.datamode},{self.exposure},{self.timedel},{rough_rate}\n")
         color_print(f"..... {outputcsv} is created.", ConsoleColors.OKGREEN)        
         if visualize:
             self._load_visualize(outputcsv)
 
     def _load_visualize(self, outputcsv):
         csvdata = pd.read_csv(outputcsv, header=None, names=[
-            "obsid", "pileup_hi", "pileup_lo", "object", "datamode", "exposure", "lastdel", "rough_rate"])
+            "obsid", "pileup_hi", "pileup_lo", "object", "datamode", "exposure", "timedel", "rough_rate"])
         print(f"CSV file '{outputcsv}' loaded successfully.")
 
         for index, row in csvdata.iterrows():
@@ -374,7 +381,7 @@ class Fits:
             pileup_lo = row['pileup_lo']
             exposure = row['exposure']
             rough_rate = row['rough_rate']
-            lastdel = row['lastdel']
+            timedel = row['timedel']
             rough_rate = row['rough_rate']
 
             # Create a bar plot for pileup rate and error
@@ -393,7 +400,7 @@ class Fits:
                         f"filename: {self.filename}\n"
                         f"Datamode: {self.datamode}\n"
                         f"Exposure: {exposure:.2f}s\n"
-                        f"Lastdel: {lastdel:.6f}\n"
+                        f"Lastdel: {timedel:.6f}\n"
                         f"rough_rate: {rough_rate:.4f}\n"
                         f"----------------------------\n"
                         f"Pileup : {pileup_hi:.2f} pixel at pileup fraction = {target_values[0]} %\n"
@@ -410,7 +417,7 @@ class Fits:
             plt.close()
 
 
-def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=10, exposure = 1e4, cellsize=3*3, debug=False, lastdel=4.0):
+def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=10, exposure = 1e4, cellsize=3*3, debug=False, timedel=4.0):
     """
     Calculate the radial pileup fraction around a given center.
 
@@ -423,7 +430,7 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
     exposure (float): The exposure time to calculate pileup fraction. Default is 1e4.
     cellsize (float): The cell size for single phtoon. Default is 3x3, though need to check. 
     debug (bool): If True, print debug information. Default is False.
-    lastdel (float): readout time for a given count rate
+    timedel (float): readout time for a given count rate
 
     Returns:
     tuple: The radial coordinates and the normalized radial profile.
@@ -446,9 +453,9 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
 
     # Normalize the radial profile and calculate pileup fraction 
     areas = np.pi * (radial_bins[1:]**2 - radial_bins[:-1]**2)
-    # pile fraction is c/s/cellsize x lastdel ~ counts/1 readout. 
-    counts_per_cellsize_lastdel = radial_profile * cellsize * lastdel / (areas * exposure) 
-    radial_pileupfraction = calc_pileupfraction(counts_per_cellsize_lastdel)
+    # pile fraction is c/s/cellsize x timedel ~ counts/1 readout. 
+    counts_per_cellsize_timedel = radial_profile * cellsize * timedel / (areas * exposure) 
+    radial_pileupfraction = calc_pileupfraction(counts_per_cellsize_timedel)
 
     if debug:
         for m in range(len(radial_bins) - 1):
@@ -456,7 +463,7 @@ def calc_radial_pileupfraction(data, x_center, y_center, search_radius=10, ndiv=
 
     return radial_centers, radial_pileupfraction
 
-def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False, lastdel = 4.0):
+def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False, timedel = 4.0):
     """
     Calculate the pileup from image information.
 
@@ -465,13 +472,13 @@ def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False, lastde
     exposure (float): The exposure time to calculate pileup fraction. Default is 1e4.
     cellsize (float): The cell size for single phtoon. Default is 3x3, though need to check. 
     debug (bool): If True, print debug information. Default is False.
-    lastdel (float): readout time for a given count rate
+    timedel (float): readout time for a given count rate
 
     Returns:
     2D array: The pileup 2d image.
     """
     cellsize_kernel = np.ones((3,3), dtype=data.dtype)
-    cellsize_per_exposure = convolve(data, cellsize_kernel, mode='same') * lastdel / exposure
+    cellsize_per_exposure = convolve(data, cellsize_kernel, mode='same') * timedel / exposure
     pileupfraction_img = calc_pileupfraction(cellsize_per_exposure)
 
     if debug:

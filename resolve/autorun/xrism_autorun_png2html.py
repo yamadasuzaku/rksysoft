@@ -26,7 +26,7 @@ def check_file_exists(filepath):
         sys.exit(1)
 
 
-def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkeyword="xspecfitlog"):
+def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkeyword="xspecfitlog", htmlfig="htmlfig"):
     # ディレクトリを作成
     os.makedirs(output_dir, exist_ok=True)
     
@@ -74,7 +74,8 @@ def generate_html_for_pngs(obsid, output_dir, keyword="check_", ver="v0", fitkey
         file_name = os.path.basename(png)
         destination_png = os.path.join(output_dir, file_name)
         # ファイルを出力ディレクトリにコピー
-        shutil.copy(png, destination_png)
+        os.makedirs(htmlfig, exist_ok=True)
+        shutil.copy(png, htmlfig + "/" + destination_png)
 
         # find xspec log file 
         if fitkeyword in png:
