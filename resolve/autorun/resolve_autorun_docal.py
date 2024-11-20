@@ -491,13 +491,6 @@ def main():
         arguments=f"" 
         dojob(obsid, runprog, fwe = fwe, subdir="checkana_compcluf", gdir=f"{obsid}/resolve/event_uf/")        
 
-################### Xtend ###################################################################
-
-    if anadic["xtendgenpharmfarf"]:
-        #
-        runprog="xtend..."
-        arguments=f"{ufevt}" 
-        dojob(obsid, runprog, fwe = fwe, subdir="checkana_compcluf", gdir=f"{obsid}/resolve/event_uf/")        
 
 ################### create HTML ###################################################################
 
