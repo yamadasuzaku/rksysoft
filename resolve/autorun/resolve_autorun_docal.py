@@ -386,16 +386,6 @@ def main():
         arguments=f"{ufevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{ufevt}"], gdir=f"{obsid}/resolve/event_uf/")        
 
-    if caldic["statusitype"]:
-        runprog="resolve_util_stat_status_itype_fast.py"        
-
-        arguments=f"{clevt}"
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
-
-        arguments=f"{ufevt}"
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{ufevt}"], gdir=f"{obsid}/resolve/event_uf/")        
-
-
     if caldic["statitype"]:
         runprog="resolve_util_stat_itype.py"        
         arguments=f"{clevt}"
@@ -490,7 +480,6 @@ def main():
         runprog="run_resolve_ana_pixel_hist1d_many_eventfiles.sh"
         arguments=f"" 
         dojob(obsid, runprog, fwe = fwe, subdir="checkana_compcluf", gdir=f"{obsid}/resolve/event_uf/")        
-
 
 ################### create HTML ###################################################################
 
