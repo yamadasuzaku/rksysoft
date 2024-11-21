@@ -116,11 +116,15 @@ EOF
     subprocess.run(f'xaexpmap ehkfile={args.ehkfile} gtifile={pha_file} instrume=XTEND badimgfile={args.bad_pixel_image_file} pixgtifile={args.flickering_pixel_file} outfile={expomap} outmaptype=EXPOSURE delta=20.0 numphi=1 clobber=yes logfile=xtd_xaexpmap.log', shell=True)
     check_file_existance(file=expomap)
 
+    if args.clobber == "yes" and os.path.exists(f"xtd_raytrace_ptsrc.fits"):
+        subprocess.run("rm -rf xtd_raytrace_ptsrc.fits", shell=True)
+
     # xaarfgenによる各region fileのarf fileの作成
     for regfile in args.regfiles:
         fitsfname = os.path.basename(regfile).replace(".reg", "")
         print_status(f"===== Run xaarfgen for {fitsfname} =====", "info")
         arf_file = f"{fitsfname}.arf"
+
         subprocess.run(f'xaarfgen xrtevtfile=xtd_raytrace_ptsrc.fits source_ra={ra_sorce} source_dec={dec_sorce} telescop=XRISM instrume=XTEND emapfile={expomap} regmode=RADEC regionfile={regfile} sourcetype=POINT rmffile={rmf_file} erange="0.3 18.0 0 0" outfile={arf_file} numphoton={args.numphoton} minphoton=100 teldeffile=CALDB qefile=CALDB contamifile=CALDB obffile=CALDB fwfile=CALDB onaxisffile=CALDB onaxiscfile=CALDB mirrorfile=CALDB obstructfile=CALDB gatevalvefile=CALDB frontreffile=CALDB backreffile=CALDB pcolreffile=CALDB scatterfile=CALDB imgfile=NONE seed=7 clobber=yes logfile="xaarfgen_{fitsfname}.log"', shell=True)
         check_file_existance(file=arf_file)
 

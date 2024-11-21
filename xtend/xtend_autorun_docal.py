@@ -204,6 +204,7 @@ def main():
     )
     parser.add_argument('-n', '--numphoton', type=int, help='number of photon for arfgen', default=1000000)    
     parser.add_argument('--genhtml', '-html', action='store_false', help='stop generate html')
+    parser.add_argument('--clobber', '-c', choices=["yes", "no"], default="no",help='Flag to skip if the output exists (yes or no)')    
 
     args = parser.parse_args()
     obsid = args.obsid
@@ -249,7 +250,7 @@ def main():
             if 3 in steps:
                 color_print("    Step 3: Create PHA, RMF, ARF", ConsoleColors.OKCYAN)
                 runprog="xtend_auto_gen_phaarfrmf.py"        
-                arguments=f"{clevt} -e {ehk} -b {bimg} -n {args.numphoton}"
+                arguments=f"{clevt} -e {ehk} -b {bimg} -n {args.numphoton} -c {args.clobber}"
                 dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{bimg}"], gdir=f"{obsid}/xtend/event_cl/")        
 
             if 4 in steps:

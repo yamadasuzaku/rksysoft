@@ -547,8 +547,8 @@ def calc_2d_pileupfraction(data, exposure=1e4, cellsize=3*3, debug=False, timede
     """
     cellsize_kernel = np.ones((3,3), dtype=data.dtype)
     cellsize_per_exposure = convolve(data, cellsize_kernel, mode='same') * timedel / exposure
-    if not celsize == 9: # this is a phenomenological way to adjuted 3x3 convolution to cellsize. 
-        cellsize_per_exposure = cellsize_per_exposure * celsize/9 
+    if not cellsize == 9: # this is a phenomenological way to adjuted 3x3 convolution to cellsize. 
+        cellsize_per_exposure = cellsize_per_exposure * cellsize/9 
 
     pileupfraction_img = calc_pileupfraction(cellsize_per_exposure)
 
