@@ -6,6 +6,7 @@ import argparse
 from astropy.io import fits
 import sys
 import matplotlib.pyplot as plt
+import shutil
 from pdf2image import convert_from_path
 
 n_max_phafile = 10
