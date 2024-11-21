@@ -43,11 +43,23 @@ def color_print(msg, color):
     print(f"{color}{msg}{ConsoleColors.ENDC}")
 
 def calc_pileupfraction(r):
-    r = np.asarray(r)  # convert numpy.array
-    result = np.zeros_like(r)
-    mask = (r > 0)
+    # Convert input 'r' to a numpy array if it is not already
+    r = np.asarray(r)  # Ensure 'r' is a numpy array for element-wise operations
+
+    # Initialize an array of zeros with the same shape as 'r'
+    result = np.zeros_like(r)  # To store the final pile-up fraction values
+
+    # Create a mask for elements where 'r' > 0
+    mask = (r > 0)  # Boolean mask to identify valid (positive) values in 'r'
+
+    # Calculate the pile-up fraction for elements where 'r' > 0
     result[mask] = (1. - (1. + r[mask]) * np.exp(-r[mask])) / (1. - np.exp(-r[mask]))
-    return result
+    # Formula explanation:
+    # (1 - (1 + r) * exp(-r)) / (1 - exp(-r)) calculates the pile-up fraction
+    # Only applied to elements where 'r' > 0, using the mask
+
+    # Return the array of pile-up fractions
+    return result  # 'result' contains the computed values for all elements in 'r'
 
 def generate_region_file(c_ra, c_dec, rin, rout, output_dir="."):
     """
@@ -86,22 +98,34 @@ def generate_region_file(c_ra, c_dec, rin, rout, output_dir="."):
     print(f"Generated: {filepath}")
 
 
-def interpolate_centers(radial_centers, radial_pileupfraction, target_values = [0.03, 0.01]):
-
+def interpolate_centers(radial_centers, radial_pileupfraction, target_values=[0.03, 0.01]):
+    # Initialize an empty list to store the interpolated center values
     result = []
-    
+
+    # Loop over each target value in the list of target pile-up fractions
     for target in target_values:
+        # Default value for interpolation result; -1 indicates no valid interpolation found
         interp_center = -1
+
+        # Iterate through the pile-up fraction array to find the interval containing the target
         for i in range(1, len(radial_pileupfraction)):
+            # Check if the target lies between two consecutive pile-up fraction values
             if (radial_pileupfraction[i-1] >= target >= radial_pileupfraction[i] or
                 radial_pileupfraction[i-1] <= target <= radial_pileupfraction[i]):
-                interp_center = np.interp(target, 
-                                          [radial_pileupfraction[i-1], radial_pileupfraction[i]], 
-                                          [radial_centers[i-1], radial_centers[i]])
-                break
+                
+                # Perform linear interpolation to find the radial center corresponding to the target
+                interp_center = np.interp(
+                    target,  # The target value to interpolate for
+                    [radial_pileupfraction[i-1], radial_pileupfraction[i]],  # y-values
+                    [radial_centers[i-1], radial_centers[i]]  # x-values
+                )
+                break  # Exit the loop once the target interval is found and interpolated
+
+        # Append the interpolated center value to the result list
         result.append(interp_center)
-    
-    return result    
+
+    # Return the list of interpolated radial centers
+    return result
 
 class Fits:
     """Class for handling FITS files and plotting radial profiles."""
@@ -117,9 +141,24 @@ class Fits:
             print(f"ERROR: Can't find the fits file: {self.eventfilename}")
             quit()
 
+    def _check_if_eventfile(self):
+        """ check if the inputfile is image FITS, not event FITS"""
+        try:         
+            hdu1 = fits.open(self.filename)[1]   
+            if hdu1.header["EXTNAME"] == "EVENTS":
+                color_print(f"[ERROR] input file should be image fits. ", ConsoleColors.FAIL)
+                color_print(f"You should start from xtend_pileup_check_quick.sh", ConsoleColors.FAIL)
+                return 
+                False
+        except: 
+            pass 
+        return True
+
     def _initialize_fits_data(self, eventfile):
         """Initialize FITS data and extract header information."""
         self.filename = eventfile
+        if not self._check_if_eventfile():
+            sys.exit()
         self.hdu = fits.open(self.filename)[0]
         self.wcs = WCS(self.hdu.header)
         self.cdelt = self.wcs.wcs.cdelt
@@ -138,8 +177,6 @@ class Fits:
 
         color_print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}", ConsoleColors.OKGREEN)
         color_print(f"[init] ... exposure={self.exposure}, timedel={self.timedel} ....", ConsoleColors.OKGREEN)
-        # print(f"[init] ... dateobs={self.dateobs}, obsid={self.obsid}, object={self.object}, datamode={self.datamode}")
-        # print(f"[init] ... exposure={self.exposure}, timedel={self.timedel} ....")
 
         self._process_data()
 
@@ -275,11 +312,42 @@ class Fits:
         ax6 = fig.add_subplot(2, 4, 7)
         self._plot_radial_profile(ax6, radial_centers, radial_pileupfraction, "(6) Pileup Fraction", 'radial distance (pixel)', 'pileup fraction')
 
-        for _target, _r, _ls in zip(target_values,pileup_result, target_lss):
+        for k, (_target, _r, _ls) in enumerate(zip(target_values,pileup_result, target_lss)):
             if _r > 0:
                 color_print(f"***** possible pileup : pileup fraction = {_target*100:.2f} % at {_r:.2f} pixel *****",ConsoleColors.WARNING)
                 ax6.axhline(y=_target, color='g', ls=_ls, alpha=0.5, label=f"plfrac={_target*100:.2f} % at {_r:.2f} pixel")
                 plt.legend(numpoints=1, frameon=True)
+                # Add the definition in the top-right corner using figtext
+                plt.figtext(
+                    0.70, 0.49 - k * 0.02,  # X, Y position in figure coordinates (1.0 is the edge of the figure)
+                    f"pl. fraction = {_target*100:.2f} % at {_r:.2f} pixel",  # Text content
+                    ha="right",  # Align text to the right
+                    va="top",  # Align text to the top
+                    fontsize=9,  # Text size
+                    color="red",  # Text color
+                )
+            else:
+                plt.figtext(
+                    0.70, 0.49 - k * 0.02,  # X, Y position in figure coordinates (1.0 is the edge of the figure)
+                    f"pl. fraction = {_target*100:.2f} % at {_r:.2f} pixel",  # Text content
+                    ha="right",  # Align text to the right
+                    va="top",  # Align text to the top
+                    fontsize=9,  # Text size
+                    color="blue",  # Text color
+                )
+
+
+
+
+        # Add the definition in the top-right corner using figtext
+        plt.figtext(
+            0.95, 0.95,  # X, Y position in figure coordinates (1.0 is the edge of the figure)
+            "Green solid (---) Pileup fraction 3%\nGreen dashed (- -) Pileup fraction 1%",  # Text content
+            ha="right",  # Align text to the right
+            va="top",  # Align text to the top
+            fontsize=12,  # Text size
+            color="green",  # Text color
+        )
 
         ax7 = fig.add_subplot(2, 4, 4)
         pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, search_radius)
@@ -287,7 +355,7 @@ class Fits:
         self._plot_contour(ax7, pileupfraction_img, x_center, y_center, search_radius, target_values, target_lss)
 
         ax8 = fig.add_subplot(2, 4, 8)
-        zoom_in_range = int(search_radius/5)
+        zoom_in_range = int(search_radius/4)
         pileup_vmin, pileup_vmax = self._pileup_image_vmin_vmax(pileupfraction_img, x_center, y_center, zoom_in_range)
         self._plot_image(ax8, pileupfraction_img, "(8) Pileup Fraction image (zoom in)", x_center, y_center, pileup_vmin, pileup_vmax, zoom_in_range, label='pileup fraction')
         self._plot_contour(ax8, pileupfraction_img, x_center, y_center, zoom_in_range, target_values, target_lss)
@@ -585,13 +653,12 @@ def main():
     parser.add_argument('-m', '--manual', action='store_true', help='Flag to use vmax, vmin', default=False)
     parser.add_argument('-x', '--x_center', type=int, help='x coordinate of center', default=1215)
     parser.add_argument('-y', '--y_center', type=int, help='y coordinate of center', default=1215)
-#   parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=3*3)
-    parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=1 + 4 )
+    parser.add_argument('-c', '--cellsize', type=int, help='cell size for a single event', default=1 + 4 ) # this value need to be verified 
     parser.add_argument('-r', '--rout', type=int, help='outer redius of the region', default=60)
     parser.add_argument('-a', '--vmax', type=float, help='VMAX', default=3e3)
     parser.add_argument('-i', '--vmin', type=float, help='VMIN', default=1)
-    parser.add_argument('-s', '--search_radius', type=int, help='Search radius for data extraction', default=80)
-    parser.add_argument('-n', '--numberOfDivision', type=int, help='Number of divisions for annulus', default=20)
+    parser.add_argument('-s', '--search_radius', type=int, help='Search radius for data extraction', default=128)
+    parser.add_argument('-n', '--numberOfDivision', type=int, help='Number of divisions for annulus', default=32)
     parser.add_argument("--output-dir", default="./regions", help="Directory to save region files.")
 
     args = parser.parse_args()
@@ -629,8 +696,11 @@ def main():
     for _target, _r in zip(target_values, pileup_result):
         if _r > 0:
             _r_radec = eve.p2arcsec * _r
-            color_print(f">>>>> create a region file at pileup fraction = {_target*100:.2f} % at {_r:.2f} pixel (= {_r_radec:.2f} arcsec)",ConsoleColors.WARNING)
-            generate_region_file(eve.c_ra, eve.c_dec, _r_radec, args.rout, output_dir=output_directory)
+            if _r_radec < args.rout:
+                color_print(f">>>>> create a region file at pileup fraction = {_target*100:.2f} % at {_r:.2f} pixel (= {_r_radec:.2f} arcsec)",ConsoleColors.WARNING)
+                generate_region_file(eve.c_ra, eve.c_dec, _r_radec, args.rout, output_dir=output_directory)
+            else:
+                color_print(f">>>>> did not create a region file, due to rin > rout : {_r_radec:.2f} > {args.rout:.2f}" ,ConsoleColors.FAIL)
 
     print(">>>>> finish \n")
 
