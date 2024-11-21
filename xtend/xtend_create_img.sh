@@ -9,7 +9,7 @@ exit
 fi
 
 evt_file=$1
-new_filename="${evt_file%.evt}.img"
+new_filename="${evt_file%.evt.gz}"; new_filename="${new_filename%.evt}.img"
 
 tmp=tmp.log
 rm -f $tmp

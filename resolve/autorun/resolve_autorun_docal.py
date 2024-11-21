@@ -455,7 +455,7 @@ def main():
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
 
         # plot all, inner, and outer spec 
-        runprog="resolve_spec_qlfit_many.py"        
+        runprog="xrism_spec_qlfit_many.py"        
         gotodir = f"{obsid}/resolve/event_cl/checkana_genpharmfarf/checkana_qlfit"
         arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out" 
         write_to_file(f"{gotodir}/f_gopt.list", ["rsl_source_Hp_all_gopt.pha","rsl_source_Hp_inner_gopt.pha","rsl_source_Hp_outer_gopt.pha"])

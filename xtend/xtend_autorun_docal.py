@@ -29,6 +29,27 @@ def check_program_in_path(program_name):
     else:
         print(f"{program_name} is found at {program_path}")
 
+def strip_gz_extension(filename):
+    """
+    .gz を除いたファイル名を返す。
+    """
+    if filename.endswith(".gz"):
+        return filename[:-3]
+    return filename
+
+
+def resolve_gz_filename(filepath):
+    """
+    .gz の有無を確認し、存在するならそのファイルを返す。
+    なければ、元のファイルパスを返す。
+    """
+    if os.path.exists(filepath + ".gz"):
+        return filepath + ".gz"
+    elif os.path.exists(filepath):
+        return filepath
+    else:
+        raise FileNotFoundError(f"File not found: {filepath} or {filepath}.gz")    
+
 class ConsoleColors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -181,6 +202,7 @@ def main():
         default=[1, 2, 3, 4],
         help="Specify which steps to execute (1: Check pileup, 2: Create region, 3: Create PHA, RMF, ARF), Step 4: Check PHA, RMF, ARF. Default is all steps."
     )
+    parser.add_argument('-n', '--numphoton', type=int, help='number of photon for arfgen', default=1000000)    
     parser.add_argument('--genhtml', '-html', action='store_false', help='stop generate html')
 
     args = parser.parse_args()
@@ -196,8 +218,11 @@ def main():
 
     for filename in filenames:
         clevt = os.path.basename(filename)
-        ehk=f"xa{obsid}.ehk"
-        bimg=clevt.replace("_cl.evt",".bimg")
+        ehk = os.path.basename(resolve_gz_filename(os.path.join(f"{obsid}/auxil", f"xa{obsid}.ehk")))
+        bimg_unzip_name = strip_gz_extension(clevt).replace("_cl.evt", ".bimg")
+        bimg = os.path.basename(resolve_gz_filename(os.path.join(f"{obsid}/xtend/event_uf", f"{bimg_unzip_name}")))
+        
+        print(f"Output file will be: {bimg}")
 
         data_class, ccd_info = extract_data_class_and_ccd(clevt)
 
@@ -224,7 +249,7 @@ def main():
             if 3 in steps:
                 color_print("    Step 3: Create PHA, RMF, ARF", ConsoleColors.OKCYAN)
                 runprog="xtend_auto_gen_phaarfrmf.py"        
-                arguments=f"{clevt} -e {ehk} -b {bimg}"
+                arguments=f"{clevt} -e {ehk} -b {bimg} -n {args.numphoton}"
                 dojob(obsid, runprog, arguments = arguments, subdir="checkpileup_std", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{bimg}"], gdir=f"{obsid}/xtend/event_cl/")        
 
             if 4 in steps:

@@ -121,7 +121,7 @@ EOF
         fitsfname = os.path.basename(regfile).replace(".reg", "")
         print_status(f"===== Run xaarfgen for {fitsfname} =====", "info")
         arf_file = f"{fitsfname}.arf"
-        subprocess.run(f'xaarfgen xrtevtfile=xtd_raytrace_ptsrc.fits source_ra={ra_sorce} source_dec={dec_sorce} telescop=XRISM instrume=XTEND emapfile={expomap} regmode=RADEC regionfile={regfile} sourcetype=POINT rmffile={rmf_file} erange="0.3 18.0 0 0" outfile={arf_file} numphoton=1000000 minphoton=100 teldeffile=CALDB qefile=CALDB contamifile=CALDB obffile=CALDB fwfile=CALDB onaxisffile=CALDB onaxiscfile=CALDB mirrorfile=CALDB obstructfile=CALDB gatevalvefile=CALDB frontreffile=CALDB backreffile=CALDB pcolreffile=CALDB scatterfile=CALDB imgfile=NONE seed=7 clobber=yes logfile="xaarfgen_{fitsfname}.log"', shell=True)
+        subprocess.run(f'xaarfgen xrtevtfile=xtd_raytrace_ptsrc.fits source_ra={ra_sorce} source_dec={dec_sorce} telescop=XRISM instrume=XTEND emapfile={expomap} regmode=RADEC regionfile={regfile} sourcetype=POINT rmffile={rmf_file} erange="0.3 18.0 0 0" outfile={arf_file} numphoton={args.numphoton} minphoton=100 teldeffile=CALDB qefile=CALDB contamifile=CALDB obffile=CALDB fwfile=CALDB onaxisffile=CALDB onaxiscfile=CALDB mirrorfile=CALDB obstructfile=CALDB gatevalvefile=CALDB frontreffile=CALDB backreffile=CALDB pcolreffile=CALDB scatterfile=CALDB imgfile=NONE seed=7 clobber=yes logfile="xaarfgen_{fitsfname}.log"', shell=True)
         check_file_existance(file=arf_file)
 
         # header keywordの変更
@@ -141,6 +141,8 @@ if __name__ == "__main__":
     parser.add_argument("--bad_pixel_image_file", "-b", default="xa300049010xtd_p031300010.bimg", help="Bad pixel image file")
     parser.add_argument("--regfiles", nargs='+', default=[f"./regions/{f}" for f in os.listdir("./regions") if f.endswith(".reg")], help="List of region files to process")
     parser.add_argument("--flickering_pixel_file", default="NONE", help="Flickering pixel file")
+    parser.add_argument('-n', '--numphoton', type=int, help='number of photon for arfgen', default=1000000)
+
 
     args = parser.parse_args()
     main(args)
