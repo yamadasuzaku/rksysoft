@@ -21,6 +21,12 @@ for dir in $(find "$RESOLVETOOLS/xtend" -type d); do
   PATH="$dir:$PATH"
 done
 export PATH
+
+# RESOLVETOOLS/xrism以下のすべてのディレクトリをPATHに追加                                                                      
+for dir in $(find "$RESOLVETOOLS/xrism" -type d); do
+  PATH="$dir:$PATH"
+done
+export PATH
 ```
 
 - ファイルの初期状態
