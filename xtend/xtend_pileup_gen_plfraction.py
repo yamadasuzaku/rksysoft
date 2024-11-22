@@ -602,6 +602,7 @@ def dist2d(x, y, x_center, y_center):
     """Calculate the Euclidean distance between points (x, y) and (x_center, y_center)."""
     return np.hypot(x - x_center, y - y_center)
 
+
 def calc_center(data, x_center, y_center, search_radius=10):
     """
     Calculate the simple peak (just for consistency check) and barycentric peak.
@@ -634,7 +635,13 @@ def calc_center(data, x_center, y_center, search_radius=10):
     peak_x, peak_y = x_indices[peak_idx], y_indices[peak_idx]
     peak_value = values[peak_idx]
 
+    # Print information about the simple peak
     color_print(f"..... in calc_center: [simple peak] x_max, y_max, z_max = {peak_x}, {peak_y}, {peak_value}", ConsoleColors.OKCYAN)
+    
+    # Print information about the barycenter
+    color_print(f"..... in calc_center: [barycenter] barycenter_x = {barycenter_x:.2f}, barycenter_y = {barycenter_y:.2f}", ConsoleColors.OKCYAN)
+    
+    # Print the total counts in the search radius
     color_print(f"..... in calc_center: [total counts in search radius] total_counts = {total_counts}", ConsoleColors.OKCYAN)
 
     if peak_value < 0:
