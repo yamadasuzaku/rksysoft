@@ -56,8 +56,7 @@ def plot_v_rho(stellar_radius):
     r_values = np.linspace(solar_radius, 50 * solar_radius, 500)  # 半径 1-50 太陽半径
     theta_values = [0, 5, 10, 15, 20]  # θの値
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     # v_windのプロット
     ax1 = axes[0]
     ax2 = ax1.secondary_xaxis('top', functions=(lambda x: x / stellar_radius_in_solar, 
@@ -77,35 +76,43 @@ def plot_v_rho(stellar_radius):
 
     ax1.set_xlabel(r"$R$ [$R_{\odot}$]")
     ax1.set_ylabel(r"$v_{wind}$ [km/s]")
-    ax1.set_title(f"Stellar Radius = {stellar_radius} (v_wind), " + r"$R_{star}$=" + f"{stellar_radius_in_solar}" + r"$R_{\odot}$")
+    ax1.set_title(f"Stellar Radius = {stellar_radius} d (velocity), " + r"$R_{star}$=" + f"{stellar_radius_in_solar}" + r"$R_{\odot}$")
     ax1.legend()
     ax1.grid()
 
-    # rho_windのプロット
+# rho_windのプロット（質量密度と粒子数密度の両方をプロット）
     ax3 = axes[1]
     ax4 = ax3.secondary_xaxis('top', functions=(lambda x: x / stellar_radius_in_solar, 
                                                 lambda x: x * stellar_radius_in_solar))
     ax4.set_xlabel(r"$R$ [$R_{star}$]")
 
+    # 右側に第2のy軸を追加
+    m_H = 1.67e-24  # 水素原子の質量 [g]
+    mu = 1  # 平均分子量
+    ax5 = ax3.secondary_yaxis('right', functions=(lambda rho: rho / (mu * m_H),
+                                                  lambda n: n * (mu * m_H)))
+    ax5.set_ylabel(r"$n_{wind}$ [cm$^{-3}$]")  # 粒子数密度のラベル
+
     for theta in theta_values:
         rho_values = [rho_wind(r, theta, stellar_radius) for r in r_values]
         ax3.plot(r_values / solar_radius, rho_values, label=f"Theta = {theta}°")
+
     ax3.set_xlabel(r"$R$ [$R_{\odot}$]")
     ax3.set_ylabel(r"$\rho_{wind}$ [g/cm³]")
-    ax3.set_title(f"Stellar Radius = {stellar_radius} (rho_wind)")
+    ax3.set_title(f"Stellar Radius = {stellar_radius} d (density)")
     ax3.set_yscale("log")  # 密度は対数スケールでプロット
     ax3.legend()
     ax3.grid()
 
     plt.tight_layout()
-    plt.savefig(f"steller_profile_{stellar_radius}.png")
+    plt.savefig(f"steller_profile_{stellar_radius}.png",bbox_inches='tight')
 
     plt.show()
 
 # 実行
 if __name__ == "__main__":
-    stellar_radius = 0.5  # モデルの選択（0.5 または 0.4）
+    stellar_radius = 0.5  # (単位は連星間距離 d, 角度0のBH方向) モデルの選択（0.5 または 0.4）
     plot_v_rho(stellar_radius)
 
-    stellar_radius = 0.4  # 別モデルで再実行
+    stellar_radius = 0.4  # (単位は連星間距離 d, 角度0のBH方向) 別モデルで再実行
     plot_v_rho(stellar_radius)
