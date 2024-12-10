@@ -1,9 +1,11 @@
+#!/usr/bin/env python 
+
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = 'serif'
 from scipy.optimize import fsolve
 from matplotlib.colors import LogNorm
-
+import math
 # 定数
 G = 6.67430e-11  # 重力定数 [m^3/kg/s^2]
 AU = 1.496e11  # 天文単位 [m]
@@ -222,11 +224,16 @@ def plot_physical_potential(
             r1_scaled = -mu * distance / scale  # Position of the primary star
             tangent_x = [r1_scaled, r2_scaled - star_radius_scaled * np. sin(theta)]
             tangent_y = [0, star_radius_scaled * np.cos(theta)]
-            ax.plot(tangent_x, tangent_y, color="cyan", linestyle="--", label=f"Tangent Line (deg): {np.degrees(theta):.2f}")
+            ax.plot(tangent_x, tangent_y, color="cyan", linestyle="--", label=f"Inclination (deg): {90 - np.degrees(theta):.2f}")
 
             tangent_x_45 = [r1_scaled, r2_scaled]
             tangent_y_45 = [        0, d_scaled]
-            ax.plot(tangent_x_45, tangent_y_45, color="green", linestyle="--", label=f"Tangent Line (deg): 45 deg")
+            ax.plot(tangent_x_45, tangent_y_45, color="green", linestyle="--", label=f"Inclination (deg): 45")
+
+            tangent_x_30 = [r1_scaled, r1_scaled + 0.8 * d_scaled]
+            tangent_y_30 = [        0, 0.8 * math.sqrt(3) * d_scaled]
+            ax.plot(tangent_x_30, tangent_y_30, color="yellow", linestyle="--", label=f"Inclination (deg): 30")
+
 
     # Optionally add plot title
     if title:
