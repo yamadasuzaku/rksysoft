@@ -1,0 +1,212 @@
+#!/bin/bash
+
+#20180301 Yoto Ichinohe, TMU, ver1
+#20180803 Shinya Yamada, TMU, ver1.1, for Qiita
+
+# This is to do the following thread
+# https://www.cosmos.esa.int/web/xmm-newton/sas-thread-esasimage
+
+# setup initical parametaters 
+cheese_scale=0.5
+cheese_rate=1.0
+cheese_dist=40.0
+cheese_elow=400
+cheese_ehigh=7200
+
+# energy range for image analysis 
+elist=('400-750' '750-1300' '2000-7200')
+
+
+basedir=`pwd`
+pwd=$PWD
+
+anadir=`pwd`
+
+export SAS_ODF=`/bin/ls -1 *SUM.SAS`
+export SAS_CCF=ccf.cif
+
+cd $anadir
+
+
+# 1) Set up your SAS environment (following the SAS Startup Thread)
+
+{
+    cifbuild withccfpath=no analysisdate=now \
+        category=XMMCCF calindexset=$SAS_CCF \
+        fullpath=yes
+
+    odfingest odfdir=$SAS_ODF outdir=$SAS_ODF
+} 2>&1 | tee log_init_sy
+
+
+
+# 2) Create cleaned (filtered for soft proton excesses) MOS and pn (including OOT processing) event files
+
+log_initproc=log_initproc_sy
+{
+    epchain withoutoftime=true
+    epchain
+    pn-filter
+    emchain
+    mos-filter
+} 2>&1 | tee $log_initproc
+
+prefixm=''
+for x in $(ls $anadir/mos?????-hist.qdp) ; do
+    p=$(basename $x '-hist.qdp')
+    p=${p##mos}
+    prefixm=${prefixm}${p}' '
+done
+
+prefixp=''
+for x in $(ls $anadir/pn????-hist.qdp) ; do
+    p=$(basename $x '-hist.qdp')
+    p=${p##pn}
+    prefixp=${prefixp}${p}' '
+done
+
+prefixm=`echo $prefixm`
+prefixp=`echo $prefixp`
+
+
+# 3) Run source detection and make point-source masks. Note that in this and many tasks below the exposure ID must be explicitly noted. This is done by the prefixm, prefixp, and prefix parameters.
+
+{
+    cheese prefixm="${prefixm}" prefixp="${prefixp}" \
+        scale=$cheese_scale rate=$cheese_rate dist=$cheese_dist clobber=1 \
+        elow=$cheese_elow ehigh=$cheese_ehigh
+
+} 2>&1 | tee log_cheese_sy
+
+
+
+
+
+{
+
+    id=full
+
+    for elh in ${elist[@]} ; do
+        el=$(echo $elh | awk -F'-' '{print $1}')
+        eh=$(echo $elh | awk -F'-' '{print $2}')
+
+        for pm in $prefixm ; do
+            n0=$(tac $log_initproc | grep -n -m 1 $pm | awk -F':' '{print $1}')
+
+            for i in `seq 1 6` ; do
+                ni=$((n0 - i))
+                str="tac $log_initproc | sed -n ${ni}p | awk '"'/\*$|#$/{print}'"'"
+                res=`eval $str`
+
+                nccd=$((i + 1))
+                if [ "$res" = "" ] ; then
+                    eval "c$nccd=1"
+                else
+                    eval "c$nccd=0"
+                fi
+            done
+
+
+# 5) Use mos-spectra and pn-spectra to create the required intermediate spectra 
+
+            mos-spectra prefix=$pm caldb=$SAS_ESAS_CALDB region=none mask=0 \
+                elow=$el ehigh=$eh ccd1=1 ccd2=$c2 ccd3=$c3 ccd4=$c4 ccd5=$c5 ccd6=$c6 ccd7=$c7
+
+
+# 6) Use mos_back and pn_back to create the quiescent particle background (QPB) spectra and images
+
+            mos_back prefix=$pm caldb=$SAS_ESAS_CALDB diag=0 \
+                elow=$el ehigh=$eh ccd1=1 ccd2=$c2 ccd3=$c3 ccd4=$c4 ccd5=$c5 ccd6=$c6 ccd7=$c7
+
+
+# 7) Use rot-im-det-sky to transform the QPB images in detector coordinates into sky. 
+
+            rot-im-det-sky prefix=$pm mask=0 elow=$el ehigh=$eh mode=1
+
+        done
+
+        for pp in $prefixp ; do
+
+            pn-spectra prefix=$pp caldb=$SAS_ESAS_CALDB region=none mask=0 \
+                elow=$el ehigh=$eh pattern=4 quad1=1 quad2=1 quad3=1 quad4=1
+
+            pn_back prefix=$pp caldb=$SAS_ESAS_CALDB diag=0 \
+                elow=$el ehigh=$eh quad1=1 quad2=1 quad3=1 quad4=1
+
+            rot-im-det-sky prefix=$pp mask=0 elow=$el ehigh=$eh mode=1
+
+        done
+    done
+
+    for pm in $prefixm ; do
+        prefix=mos$pm
+
+# 8) For convenience, rename a few files so that they are not overwritten.
+
+        mv ${prefix}-obj.pi ${prefix}-obj-${id}.pi
+        mv ${prefix}.rmf ${prefix}-${id}.rmf
+        mv ${prefix}.arf ${prefix}-${id}.arf
+        mv ${prefix}-back.pi ${prefix}-back-${id}.pi
+        mv ${prefix}-obj-im-sp-det.fits ${prefix}-sp-${id}.fits
+
+# 9) Group the spectral data in preparation for spectral fitting.
+
+        str="grppha ${prefix}-obj-${id}.pi ${prefix}-obj-${id}-grp.pi "
+        str="${str}'chkey BACKFILE ${prefix}-back-${id}.pi & chkey RESPFILE ${prefix}-${id}.rmf & "
+        str="${str}chkey ANCRFILE ${prefix}-${id}.arf & group min 100 & exit'"
+        eval $str
+
+    done
+
+    for pp in $prefixp ; do
+        prefix=pn$pp
+
+# 8) For convenience, rename a few files so that they are not overwritten.
+
+        mv ${prefix}-obj-os.pi ${prefix}-obj-os-${id}.pi
+        mv ${prefix}-obj.pi ${prefix}-obj-${id}.pi
+        mv ${prefix}-obj-oot.pi ${prefix}-obj-oot-${id}.pi
+        mv ${prefix}.rmf ${prefix}-${id}.rmf
+        mv ${prefix}.arf ${prefix}-${id}.arf
+        mv ${prefix}-back.pi ${prefix}-back-${id}.pi
+        mv ${prefix}-obj-im-sp-det.fits ${prefix}-sp-${id}.fits
+
+
+# 9) Group the spectral data in preparation for spectral fitting.
+
+        str="grppha ${prefix}-obj-os-${id}.pi ${prefix}-obj-os-${id}-grp.pi "
+        str="${str}'chkey BACKFILE ${prefix}-back-${id}.pi & chkey RESPFILE ${prefix}-${id}.rmf & "
+        str="${str}chkey ANCRFILE ${prefix}-${id}.arf & group min 100 & exit'"
+        eval $str
+
+    done
+
+} 2>&1 | tee log_spectra_back_grppha1
+
+{
+
+    for elh in ${elist[@]} ; do
+        el=$(echo $elh | awk -F'-' '{print $1}')
+        eh=$(echo $elh | awk -F'-' '{print $2}')
+
+        id=all
+
+        comb caldb=$SAS_ESAS_CALDB withpartcontrol=1 withsoftcontrol=0 withswcxcontrol=0 \
+            elowlist=$el ehighlist=$eh mask=1 prefixlist="$prefixp $prefixm"
+
+        adapt smoothingcounts=50 thresholdmasking=0.02 detector=0 binning=2 elow=$el ehigh=$eh \
+            withmaskcontrol=no withpartcontrol=yes withsoftcontrol=0 withswcxcontrol=0
+
+        mv comb-obj-im-${elh}.fits comb-obj-im-${elh}-${id}.fits
+        mv comb-back-im-sky-${elh}.fits comb-back-im-sky-${elh}-${id}.fits
+        mv comb-exp-im-${elh}.fits comb-exp-im-${elh}-${id}.fits
+        mv adapt-${elh}.fits adapt-${elh}-${id}.fits
+        mv radial-filt-${elh}.qdp radial-filt-${elh}-${id}.qdp
+        mv size-${elh}.qdp size-${elh}-${id}.qdp
+        mv size-${elh}.fits size-${elh}-${id}.fits
+
+    done
+
+} 2>&1 | tee log_comb_adapt1_sy
+
+cd $pwd
