@@ -11,6 +11,16 @@ from astropy.time import Time
 import datetime
 import random
 
+import os 
+
+# 出力ディレクトリの作成
+output_dir = "fig_cluster"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+    print(f"Directory '{output_dir}' created.")
+else:
+    print(f"Directory '{output_dir}' already exists.")
+
 # global variables
 template_length_MR=219
 # Define global variables
@@ -29,7 +39,7 @@ def is_cluster_start(event, event_n1, event_n2, prev_event, key1 = "NEXT_INTERVA
         print(f"{status} = ({event[key1]} < {para1}) & ({event_n1[key1]} < {para1}) & ({event_n2[key1]} < {para1})")
     return status  # Return True/False based on the condition
 
-def is_cluster_continue(event, current_cluster, key1 = "NEXT_INTERVAL", para1=120, debug=True):
+def is_cluster_continue(event, current_cluster, key1 = "NEXT_INTERVAL", para1=120, debug=False):
     """Check if the current event continues the existing cluster."""
     # Logic for cluster continuation condition
     status = event[key1] < para1
@@ -37,7 +47,7 @@ def is_cluster_continue(event, current_cluster, key1 = "NEXT_INTERVAL", para1=12
         print(f"{status} = {event[key1]} < {para1}")
     return status  # Return True/False based on the condition
 
-def is_cluster_end(event, current_cluster, para1=2, debug=True):
+def is_cluster_end(event, current_cluster, para1=2, debug=False):
     """Determine if the cluster has reached its end."""
     # Logic for cluster end condition
     status = len(current_cluster) >= para1
@@ -45,17 +55,19 @@ def is_cluster_end(event, current_cluster, para1=2, debug=True):
         print(f"{status} = {len(current_cluster)} >= {para1}")
     return status  # Return True/False based on the condition
 
-def confirm_cluster(current_cluster, icluster, usepixel, key1="ITYPE", debug=True):
+def confirm_cluster(current_cluster, icluster, usepixel, key1="ITYPE", debug=False, show=False, do_plot=True):
     """Confirm and finalize the cluster, applying any necessary checks or filters."""
     # Logic for confirming or saving the finalized cluster
+    if do_plot:
+        plot_onecluster(current_cluster, icluster, usepixel, debug=debug, show=show)
     if debug:
-        plot_onecluster(current_cluster, icluster, usepixel)
         for i, mcluster in enumerate(current_cluster):
             print(i, mcluster[key1])
     status = True
     return status  # Return good or bad if any
 
-def plot_onecluster(cluster, icluster, usepixel, keys=["LO_RES_PH", "DERIV_MAX", "ITYPE", "RISE_TIME", "PREV_INTERVAL", "NEXT_INTERVAL"], output_dir="."):
+def plot_onecluster(cluster, icluster, usepixel, debug=False, \
+    keys=["LO_RES_PH", "DERIV_MAX", "ITYPE", "RISE_TIME", "PREV_INTERVAL", "NEXT_INTERVAL"], output_dir="fig_cluster", show=False):
     """
     Visualize the data for a single cluster and save the plot to a PNG file.
 
@@ -71,11 +83,12 @@ def plot_onecluster(cluster, icluster, usepixel, keys=["LO_RES_PH", "DERIV_MAX",
     imember_cluster = np.arange(len(cluster)) + 1
 
     # Print cluster information to standard output
-    print("Cluster Information:")
+    print(f"Cluster Information: pixel={usepixel}, icluster={icluster}, cluster length = {len(cluster)}")
+    print(f"     TIME: {times[0]} to {times[-1]}")
+    print(f"     DATETIME: {imember_datetime[0]} to {imember_datetime[-1]}")
+
     for key in keys:
-        print(f"{key}: {data[key]}")
-    print(f"TIME: {times}")
-    print(f"DATETIME: {imember_datetime}")
+        print(f"     {key}: {data[key]}")
 
     # Determine the number of rows and columns for subplots
     num_keys = len(keys)
@@ -106,13 +119,14 @@ def plot_onecluster(cluster, icluster, usepixel, keys=["LO_RES_PH", "DERIV_MAX",
 
     # Save plot to file
     plt.savefig(filepath)
-    plt.show()
+    if show:
+        plt.show()
     plt.close()
 
     print(f"Cluster plot saved as: {filepath}")
 
 
-def process_event_list(event_list, usepixel, nicutlength, debug=True):
+def process_event_list(event_list, usepixel, nicutlength, debug=True, show=False):
 
     if debug: print(f"start process_event_list : {event_list[0]}, {usepixel}, {nicutlength}")
     icluster_array, imember_array, bit14_array, bit15_array = [],[],[],[]
@@ -141,30 +155,31 @@ def process_event_list(event_list, usepixel, nicutlength, debug=True):
         if not current_cluster:  # current_cluster is empty
             # Check for a new cluster start condition
             if event_n1 is not None and event_n2 is not None:  # Execute only if there are at least three remaining events.
-                if is_cluster_start(event, event_n1, event_n2, prev_event):
+                if is_cluster_start(event, event_n1, event_n2, prev_event, debug=debug):
                     if debug: print(f"Cluster candidate found.")
                     current_cluster.append(event)
                     bit14 = True
-                    icluster = len(clusters)
+                    icluster = len(clusters) + 1
                     imember = len(current_cluster)
 
         else:
             # Process the ongoing cluster
-            if is_cluster_continue(event, current_cluster, para1=nicutlength):
+            if is_cluster_continue(event, current_cluster, para1=nicutlength, debug=debug):
                 if debug: print(f"Cluster continues.")
                 current_cluster.append(event)
                 bit15 = True
-                icluster = len(clusters) 
+                icluster = len(clusters) + 1 
                 imember = len(current_cluster)
             else:
-                if is_cluster_end(event, current_cluster):
+                if is_cluster_end(event, current_cluster, debug=debug):
                     if debug: print(f"Cluster closed. Store the bufffer.")
+                    current_cluster.append(event)
+                    imember = len(current_cluster)                    
                     # Finalize and save the cluster
-                    icluster = len(clusters)
-                    imember = len(current_cluster)
-                    bit15 = True
+                    icluster = len(clusters) + 1
                     clusters.append(current_cluster)
-                    confirm_cluster(current_cluster, icluster, usepixel) # check the content for debug
+                    bit15 = True
+                    confirm_cluster(current_cluster, icluster, usepixel, debug=debug, show=show) # check the content for debug
                     current_cluster = []  # Reset the cluster
                 else:
                     if debug: print(f"Cluster is not closed. Delete the bufffer.")
@@ -175,11 +190,8 @@ def process_event_list(event_list, usepixel, nicutlength, debug=True):
         bit14_array.append(bit14)
         bit15_array.append(bit15)
 
-    # Check and confirm the final cluster, if any
     if current_cluster:
-        confirmed_cluster = confirm_cluster(current_cluster)
-        if confirmed_cluster:
-            clusters.append(confirmed_cluster)
+        current_cluster = []  # Do not store the last buffer
 
     return clusters, icluster_array, imember_array, bit14_array, bit15_array
 
@@ -189,6 +201,8 @@ def main():
     parser.add_argument('--usepixels', '-p', type=str, help='Comma-separated list of pixels to plot', default=','.join(map(str, range(36))))
     parser.add_argument('--nicutlength', '-ni', type=int, default=120, help='The interval of the NEXT_INTERVAL')
     parser.add_argument('--debug', '-d', action='store_true', default=False, help='The debug flag')
+    parser.add_argument('--show', '-s', action='store_true', default=False, help='plt.show is used.')
+    parser.add_argument('--outname', '-o', type=str, help='fname tag used for output file name', default="addcluster_")
 
     args = parser.parse_args()
 
@@ -196,14 +210,20 @@ def main():
     usepixels = list(map(int, args.usepixels.split(',')))
     nicutlength = args.nicutlength
     debug = args.debug
+    show = args.show
+    outname = args.outname
 
-    output_fits = "cluster_" + input_fits
+    output_fits = outname + input_fits
 
     # Open the input FITS file
+
     with fits.open(input_fits) as hdul:
         # Access the STATUS and PIXEL columns
         status_data = hdul[1].data['STATUS']
         pixel_data = hdul[1].data['PIXEL']
+        # データ型を int16 に変換
+        hdul[1].data['PREV_INTERVAL'] = hdul[1].data['PREV_INTERVAL'].astype(np.int16)
+        hdul[1].data['NEXT_INTERVAL'] = hdul[1].data['NEXT_INTERVAL'].astype(np.int16)        
         n_rows = len(status_data)
         # Create a new column for cluster index
         icluster = np.zeros(n_rows, dtype=np.int32)
@@ -214,7 +234,7 @@ def main():
             # Get rows corresponding to the current pixel
             pixel_mask = (pixel_data == pixel) # bool type with a length of n_rows 
             # Process the event list to find clusters
-            clusters, icluster_array, imember_array, bit14_array, bit15_array = process_event_list(hdul[1].data, pixel, nicutlength, debug=debug)
+            clusters, icluster_array, imember_array, bit14_array, bit15_array = process_event_list(hdul[1].data, pixel, nicutlength, debug=debug, show=show)
 
             if debug:
                 print(f"Cluster Number in {np.sum(pixel_mask)} = {len(clusters)}, {len(icluster_array)}, {len(imember_array)}, {len(bit14_array)}, {len(bit15_array)}")
@@ -225,6 +245,8 @@ def main():
             # Modify the STATUS column and ICLUSTER, IMEMBER for the current pixel
             icluster[pixel_mask] = icluster_array
             imember[pixel_mask] = imember_array
+            print(f"bit14_array = {bit14_array}")
+            print(f"bit15_array = {bit15_array}")
             status_data[pixel_mask, 14] = bit14_array
             status_data[pixel_mask, 15] = bit15_array
 
