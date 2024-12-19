@@ -144,7 +144,7 @@ if __name__ == "__main__":
     parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
     parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis", default=None)
     parser.add_argument("--gtifiles", type=str, help="Comma-separated column names for gtifiles", default=None)
-    parser.add_argument("--outname", type=str, help="outputfile name tag", default="_p_")
+    parser.add_argument("--outname", "-o", type=str, help="outputfile name tag", default="_p_")
 
     args = parser.parse_args()
     outname = args.outname
