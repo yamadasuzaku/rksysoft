@@ -591,7 +591,7 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
             ax.set_xlabel("all grade rate (c/s/pixel)")
             ax.set_ylabel("each grade rate (c/s/pixel)")
             ax.grid(alpha=0.2)
-            ax.set_title(f"OBSID={obsid} pixel={pix:02d}")
+            ax.set_title(f"OBSID={obsid} pixel={pix:02d} timebinsize={timebinsize}")
             if yscale_ingratio == "log":
                 ax.set_ylim(1e-5,rate_max_ingratio)
                 ax.set_xlim(1e-2,rate_max_ingratio)
