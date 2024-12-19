@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+"""
+Script Name: resolve_ana_pixel_Ls_define_cluster.py
+
+Description:
+This script modifies the 14th and 15th bits in the STATUS column of a FITS file
+for each pixel and adds a new column for row indices for pseudo-Ls events. 
+
+History:
+- ver 1, 2024.12.19, first draft, collaborated with Yuusuke Uchida-san to resolve a bug in FITS writing.
+"""
+
 import argparse
 import matplotlib.pyplot as plt
 params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
@@ -87,7 +98,7 @@ def plot_onecluster(cluster, icluster, usepixel, event_list, pixel_mask, pixel_m
     # get out of cluster evenst 
     pixel_mask_index
     prev_n1 = event_list[pixel_mask[pixel_mask_index - imember_length]] if (pixel_mask_index - imember_length < len(pixel_mask)) or (pixel_mask_index - imember_length >= 0) else None
-    next_n1 = event_list[pixel_mask[pixel_mask_index + 1]] if (pixel_mask_index +1 < len(pixel_mask)-1 ) or (pixel_mask_index +1 >= 0) else None
+    next_n1 = event_list[pixel_mask[pixel_mask_index + 1]] if (pixel_mask_index +1 < len(pixel_mask)-1 ) and (pixel_mask_index +1 >= 0) else None
 
     # Print cluster information to standard output
     print(f"Cluster Information: pixel={usepixel}, icluster={icluster}, cluster length = {len(cluster)}")
@@ -260,15 +271,12 @@ def main():
         # Access the STATUS and PIXEL columns
         status_data = hdul[1].data['STATUS']
         pixel_data = hdul[1].data['PIXEL']
-        # データ型を int16 に変換
-        # hdul[1].data['PREV_INTERVAL'] = hdul[1].data['PREV_INTERVAL'].astype(np.int16)
-        # hdul[1].data['NEXT_INTERVAL'] = hdul[1].data['NEXT_INTERVAL'].astype(np.int16)        
 
-        hdul[1].columns['PREV_INTERVAL'].array = hdul[1].data['PREV_INTERVAL'].astype(np.int16)
-        hdul[1].columns['NEXT_INTERVAL'].array = hdul[1].data['NEXT_INTERVAL'].astype(np.int16)
-        hdul[1].columns['PREV_INTERVAL'].bzero = 0
-        hdul[1].columns['NEXT_INTERVAL'].bzero = 0
-
+        # create PREV/NEXT_INTERVAL to store them as int64
+        prev_interval_col = fits.Column(name='PREV_INTERVAL', format='K')
+        prev_interval_col.array = hdul[1].data['PREV_INTERVAL'].astype(np.int64)
+        next_interval_col = fits.Column(name='NEXT_INTERVAL', format='K')
+        next_interval_col.array = hdul[1].data['NEXT_INTERVAL'].astype(np.int64)
 
         n_rows = len(status_data)
         # Create a new column for cluster index
@@ -303,6 +311,15 @@ def main():
         new_col1 = fits.Column(name='ICLUSTER', format='J', array=icluster)
         new_col2 = fits.Column(name='IMEMBER', format='J', array=imember)
         new_cols = fits.ColDefs(col_defs + new_col1 + new_col2)
+
+        new_cols = []
+        for col in col_defs+new_col1+new_col2 :
+            if col.name == 'PREV_INTERVAL' : 
+                new_cols.append(prev_interval_col)
+            elif col.name == 'NEXT_INTERVAL' :
+                new_cols.append(next_interval_col)
+            else :
+                new_cols.append(col)
 
         # Create a new binary table with the updated columns
         new_hdu = fits.BinTableHDU.from_columns(new_cols, header=hdul[1].header)
