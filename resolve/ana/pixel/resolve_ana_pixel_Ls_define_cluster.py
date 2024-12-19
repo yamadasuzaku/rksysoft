@@ -143,7 +143,7 @@ def plot_onecluster(cluster, icluster, usepixel, event_list, pixel_mask, pixel_m
                     textcoords='offset points', ha='center', fontsize=8, color="y")
 
         if next_n1 is not None:
-            ax.plot(imember_length + 1, next_n1[key], marker='o', color="y", label="out of cluster (+1)")
+            ax.plot(imember_length + 1, next_n1[key], marker='s', color="y", label="out of cluster (+1)")
             # Annotate the previous event value
             ax.annotate(f'{next_n1[key]}', xy=(imember_length + 1, next_n1[key]), xytext=(0, 5),
                     textcoords='offset points', ha='center', fontsize=8, color="y")
