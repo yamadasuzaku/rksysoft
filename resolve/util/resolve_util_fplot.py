@@ -49,19 +49,6 @@ def apply_filters(data, filters):
             mask &= (data[col] >= value)
     return data[mask]
 
-# def parse_filter_conditions(conditions):
-#     filters = []
-#     for condition in conditions.split(","):
-#         col, value = condition.split("==")
-#         filters.append((col.strip(), float(value.strip())))
-#     return filters
-
-# def apply_filters(data, filters):
-#     mask = np.ones(len(data), dtype=bool)
-#     for col, value in filters:
-#         mask &= (data[col] == value)
-#     return data[mask]
-
 def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, filters=None,\
                       plotflag = False, markers = "o", debug=True, markersize = 1, gtifiles = None):
     # Open the FITS file
@@ -157,8 +144,10 @@ if __name__ == "__main__":
     parser.add_argument("--markersize", '-k', type=float, help="marker size", default=1)
     parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis", default=None)
     parser.add_argument("--gtifiles", type=str, help="Comma-separated column names for gtifiles", default=None)
+    parser.add_argument("--outname", type=str, help="outputfile name tag", default="_p_")
 
     args = parser.parse_args()
+    outname = args.outname
     file_names = [_ for _ in args.file_names.split(",")]
     print(f'file_names = {file_names}')
 
@@ -181,6 +170,6 @@ if __name__ == "__main__":
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None    
 
     title = f"{args.file_names} : filtered with {args.filters}"
-    outfname = "fplot_" + args.file_names.replace(",", "_").replace(".", "_p_") + ".png"
+    outfname = "fplot_" + args.file_names.replace(",", "_").replace(".", outname) + ".png"
     plot_fits_data(file_names, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname,
                    filters=filter_conditions, plotflag=args.plot, markers=args.markers, markersize=args.markersize, gtifiles=args.gtifiles)
