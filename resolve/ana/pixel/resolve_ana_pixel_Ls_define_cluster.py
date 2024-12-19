@@ -10,6 +10,7 @@ from astropy.io import fits
 from astropy.time import Time
 import datetime
 import random
+from matplotlib.ticker import MaxNLocator
 
 import os 
 
@@ -55,18 +56,18 @@ def is_cluster_end(event, current_cluster, para1=2, debug=False):
         print(f"{status} = {len(current_cluster)} >= {para1}")
     return status  # Return True/False based on the condition
 
-def confirm_cluster(current_cluster, icluster, usepixel, key1="ITYPE", debug=False, show=False, do_plot=True):
+def confirm_cluster(current_cluster, icluster, usepixel, event_list, pixel_mask, pixel_mask_index, key1="ITYPE", debug=False, show=False, do_plot=True):
     """Confirm and finalize the cluster, applying any necessary checks or filters."""
     # Logic for confirming or saving the finalized cluster
     if do_plot:
-        plot_onecluster(current_cluster, icluster, usepixel, debug=debug, show=show)
+        plot_onecluster(current_cluster, icluster, usepixel, event_list, pixel_mask, pixel_mask_index, debug=debug, show=show)
     if debug:
         for i, mcluster in enumerate(current_cluster):
             print(i, mcluster[key1])
     status = True
     return status  # Return good or bad if any
 
-def plot_onecluster(cluster, icluster, usepixel, debug=False, \
+def plot_onecluster(cluster, icluster, usepixel, event_list, pixel_mask, pixel_mask_index, debug=False, \
     keys=["LO_RES_PH", "DERIV_MAX", "ITYPE", "RISE_TIME", "PREV_INTERVAL", "NEXT_INTERVAL"], output_dir="fig_cluster", show=False):
     """
     Visualize the data for a single cluster and save the plot to a PNG file.
@@ -80,7 +81,13 @@ def plot_onecluster(cluster, icluster, usepixel, debug=False, \
     data = {key: [event[key] for event in cluster] for key in keys}
     times = [event["TIME"] for event in cluster]
     imember_datetime = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=time) for time in times])
-    imember_cluster = np.arange(len(cluster)) + 1
+    imember_length = len(cluster)
+    imember_cluster = np.arange(imember_length) + 1
+
+    # get out of cluster evenst 
+    pixel_mask_index
+    prev_n1 = event_list[pixel_mask[pixel_mask_index - imember_length]] if (pixel_mask_index - imember_length < len(pixel_mask)) or (pixel_mask_index - imember_length >= 0) else None
+    next_n1 = event_list[pixel_mask[pixel_mask_index + 1]] if (pixel_mask_index +1 < len(pixel_mask)-1 ) or (pixel_mask_index +1 >= 0) else None
 
     # Print cluster information to standard output
     print(f"Cluster Information: pixel={usepixel}, icluster={icluster}, cluster length = {len(cluster)}")
@@ -95,23 +102,56 @@ def plot_onecluster(cluster, icluster, usepixel, debug=False, \
     num_cols = 2  # Fixed number of columns
     num_rows = (num_keys + num_cols - 1) // num_cols  # Calculate rows dynamically
 
-    # Create a plot
-    plt.figure(figsize=(12, 2 * num_rows))
+    # Create a figure with subplots
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(12, 2 * num_rows))
+    axes = axes.flatten()  # Flatten the axes array for easy iteration
+
     for i, key in enumerate(keys):
-        plt.subplot(num_rows, num_cols, i + 1)
-        plt.plot(imember_cluster, data[key], marker='o')
-        plt.title(key, fontsize=10)
-        plt.xlabel("Cluster Member", fontsize=8)
-        plt.ylabel(key, fontsize=8)
-        plt.xticks(fontsize=8)
-        plt.yticks(fontsize=8)
+        ax = axes[i]  # Get the corresponding axis
+
+        # Plot cluster data
+        ax.plot(imember_cluster, data[key], marker='o', color="b", label="cluster")
+
+        # Set titles and labels
+        ax.set_title(key, fontsize=10)
+        ax.set_xlabel("Cluster Member", fontsize=8)
+        ax.set_ylabel(key, fontsize=8)
+
+        # Set integer ticks on the x-axis
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        # Annotate values on the data points
+        for x, y in zip(imember_cluster, data[key]):
+            ax.annotate(f'{y}', xy=(x, y), xytext=(0, 5),
+                        textcoords='offset points', ha='center', fontsize=8)
+
+        if prev_n1 is not None:
+            ax.plot(0, prev_n1[key], marker='o', color="y", label="out of cluster (-1)")
+            # Annotate the previous event value
+            ax.annotate(f'{prev_n1[key]}', xy=(0, prev_n1[key]), xytext=(0, 5),
+                    textcoords='offset points', ha='center', fontsize=8, color="y")
+
+        if next_n1 is not None:
+            ax.plot(imember_length + 1, next_n1[key], marker='o', color="y", label="out of cluster (+1)")
+            # Annotate the previous event value
+            ax.annotate(f'{next_n1[key]}', xy=(imember_length + 1, next_n1[key]), xytext=(0, 5),
+                    textcoords='offset points', ha='center', fontsize=8, color="y")
+
+        # Add legend at one time 
+        if i == 0:
+            ax.legend(fontsize=8)
+
+    # Remove unused subplots
+    for j in range(len(keys), len(axes)):
+        fig.delaxes(axes[j])
 
     # Add time and datetime information as text
-    time_info = f"ICLUSTER = {icluster} PIXEL = {usepixel} \n time range: {times[0]} - {times[-1]}, datetime range: {imember_datetime[0]} - {imember_datetime[-1]}"
-    plt.figtext(0.5, 0.91, time_info, ha="center", fontsize=8, wrap=True)
+    time_info = (f"ICLUSTER = {icluster} PIXEL = {usepixel} \n "
+                 f"time range: {times[0]} - {times[-1]}, datetime range: {imember_datetime[0]} - {imember_datetime[-1]}")
+    fig.text(0.5, 0.91, time_info, ha="center", fontsize=8, wrap=True)
 
     # Adjust layout to minimize gaps
-    plt.tight_layout(rect=[0, 0.01, 1, 0.90])
+    fig.tight_layout(rect=[0, 0.01, 1, 0.90])
 
     # Generate file name based on cluster size and keys
     filename = f"cluster_trend_pixel{usepixel:02d}_ic{icluster:03d}_clen{len(cluster)}.png"
@@ -123,8 +163,7 @@ def plot_onecluster(cluster, icluster, usepixel, debug=False, \
         plt.show()
     plt.close()
 
-    print(f"Cluster plot saved as: {filepath}")
-
+    print(f"Plot saved to {filepath}")
 
 def process_event_list(event_list, usepixel, nicutlength, debug=True, show=False):
 
@@ -143,14 +182,14 @@ def process_event_list(event_list, usepixel, nicutlength, debug=True, show=False
     prev_event = None  # Placeholder for the previous event
 
     # Loop through the event list
-    for k, idx in enumerate(pixel_mask): 
+    for pixel_mask_index, idx in enumerate(pixel_mask): 
         if debug: print(f"idx = {idx}")
         icluster, imember, bit14, bit15 = 0,0,False,False # init
 
-        event = event_list[pixel_mask[k]]
+        event = event_list[pixel_mask[pixel_mask_index]]
         # Check the next event and the event after that (ensure safe access by validating the range).
-        event_n1 = event_list[pixel_mask[k + 1]] if k + 1 < len(pixel_mask) else None
-        event_n2 = event_list[pixel_mask[k + 2]] if k + 2 < len(pixel_mask) else None
+        event_n1 = event_list[pixel_mask[pixel_mask_index + 1]] if pixel_mask_index + 1 < len(pixel_mask) else None
+        event_n2 = event_list[pixel_mask[pixel_mask_index + 2]] if pixel_mask_index + 2 < len(pixel_mask) else None
 
         if not current_cluster:  # current_cluster is empty
             # Check for a new cluster start condition
@@ -179,7 +218,7 @@ def process_event_list(event_list, usepixel, nicutlength, debug=True, show=False
                     icluster = len(clusters) + 1
                     clusters.append(current_cluster)
                     bit15 = True
-                    confirm_cluster(current_cluster, icluster, usepixel, debug=debug, show=show) # check the content for debug
+                    confirm_cluster(current_cluster, icluster, usepixel, event_list, pixel_mask, pixel_mask_index, debug=debug, show=show) # check the content for debug
                     current_cluster = []  # Reset the cluster
                 else:
                     if debug: print(f"Cluster is not closed. Delete the bufffer.")
@@ -222,12 +261,19 @@ def main():
         status_data = hdul[1].data['STATUS']
         pixel_data = hdul[1].data['PIXEL']
         # データ型を int16 に変換
-        hdul[1].data['PREV_INTERVAL'] = hdul[1].data['PREV_INTERVAL'].astype(np.int16)
-        hdul[1].data['NEXT_INTERVAL'] = hdul[1].data['NEXT_INTERVAL'].astype(np.int16)        
+        # hdul[1].data['PREV_INTERVAL'] = hdul[1].data['PREV_INTERVAL'].astype(np.int16)
+        # hdul[1].data['NEXT_INTERVAL'] = hdul[1].data['NEXT_INTERVAL'].astype(np.int16)        
+
+        hdul[1].columns['PREV_INTERVAL'].array = hdul[1].data['PREV_INTERVAL'].astype(np.int16)
+        hdul[1].columns['NEXT_INTERVAL'].array = hdul[1].data['NEXT_INTERVAL'].astype(np.int16)
+        hdul[1].columns['PREV_INTERVAL'].bzero = 0
+        hdul[1].columns['NEXT_INTERVAL'].bzero = 0
+
+
         n_rows = len(status_data)
         # Create a new column for cluster index
-        icluster = np.zeros(n_rows, dtype=np.int32)
-        imember = np.zeros(n_rows, dtype=np.int32)
+        icluster = np.zeros(n_rows, dtype=np.int64)
+        imember = np.zeros(n_rows, dtype=np.int64)
 
         # Process each pixel independently
         for pixel in usepixels:
@@ -252,6 +298,8 @@ def main():
 
         # Add the row indices as a new column
         col_defs = hdul[1].columns
+        col_defs['STATUS'].array = status_data
+
         new_col1 = fits.Column(name='ICLUSTER', format='J', array=icluster)
         new_col2 = fits.Column(name='IMEMBER', format='J', array=imember)
         new_cols = fits.ColDefs(col_defs + new_col1 + new_col2)
