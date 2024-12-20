@@ -183,8 +183,6 @@ def plot_xhist(file_names, x_col, x_hdu, outfname, xmin, xmax, rebin, \
     else:
         axs[1].set_xlabel(x_col)
     axs[1].set_ylabel(f"Counts/bin (binsize={realbinsize:1.3f})")
-
-    axs[1].set_ylabel("Ratio to Total")
     if ylin:
         axs[1].set_yscale("linear")
     else:
