@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 import numpy as np
+import matplotlib.colors as colors
+import matplotlib.cm as cm
 
 # Plotting Configuration
 plt.rcParams['font.family'] = 'serif'
@@ -47,14 +49,27 @@ for grid_name, df in grids.items():
     grids[grid_name] = df.dropna()
 
 # 可視化
+num = 27 # max of color 
+usercmap = plt.get_cmap('jet')
+cNorm  = colors.Normalize(vmin=0, vmax=num)
+scalarMap = cm.ScalarMappable(norm=cNorm, cmap=usercmap)
+
 for grid_name, df in grids.items():
     gridint = int(grid_name.replace("grid",""))
     if df.empty or len(df.columns) <= 1:
         print(f"警告: {grid_name} にはプロット可能なデータがありません。スキップします。")
         continue
     plt.figure(figsize=(12, 7))
-    for column in df.columns[1:]:  # depth以外の列をプロット
-        plt.plot(df['depth'], df[column], label=f"{column} mean={np.mean(df[column]):2.6f}")
+    for i, column in enumerate(df.columns[1:]):  # depth以外の列をプロット
+        print(i, column)
+        if column == "Fe":
+            ionnum = 0
+        elif column == "Fe+":
+            ionnum = 1        
+        else:
+            ionnum = int(column.replace("Fe","").replace("+",""))
+        c = scalarMap.to_rgba(ionnum)
+        plt.plot(df['depth'], df[column], label=f"{column} zones={len(df['depth']):02d} mean={np.mean(df[column]):2.6f}", color=c)
     plt.xscale('log')
     plt.yscale('log')
     plt.ylim(1e-30,10)
@@ -62,8 +77,10 @@ for grid_name, df in grids.items():
     plt.xlabel('Depth')
     plt.ylabel('Probability')
     plt.title(f'Ionic Probabilities for {grid_name}, XI={gridint*0.2:2.2f}')
-    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1))
-    plt.tight_layout()
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=8)
+
+    # Adjust layout to minimize gaps
+    plt.tight_layout(rect=[0, 0.01, 0.8, 0.90])
     plt.savefig(f"{grid_name}.png")
     plt.show()
     plt.close()

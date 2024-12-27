@@ -1,0 +1,14 @@
+set punch prefix "cygx1_lhs_hden10dr8zone1"
+table SED "diskbb_nthcomp_forCloudy.sed"
+iterate
+hden 10
+xi 1 vary
+grid -2 6 0.05
+set dr 8
+stop zone 1 
+save iron elemnt ".fe" last
+save grid ".mygrid" last
+save overview "cygx1_overview.ovr" last
+punch last xspec atable spectrum "emis.fits"
+punch last xspec atable reflected spectrum "refl.fits"
+punch last xspec mtable "abs.fits"
