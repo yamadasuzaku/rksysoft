@@ -1,0 +1,10 @@
+set punch prefix "cygx1_lhs_nh23_iter"
+table SED "diskbb_nthcomp_forCloudy.sed"
+iterate
+hden 10
+xi 1 vary
+grid 0 4 0.2
+stop column density 23
+save iron elemnt ".fe" last
+save grid ".mygrid" last
+save overview "cygx1_overview.ovr" last
