@@ -52,6 +52,23 @@ def generate_flag_dict(flag_values, keys):
     """フラグ値リストを辞書に変換"""
     return {key: bool(value) for key, value in zip(keys, flag_values)}
 
+def get_cordir(base_gdir, is_special_case=False, debug=True):
+    """
+    Generate the directory path based on whether it is a special case.
+    
+    Args:
+        base_gdir (str): Base directory path.
+        is_special_case (bool): Whether the special '_rslgain' suffix is required.
+        
+    Returns:
+        str: Generated directory path.
+    """
+    generated_dir_path = base_gdir.replace("event_cl","event_cl_rslgain") if is_special_case else f"{base_gdir}"
+    if debug: 
+        print(f"in get_cordir: generated_dir_path = {generated_dir_path}")
+    return generated_dir_path
+
+
 # コマンドライン引数を解析する関数
 def parse_args():
     """
@@ -204,12 +221,12 @@ def main():
     plotpixels = list(map(int, args.plotpixels.split(',')))
     gmin = args.gmin    
 
+
 ################### setting for input files ###################################################################
 
     clname = f"xa{obsid}rsl_p0px{fwe_value}_cl"
     clevt = f"{clname}.evt"    
-    clgcorevt = f"{clname}gcor.evt"    
-
+    clgcorevt = f"{clname}gcor.evt"  # so far this is only used for Cyg X-1
     ufname = f"xa{obsid}rsl_p0px{fwe_value}_uf"
     ufevt = f"{ufname}.evt"
     rsla0hk1 = f"xa{obsid}rsl_a0.hk1"
@@ -389,23 +406,28 @@ def main():
 
     if flag_dicts["anaflags"]["genpharmfarf"]:
         runprog="resolve_auto_gen_phaarfrmf.py"        
+        special_case = (obsid == "300049010") # Cyg X-1 SWG
+        cldir=get_cordir(f"{obsid}/resolve/event_cl/",is_special_case=special_case)
+        if special_case:
+            clevt = clgcorevt
 
         # all pixel 
         arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname all" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=cldir)        
         # centeral 4 pixels 
         arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname inner --pixels 0,17,18,35" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=cldir)        
         # outer 31 pixels
         arguments=f"-eve {clevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no --pname outer --pixels 1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl/")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=cldir)        
 
         # # only for Cyg X-1
         # arguments=f"-eve {clgcorevt} -ehk {ehk} -gti {expgti} --gmin {gmin} --numphoton 300000 --clobber no" 
         # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clgcorevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl_rslgain/")        
 
-
     if flag_dicts["anaflags"]["qlfit"]:
+        special_case = (obsid == "300049010") # Cyg X-1 SWG
+        gdir=get_cordir(f"{obsid}/resolve/event_cl/checkana_genpharmfarf",is_special_case=special_case)
 
         # all pixel 
         runprog="resolve_spec_qlfit.py"        
@@ -414,11 +436,10 @@ def main():
         arffile="rsl_source_Hp_all.arf"
 
         arguments=f"{phafile}" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=gdir)        
 
         arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
-
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=gdir)        
 
         # inner
         phafile="rsl_source_Hp_inner_gopt.pha"
@@ -426,10 +447,10 @@ def main():
         arffile="rsl_source_Hp_inner.arf"
 
         arguments=f"{phafile}" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=gdir)        
 
         arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=gdir)        
 
         # outer
         phafile="rsl_source_Hp_outer_gopt.pha"
@@ -437,14 +458,16 @@ def main():
         arffile="rsl_source_Hp_outer.arf"
 
         arguments=f"{phafile}" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=gdir)        
 
         arguments=f"{phafile} --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
-        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_qlfit", linkfiles=[f"../{phafile}",f"../{rmffile}",f"../{arffile}"], gdir=gdir)        
 
         # plot all, inner, and outer spec 
         runprog="xrism_spec_qlfit_many.py"        
         gotodir = f"{obsid}/resolve/event_cl/checkana_genpharmfarf/checkana_qlfit"
+        gotodir=get_cordir(gotodir,is_special_case=special_case)
+
         arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out" 
         write_to_file(f"{gotodir}/f_gopt.list", ["rsl_source_Hp_all_gopt.pha","rsl_source_Hp_inner_gopt.pha","rsl_source_Hp_outer_gopt.pha"])
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
@@ -452,9 +475,9 @@ def main():
         arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
 
-        runprog="xrism_util_plot_arf.py"        
+        runprog="xrism_util_plot_arf.py"
         arguments=""
-        dojob(obsid, runprog, arguments = arguments, subdir="checkana_qlfit", gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
+        dojob(obsid, runprog, arguments = arguments, subdir="checkana_qlfit", gdir=gdir)        
 
     if flag_dicts["anaflags"]["compcluf"]:
 
