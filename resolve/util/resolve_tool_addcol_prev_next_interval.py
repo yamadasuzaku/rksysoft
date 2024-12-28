@@ -61,6 +61,12 @@ def update_intervals(fits_file, output_file=None):
             print(prev_intervals[:3])
             print(next_intervals[:3])
             print(f"Pixel: {pixel}, NEXT_INTERVAL: {next_intervals[:10]}")
+            zcut = np.where(prev_intervals==0)[0]
+            if len(zcut) > 0:
+                print(f"Warning!! zero found in Pixel{pixel}, PREV[zcut]: {prev_intervals[zcut]}, TRIG_LP[zcut] {TRIG_LP[zcut]}")
+            zcut = np.where(next_intervals==0)[0]
+            if len(zcut) > 0:
+                print(f"Warning!! zero found in Pixel{pixel}, NEXT[zcut]: {next_intervals[zcut]}, TRIG_LP[zcut] {TRIG_LP[zcut]}")
 
             # Update data arrays using direct indexing
             if len(prev_intervals) > 0:

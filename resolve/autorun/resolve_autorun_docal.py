@@ -7,7 +7,21 @@ import argparse
 import time
 import sys
 
+# set global variables
 topdir = os.getcwd()
+
+# フラグの設定情報を辞書で管理
+flag_configs = {
+    "progflags": [
+        "qlmklc", "qlmkspec", "spec6x6", "deltat", "deltat-rt-pha", "detxdety",
+        "temptrend", "plotghf", "plotgti", "spec-eachgti", "lc-eachgti", "mkbratio"
+    ],
+    "calflags": [
+        "lsdist", "lsdetail", "specratio6x6", "statusitype", "statitype", "antico"
+    ],
+    "deeplsflags": ["addprevnext", "defcluster"],
+    "anaflags": ["genpharmfarf", "qlfit", "compcluf"]
+}
 
 def write_to_file(filename, content):
     with open(filename, 'w') as f:
@@ -28,6 +42,16 @@ def check_program_in_path(program_name):
     else:
         print(f"{program_name} is found at {program_path}")
 
+def parse_flags(flag_input, keys):
+    """フラグ文字列をリストに変換し、不足分を埋める"""
+    # 空文字列の場合は空リストを返す
+    values = [int(x) for x in flag_input.split(",") if x.strip()] if flag_input else []
+    return values + [0] * (len(keys) - len(values))
+
+def generate_flag_dict(flag_values, keys):
+    """フラグ値リストを辞書に変換"""
+    return {key: bool(value) for key, value in zip(keys, flag_values)}
+
 # コマンドライン引数を解析する関数
 def parse_args():
     """
@@ -45,11 +69,13 @@ def parse_args():
       ''',
     formatter_class=argparse.RawDescriptionHelpFormatter)    
     parser.add_argument('obsid', help='OBSID')
-    # カンマ区切りの数値列を受け取る
-    parser.add_argument('--progflags', type=str, help='Comma-separated flags for qlmklc, qlmkspec, spec6x6 (e.g. 0,1,0)')
-    parser.add_argument('--calflags', type=str, help='Comma-separated flags for cal operations (e.g. 0,1,0)')    
-    parser.add_argument('--anaflags', type=str, help='Comma-separated flags for ana operations (e.g. 1,0,0)')    
-    parser.add_argument('--xtendflags', type=str, help='Comma-separated flags for xtend operations (e.g. 1,0,0)')        
+    for flag_name, keys in flag_configs.items():
+        example_flags = ",".join(["1"] * len(keys))  # keysの長さに基づいて例を作成
+        parser.add_argument(
+            f"--{flag_name}",
+            type=str,
+            help=f"Comma-separated flags for {flag_name} (e.g. --{flag_name} {example_flags})"
+        )        
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
     parser.add_argument('--plotpixels', '-p', type=str, help='プロットするピクセルのカンマ区切りリスト', default=','.join(map(str, range(36))))
@@ -65,6 +91,7 @@ def parse_args():
     # Define the fwe option with choices OPEN or ND
     parser.add_argument('--fwe', choices=['OPEN', 'ND'], default="OPEN", help='Choose OPEN for 1000 or ND for 3000')
     args = parser.parse_args()
+
     # Set fwe based on the chosen option
     if args.fwe == 'OPEN':
         fwe_value = 1000
@@ -74,7 +101,7 @@ def parse_args():
         raise ValueError("Invalid option for fwe.")
     
     # 引数の確認をプリント
-    print("----- 設定 -----")
+    print("----- input arguments -----")
     # Print the command-line arguments to help with debugging
     args_dict = vars(args)
     print("Command-line arguments:")
@@ -107,7 +134,6 @@ def dojob(obsid, runprog, arguments=None, fwe=3000, \
         # Change to the processing directory
         os.makedirs(os.path.join(gotodir, subdir), exist_ok=True)
         os.chdir(os.path.join(gotodir, subdir))
-
 
     # Create symbolic links for the necessary files
     if linkfiles == None:
@@ -153,9 +179,18 @@ def main():
 ################### setting for arguments ###################################################################
     args, fwe_value = parse_args()
 
-    progflags = args.progflags
-    calflags = args.calflags
-    anaflags = args.anaflags
+    # 各フラグを辞書形式に変換
+    flag_dicts = {}
+    print(f"*********** (start) flag settting ***************")
+    for flag_name, keys in flag_configs.items():
+        flag_input = getattr(args, flag_name, "")
+        flag_values = parse_flags(flag_input, keys)
+        flag_dicts[flag_name] = generate_flag_dict(flag_values, keys)
+
+    # フラグの設定結果の出力
+    for name, flag_dict in flag_dicts.items():
+        print(f"{name} = {flag_dict}")
+    print(f"*********** (end) flag settting *****************")
 
     obsid = args.obsid
     timebinsize=args.timebinsize
@@ -168,66 +203,6 @@ def main():
     itypenames = list(map(int, args.itypenames.split(',')))
     plotpixels = list(map(int, args.plotpixels.split(',')))
     gmin = args.gmin    
-
-    # カンマで分割して、数値に変換
-    # ユーザーの入力をパースし、整数に変換
-    progflags = progflags or ""
-    flag_values = [int(x) for x in progflags.split(',')]
-    # 12個未満の場合は、0 で埋める
-    if len(flag_values) < 12:
-        flag_values += [0] * (12 - len(flag_values))    
-
-    calflags = calflags or ""
-    cal_values = [int(x) for x in calflags.split(',')]
-    # 6個未満の場合は、0 で埋める
-    if len(flag_values) < 6:
-        flag_values += [0] * (6 - len(flag_values))    
-
-    anaflags = anaflags or ""
-    ana_values = [int(x) for x in anaflags.split(',')]
-    # 3個未満の場合は、0 で埋める
-    if len(ana_values) < 3:
-        ana_values += [0] * (3 - len(flag_values))    
-
-    # 数値列をTrue/Falseに変換し、flagが1の時だけ実行
-    procdic = {
-        "qlmklc": bool(flag_values[0]),
-        "qlmkspec": bool(flag_values[1]),
-        "spec6x6": bool(flag_values[2]),
-        "deltat": bool(flag_values[3]),
-        "deltat-rt-pha": bool(flag_values[4]),
-        "detxdety": bool(flag_values[5]),
-        "temptrend": bool(flag_values[6]),
-        "plotghf": bool(flag_values[7]),        
-        "plotgti": bool(flag_values[8]),        
-        "spec-eachgti": bool(flag_values[9]),                
-        "lc-eachgti": bool(flag_values[10]),                        
-        "mkbratio": bool(flag_values[11]),
-    }
-    print(f"procdic = {procdic}")    
-
-    caldic = {
-        "lsdist": bool(cal_values[0]),
-        "lsdetail": bool(cal_values[1]),
-        "specratio6x6": bool(cal_values[2]),        
-        "statusitype": bool(cal_values[3]),
-        "statitype": bool(cal_values[4]),
-        "antico": bool(cal_values[5])        
-    }
-    print(f"caldic = {caldic}")    
-
-    anadic = {
-        "genpharmfarf": bool(ana_values[0]),
-        "qlfit": bool(ana_values[1]),        
-        "compcluf": bool(ana_values[2]),
-    }
-    print(f"anadic = {anadic}")    
-
-    xtenddic = {
-        "xtendgenpharmfarf": bool(ana_values[0]),
-    }
-    print(f"xtenddic = {xtenddic}")    
-
 
 ################### setting for input files ###################################################################
 
@@ -246,9 +221,10 @@ def main():
     elgti= f"xa{obsid}rsl_el.gti"
     expgti = f"xa{obsid}rsl_px{fwe_value}_exp.gti"
     ehk = f"xa{obsid}.ehk"
+
 ################### standard process ###################################################################
 
-    if procdic["qlmklc"]:
+    if flag_dicts["progflags"]["qlmklc"]:
         runprog="resolve_ana_pixel_ql_mklc_binned_sorted_itype_v1.py"        
         if args.show:
             arguments=f"{clevt} --timebinsize {timebinsize} -d"
@@ -256,7 +232,7 @@ def main():
             arguments=f"{clevt} --timebinsize {timebinsize}"        
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmklc", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
 
-    if procdic["qlmkspec"]:
+    if flag_dicts["progflags"]["qlmkspec"]:
         runprog="resolve_ana_pixel_ql_plotspec.py"        
         if args.show:
             arguments=f"{clevt} --rebin {bin_width} --emin {ene_min} --emax {ene_max} -d"
@@ -269,7 +245,7 @@ def main():
         arguments=f"{clevt} --rebin 4 --emin 6100 --emax 7100"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_qlmkspec", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if procdic["spec6x6"]:
+    if flag_dicts["progflags"]["spec6x6"]:
         runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
         if args.show:
             arguments=f"{clevt} -l {ene_min} -x {ene_max} -b {bin_width} -c -p"
@@ -281,17 +257,17 @@ def main():
         arguments=f"{clevt} -l 6100 -x 7100 -b 4 -c"        
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")
         
-    if procdic["deltat"]:
+    if flag_dicts["progflags"]["deltat"]:
         runprog="resolve_ana_pixel_deltat_distribution.py"        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_deltat", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if procdic["deltat-rt-pha"]:
+    if flag_dicts["progflags"]["deltat-rt-pha"]:
         runprog="resolve_ana_pixel_deltat_risetime_distribution.py"        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_deltat-rt-pha", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if procdic["detxdety"]:
+    if flag_dicts["progflags"]["detxdety"]:
         runprog="resolve_plot_detxdety.py"        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
@@ -300,12 +276,12 @@ def main():
         arguments=f"{clevt}  -min 0 -max 59999"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_detxdety", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if procdic["temptrend"]:
+    if flag_dicts["progflags"]["temptrend"]:
         runprog="resolve_hk_plot_temptrend.sh"
         arguments=f"{rsla0hk1}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_temptrend", linkfiles=[f"../{rsla0hk1}"], gdir=f"{obsid}/resolve/hk/")        
 
-    if procdic["plotghf"]:
+    if flag_dicts["progflags"]["plotghf"]:
         runprog="resolve_ecal_plot_ghf_detail.py"
         arguments=f"{ghf}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotghf", linkfiles=[f"../{ghf}"], gdir=f"{obsid}/resolve/event_uf/")        
@@ -313,7 +289,7 @@ def main():
         arguments=f"{ghf} --hk1 {rsla0hk1}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotghf", linkfiles=[f"../{ghf}",f"../../hk/{rsla0hk1}"], gdir=f"{obsid}/resolve/event_uf/")        
 
-    if procdic["plotgti"]:
+    if flag_dicts["progflags"]["plotgti"]:
         runprog="resolve_util_gtiplot.py"
 
         arguments=f"{uf50evt},{ufacevt} -e {uf50evt},{ufacevt}"
@@ -331,7 +307,7 @@ def main():
         arguments=f"{clevt},{elgti} -e {ufacevt} -c r -l -" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_plotgti", linkfiles=[f"../{ufacevt}",f"../{elgti}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
 
-    if procdic["spec-eachgti"]:
+    if flag_dicts["progflags"]["spec-eachgti"]:
         runprog="resolve_ana_pixel_mkspec_eachgti.py"
 
         arguments=f"{clevt} -i 6000 -x 9000 -y 0 -m 5 -r 5 -t -v 0.002" 
@@ -343,7 +319,7 @@ def main():
         arguments=f"{clevt} -i 3000 -x 5000 -y 0 -m 5 -r 10 -t -v 0.002" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="check_spec-eachgti", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if procdic["lc-eachgti"]:
+    if flag_dicts["progflags"]["lc-eachgti"]:
         runprog="resolve_ana_pixel_mklc_branch.py"
         gotodir = f"{obsid}/resolve/event_cl/"
         subdir = "check_lc-eachgti"
@@ -352,7 +328,7 @@ def main():
         write_to_file(f"{gotodir}/{subdir}/f.list", clevt)
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir=subdir, linkfiles=[f"../{clevt}"], gdir=gotodir)        
 
-    if procdic["mkbratio"]:
+    if flag_dicts["progflags"]["mkbratio"]:
         runprog="resolve_ana_pixel_mklc_branch.py"
         gotodir = f"{obsid}/resolve/event_cl/"
         subdir = "check_mkbratio"
@@ -363,43 +339,55 @@ def main():
 
 ################### calibration ###################################################################
 
-    if caldic["lsdist"]:
+    if flag_dicts["calflags"]["lsdist"]:
         runprog="resolve_ana_run_addprevnext_Lscheck.sh"        
         arguments=f"{ufevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_lsdist", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
 
-    if caldic["lsdetail"]:
+    if flag_dicts["calflags"]["lsdetail"]:
         runprog="resolve_run_ana_pixel_Ls_mksubgroup_using_saturatedflags.sh"        
         ufclgtievt=f"{ufname}_noBL_prevnext_cutclgti.evt"   
         arguments=f"{ufclgtievt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_lsdetail", linkfiles=[f"../{ufclgtievt}"], gdir=f"{obsid}/resolve/event_uf/checkcal_lsdist")        
 
-    if caldic["specratio6x6"]:
+    if flag_dicts["calflags"]["specratio6x6"]:
         runprog="resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py"        
         arguments=f"{clevt} -r -y 0 -l 2000 -x 12000 -b 250 -c -g"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_specratio6x6", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if caldic["statusitype"]:
+    if flag_dicts["calflags"]["statusitype"]:
         runprog="resolve_util_stat_status_itype_fast.py"        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
         arguments=f"{ufevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statusitype", linkfiles=[f"../{ufevt}"], gdir=f"{obsid}/resolve/event_uf/")        
 
-    if caldic["statitype"]:
+    if flag_dicts["calflags"]["statitype"]:
         runprog="resolve_util_stat_itype.py"        
         arguments=f"{clevt}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_statitype", linkfiles=[f"../{clevt}"], gdir=f"{obsid}/resolve/event_cl/")        
 
-    if caldic["antico"]:
+    if flag_dicts["calflags"]["antico"]:
         runprog="resolve_ana_antico_comp_ELVhilo.sh"        
         arguments=f"{obsid}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_antico", linkfiles=[f"../{ufacevt}",f"../../../auxil/{ehk}"], gdir=f"{obsid}/resolve/event_uf/")
 
 
+################### deepls ###################################################################
+    if flag_dicts["deeplsflags"]["addprevnext"]:
+        runprog="resolve_ana_run_addprevnext_Lscheck_for_deepls.sh"        
+        arguments=f"{ufevt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkdeepls_addprevnext", linkfiles=[f"../{ufevt}",f"../../event_cl/{clevt}"], gdir=f"{obsid}/resolve/event_uf/")        
+
+    if flag_dicts["deeplsflags"]["defcluster"]:
+        runprog="resolve_ana_pixel_Ls_define_cluster.py"        
+        ufclgtievt=f"{ufname}_noBL_prevnext_cutclgti.evt"   
+        arguments=f"{ufclgtievt}"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkdeepls_defcluster", linkfiles=[f"../{ufclgtievt}"], gdir=f"{obsid}/resolve/event_uf/checkdeepls_addprevnext")        
+
 ################### analysis ###################################################################
 
-    if anadic["genpharmfarf"]:
+    if flag_dicts["anaflags"]["genpharmfarf"]:
         runprog="resolve_auto_gen_phaarfrmf.py"        
 
         # all pixel 
@@ -417,7 +405,7 @@ def main():
         # dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkana_genpharmfarf", linkfiles=[f"../{clgcorevt}",f"../../../auxil/{ehk}",f"../../event_uf/{expgti}"], gdir=f"{obsid}/resolve/event_cl_rslgain/")        
 
 
-    if anadic["qlfit"]:
+    if flag_dicts["anaflags"]["qlfit"]:
 
         # all pixel 
         runprog="resolve_spec_qlfit.py"        
@@ -468,8 +456,7 @@ def main():
         arguments=""
         dojob(obsid, runprog, arguments = arguments, subdir="checkana_qlfit", gdir=f"{obsid}/resolve/event_cl/checkana_genpharmfarf")        
 
-
-    if anadic["compcluf"]:
+    if flag_dicts["anaflags"]["compcluf"]:
 
         # # all pixel 
         runprog="resolve_util_screen_ufcl_std.sh"
@@ -489,6 +476,7 @@ def main():
         check_program_in_path(runprog)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["check_"] + ["--ver"] +  ["v0"], check=True)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkcal_"] + ["--ver"] +  ["v0"], check=True)
+        subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkdeepls_"] + ["--ver"] +  ["v0"], check=True)
         subprocess.run([runprog] + [obsid] + ["--keyword"] + ["checkana_"] + ["--ver"] +  ["v0"], check=True)
                         
 if __name__ == "__main__":
