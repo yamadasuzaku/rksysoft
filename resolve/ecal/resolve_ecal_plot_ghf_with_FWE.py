@@ -90,6 +90,7 @@ def parse_arguments():
     parser.add_argument('--hk1', '-k', type=str, help='hk1file', default=None)
     parser.add_argument('--reverse_axes', '-r', action='store_false', help='Reverse x-axis to show only time instead of date and time')
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
+    parser.add_argument('--paper', '-p', action='store_true', help='論文モード (eps保存、タイトルにファイル名非表示)')    
     return parser.parse_args()
 
 def open_fits_data(fname):
@@ -129,9 +130,13 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
         df.to_csv(csv_filename, index=False)
         print(f"Data for pixel {pixel_} saved to {csv_filename}")
 
-def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test", show=False):
-    fig, ax1 = plt.subplots(figsize=(11, 7))
-    plt.subplots_adjust(right=0.85)  # make the right space bigger
+def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test", show=False, paper=False):
+    k2mk = 1e3 
+    if paper:
+        fig, ax1 = plt.subplots(figsize=(10, 8))
+    else:
+        fig, ax1 = plt.subplots(figsize=(11, 7))        
+    plt.subplots_adjust(right=0.8)  # make the right space bigger
 
     if reverse_axes:
         ax1.set_xlabel('Date')
@@ -149,7 +154,9 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
 
     ax1.set_ylabel("TEMP_FIT : Effective Temperature (mK)")
     ax1.grid(alpha=0.2)
-    ax1.set_title(title)
+
+    if not paper: 
+        ax1.set_title(title)
 
     # Plot histograms for each pixel
     for pixel_ in np.arange(36):
@@ -162,9 +169,10 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
 
         color = scalarMap.to_rgba(pixel_)
         event_number = len(px_time)
-        ax1.errorbar(px_time, px_temp_fit, color=color, alpha=0.8, fmt=ishape[pixel_ % 5]+'-', label=f"P{pixel_} ({event_number}c)")
+        ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.8, fmt=ishape[pixel_ % 5], label=f"P{pixel_} ({event_number})")
+        ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.2, fmt="-", label=None)
 
-    ax1.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0., fontsize=6)
+    ax1.legend(bbox_to_anchor=(1.1, 1.05), loc='upper left', borderaxespad=0., fontsize=8)
 
     if hk1 is not None:
         if not os.path.isfile(hk1):
@@ -173,23 +181,38 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         hk1data = fits.open(hk1)[4].data
         hk1time = hk1data["TIME"]
         hk1fwpos = hk1data["FWE_FW_POSITION1_CAL"]
-
         ax3 = ax1.twinx()  # Secondary y-axis
         ax3.set_ylabel("FW Position (calibrated units)")
         if reverse_axes:
-            dtime_hk1time = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in hk1time])
-            ax3.plot(dtime_hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
+            dtime_hk1time = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in hk1time])            
+            if paper:
+                hk1fwpos_30open = hk1fwpos[ (hk1fwpos > 29) &  (hk1fwpos < 31)] 
+                hk1fwpos_150ND = hk1fwpos[ (hk1fwpos > 149) &  (hk1fwpos < 151)] 
+                hk1fwpos_330Fe55 = hk1fwpos[(hk1fwpos > 329.36) &  (hk1fwpos < 329.40)] 
+#                ax3.plot(dtime_hk1time[(hk1fwpos > 28) &  (hk1fwpos < 32)], hk1fwpos_30open, 'y.', alpha=0.5, label="OPEN")
+                ax3.plot(dtime_hk1time[(hk1fwpos > 149) &  (hk1fwpos < 151)], hk1fwpos_150ND, 'o', color="bisque",alpha=0.5, label="ND", ms=2)
+                ax3.plot(dtime_hk1time[(hk1fwpos > 329.36) &  (hk1fwpos < 329.40)], hk1fwpos_330Fe55, 'o', color="springgreen",alpha=0.5, label="Fe55", ms=2)
+                ax3.set_ylim(140,340)
+            else:
+                ax3.plot(dtime_hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
         else:
             ax3.plot(hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
 
-        ax3.legend(loc='upper right', fontsize=6)
+#        ax3.legend(loc='upper right', fontsize=8)
+        legend_ax3 = ax3.legend(bbox_to_anchor=(1.1, 0.01), loc='lower left', borderaxespad=0., fontsize=8)
 
     ofname = f"fig_{outfname}"
     plt.savefig(ofname)
-    if show:
-        plt.show()
     print(f"..... {ofname} is created.")
 
+    if paper:
+        ofname = ofname.replace(".png",".eps")
+        plt.savefig(ofname)
+        print(f"..... {ofname} is created.")
+
+    if show:
+        plt.show()
+    
 def main():
     args = parse_arguments()
     if not args.filename or (args.hk1 and not os.path.isfile(args.hk1)):
@@ -204,7 +227,7 @@ def main():
     # Save pixel data to CSV
     save_pixel_data_to_csv(pixel, time, temp_fit)
 
-    plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}", show=args.show)
+    plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}", show=args.show, paper=args.paper)
 
 if __name__ == "__main__":
     main()

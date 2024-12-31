@@ -391,6 +391,12 @@ resolve_ecal_plot_ghf_with_FWE.py xa000126000rsl_000_fe55.ghf --hk1 xa000126000r
 - resolve_ecal_plot_ghf_detail.py でフィット結果が正しいことを目視で確認する。
 - resolve_ecal_plot_ghf_with_FWE.py で、FWEの時刻とGHFがあってることを確認する。
 
+``` bash:
+resolve_ecal_plot_ghf_with_FWE.py min60_dshift12_xa300049010rsl_p0px5000_uf.ghf --hk1 xa300049010rsl_a0.hk1 -p -s
+``` 
+
+`-p` をつけると、paper 用のスタイルになる(現状、Cyg X-1 の専用にチューニングしてる。)。
+
 ## ghf の詳細チェック
 
 ```bash:
