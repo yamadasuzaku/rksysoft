@@ -12,6 +12,7 @@ from matplotlib.colors import Normalize
 import matplotlib.dates as mdates ######################################追加
 import matplotlib.cm as cm
 import os
+from PIL import Image
 
 # Constants
 MJD_REFERENCE_DAY = 58484
@@ -133,7 +134,7 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
 def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test", show=False, paper=False):
     k2mk = 1e3 
     if paper:
-        fig, ax1 = plt.subplots(figsize=(10, 8))
+        fig, ax1 = plt.subplots(figsize=(9, 7))
     else:
         fig, ax1 = plt.subplots(figsize=(11, 7))        
     plt.subplots_adjust(right=0.8)  # make the right space bigger
@@ -145,15 +146,15 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         unit = 'seconds'  # ここで単位を変更できる（'seconds', 'minutes', 'hours', 'days', 'years'）
         dtime_to_time, time_to_dtime = create_date_time_funcs(dtime[0], unit)        
         ax2 = ax1.secondary_xaxis('top', functions=(dtime_to_time, time_to_dtime)) ###############################追加
-        ax2.set_xlabel("Elapsed Time (s) from " + str(dtime[0])) ###############################追加
+        ax2.set_xlabel("Elapsed Time (s) from " + dtime[0].strftime('%Y/%m/%d %H:%M:%S')) ###############################追加
         x_data = dtime
     else:
         ax1.set_xlabel("Elapsed Time (s) from " + str(dtime[0]))
         ax1.set_xlim(time[0], time[-1])
         x_data = time
 
-    ax1.set_ylabel("TEMP_FIT : Effective Temperature (mK)")
-    ax1.grid(alpha=0.2)
+    ax1.set_ylabel("Effective Temperature (mK)")
+#    ax1.grid(alpha=0.2)
 
     if not paper: 
         ax1.set_title(title)
@@ -172,7 +173,7 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.8, fmt=ishape[pixel_ % 5], label=f"P{pixel_} ({event_number})")
         ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.2, fmt="-", label=None)
 
-    ax1.legend(bbox_to_anchor=(1.1, 1.05), loc='upper left', borderaxespad=0., fontsize=8)
+    ax1.legend(bbox_to_anchor=(1.1, 1.08), loc='upper left', borderaxespad=0., fontsize=8)
 
     if hk1 is not None:
         if not os.path.isfile(hk1):
@@ -182,7 +183,7 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         hk1time = hk1data["TIME"]
         hk1fwpos = hk1data["FWE_FW_POSITION1_CAL"]
         ax3 = ax1.twinx()  # Secondary y-axis
-        ax3.set_ylabel("FW Position (calibrated units)")
+        ax3.set_ylabel("FW Position (degree)")
         if reverse_axes:
             dtime_hk1time = np.array([REFERENCE_TIME.datetime + datetime.timedelta(seconds=float(t)) for t in hk1time])            
             if paper:
@@ -190,8 +191,8 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
                 hk1fwpos_150ND = hk1fwpos[ (hk1fwpos > 149) &  (hk1fwpos < 151)] 
                 hk1fwpos_330Fe55 = hk1fwpos[(hk1fwpos > 329.36) &  (hk1fwpos < 329.40)] 
 #                ax3.plot(dtime_hk1time[(hk1fwpos > 28) &  (hk1fwpos < 32)], hk1fwpos_30open, 'y.', alpha=0.5, label="OPEN")
-                ax3.plot(dtime_hk1time[(hk1fwpos > 149) &  (hk1fwpos < 151)], hk1fwpos_150ND, 'o', color="bisque",alpha=0.5, label="ND", ms=2)
-                ax3.plot(dtime_hk1time[(hk1fwpos > 329.36) &  (hk1fwpos < 329.40)], hk1fwpos_330Fe55, 'o', color="springgreen",alpha=0.5, label="Fe55", ms=2)
+                ax3.plot(dtime_hk1time[(hk1fwpos > 149) &  (hk1fwpos < 151)][::40], hk1fwpos_150ND[::40], 'o', color="bisque",alpha=0.5, label="FW ND", ms=2)
+                ax3.plot(dtime_hk1time[(hk1fwpos > 329.36) &  (hk1fwpos < 329.40)][::40], hk1fwpos_330Fe55[::40], 'o', color="springgreen",alpha=0.5, label="FW Fe55", ms=2)
                 ax3.set_ylim(140,340)
             else:
                 ax3.plot(dtime_hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
@@ -199,16 +200,20 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
             ax3.plot(hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
 
 #        ax3.legend(loc='upper right', fontsize=8)
-        legend_ax3 = ax3.legend(bbox_to_anchor=(1.1, 0.01), loc='lower left', borderaxespad=0., fontsize=8)
+        legend_ax3 = ax3.legend(bbox_to_anchor=(0.9, 1.01), loc='lower left', borderaxespad=0., fontsize=9)
 
     ofname = f"fig_{outfname}"
     plt.savefig(ofname)
     print(f"..... {ofname} is created.")
 
     if paper:
-        ofname = ofname.replace(".png",".eps")
-        plt.savefig(ofname)
-        print(f"..... {ofname} is created.")
+        # PNG を開いて PDF として保存
+        pdfname = ofname.replace(".png",".pdf")
+        image = Image.open(ofname)
+        image.save(pdfname, "PDF")
+
+        epsname = ofname.replace(".png",".eps")
+        plt.savefig(epsname)
 
     if show:
         plt.show()

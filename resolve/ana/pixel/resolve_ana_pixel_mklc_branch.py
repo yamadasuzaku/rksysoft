@@ -676,7 +676,8 @@ def main():
         if args.plot_rate_vs_grade:
             print("----- plot_rate_vs_grade ----- ")
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh)
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh, \
+                                            rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
             print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
 
     else:
