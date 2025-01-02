@@ -20,7 +20,11 @@ REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')
 TIME_50MK = 150526800.0
 
 # Plotting Configuration
+params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 10, \
+          'axes.labelsize': 11  # xlabel, ylabel のフォントサイズを変更}
+          }
 plt.rcParams['font.family'] = 'serif'
+plt.rcParams.update(params)
 usercmap = plt.get_cmap('jet')
 cNorm = Normalize(vmin=0, vmax=35)
 scalarMap = cm.ScalarMappable(norm=cNorm, cmap=usercmap)
@@ -134,10 +138,10 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
 def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test", show=False, paper=False):
     k2mk = 1e3 
     if paper:
-        fig, ax1 = plt.subplots(figsize=(9, 7))
+        fig, ax1 = plt.subplots(figsize=(7, 6))
     else:
         fig, ax1 = plt.subplots(figsize=(11, 7))        
-    plt.subplots_adjust(right=0.8)  # make the right space bigger
+    plt.subplots_adjust(right=0.74)  # make the right space bigger
 
     if reverse_axes:
         ax1.set_xlabel('Date')
@@ -173,7 +177,7 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.8, fmt=ishape[pixel_ % 5], label=f"P{pixel_} ({event_number})")
         ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.2, fmt="-", label=None)
 
-    ax1.legend(bbox_to_anchor=(1.1, 1.08), loc='upper left', borderaxespad=0., fontsize=8)
+    ax1.legend(bbox_to_anchor=(1.2, 1.11), loc='upper left', borderaxespad=0., fontsize=7.5)
 
     if hk1 is not None:
         if not os.path.isfile(hk1):
