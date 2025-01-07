@@ -658,3 +658,17 @@ reseolve_util_extract_saa_from_ufevt.sh xa000114000rsl_p0px1000_cl.evt xa0001140
 ``` bash:
 resolve_util_extract_clgti_from_ufevt.sh xa000114000rsl_p0px1000_cl.evt xa000114000rsl_p0px1000_uf.evt
 ```
+
+
+## Mn Ka のフィットをするスクリプト
+
+xrism_sdc_tutorial_20240306_v4.pdf のやり方に従って、
+- 対角レスポンスを生成する
+- Holzer でフィット、gain, gsmooth の sigma (FWHMではない)、norm、の３つの free parameter でフィットする。
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_fitMnKa.sh
+
+``` bash:
+resolve_ana_pixel_fitMnKa.sh xa300049010rsl_p0px5000_cl.evt 
+```
+
