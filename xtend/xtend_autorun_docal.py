@@ -262,11 +262,11 @@ def main():
                 # plot all, inner, and outer spec 
                 runprog="xrism_spec_qlfit_many.py"        
                 gotodir = f"{obsid}/xtend/event_cl/checkpileup_std"
-                arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out" 
+                arguments=f"f_gopt.list --fname {obsid}_xtend_comp_all_in_out" 
                 write_to_file(f"{gotodir}/f_gopt.list", get_sorted_pha_files(gotodir))
                 dojob(obsid, runprog, arguments = arguments, gdir=gotodir)        
 
-                arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+                arguments=f"f_gopt.list --fname {obsid}_xtend_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
                 dojob(obsid, runprog, arguments = arguments, gdir=gotodir)        
 
         else:

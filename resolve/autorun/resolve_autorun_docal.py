@@ -468,11 +468,11 @@ def main():
         gotodir = f"{obsid}/resolve/event_cl/checkana_genpharmfarf/checkana_qlfit"
         gotodir=get_cordir(gotodir,is_special_case=special_case)
 
-        arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out" 
+        arguments=f"f_gopt.list --fname {obsid}_resolve_comp_all_in_out" 
         write_to_file(f"{gotodir}/f_gopt.list", ["rsl_source_Hp_all_gopt.pha","rsl_source_Hp_inner_gopt.pha","rsl_source_Hp_outer_gopt.pha"])
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
 
-        arguments=f"f_gopt.list --fname {obsid}_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
+        arguments=f"f_gopt.list --fname {obsid}_resolve_comp_all_in_out_narrow --emin 6.0 --emax 7.5 --xscale off --progflags 1,1,1" 
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, gdir=gotodir)        
 
         runprog="xrism_util_plot_arf.py"
