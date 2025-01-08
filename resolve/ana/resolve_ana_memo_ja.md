@@ -347,11 +347,16 @@ resolve_hk_plot_temptrend.sh xa300065010rsl_a0.hk1
 
 中身は、
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_fplot.py
+
+を、
+
 ``` bash:
 resolve_util_fplot.py $input_file TIME 7,6,6,6,6 XBOXA_TEMP3_CAL,HE_TANK2,JT_SHLD2,CAMC_CT1,ADRC_CT_MON_FLUC 7,6,6,6,6  -p -m . -s linear,linear,linear,log,log
 ```
 
-を動かしているだけです。
+のようにして使ってます。
+
 
 ## fplot の使い方
 
