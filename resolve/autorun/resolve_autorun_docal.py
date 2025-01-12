@@ -393,6 +393,11 @@ def main():
         runprog="resolve_ana_pixel_ql_fit_MnKa_v2_EPI2.py"
         arguments=f"{uf50evt} --paper -n timeave_epi2"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_fe55fit", linkfiles=[f"../{uf50evt}"], gdir=f"{obsid}/resolve/event_uf/")
+#       when xspec is used. 
+#       runprog="run_ecal_xspec_fitMnKa.sh"
+#       arguments=f"{uf50evt}"
+#       dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_fe55fit", linkfiles=[f"../{uf50evt}"], gdir=f"{obsid}/resolve/event_uf/")
+
 
 ################### deepls ###################################################################
     if flag_dicts["deeplsflags"]["addprevnext"]:

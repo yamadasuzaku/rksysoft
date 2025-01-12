@@ -671,9 +671,15 @@ xrism_sdc_tutorial_20240306_v4.pdf のやり方に従って、
 - 対角レスポンスを生成する
 - Holzer でフィット、gain, gsmooth の sigma (FWHMではない)、norm、の３つの free parameter でフィットする。
 
-https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ecal_fitMnKa.sh
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/run_ecal_xspec_fitMnKa.sh
 
 ``` bash:
-resolve_ana_pixel_fitMnKa.sh xa300049010rsl_p0px5000_cl.evt 
+run_ecal_xspec_fitMnKa.sh xa300049010rsl_p0px5000_cl.evt 
+```
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ana_pixel_ql_fit_MnKa_v2_EPI2.py
+
+``` bash:
+resolve_ana_pixel_ql_fit_MnKa_v2_EPI2.py xa300049010rsl_p0px5000_uf_gcor.evt --paper -n timeave_epi2
 ```
 
