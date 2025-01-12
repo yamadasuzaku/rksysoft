@@ -310,7 +310,8 @@ def fit_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0.
     plt.savefig(ofname)
     print(f"[def fit_histogram] {ofname} is created.")
     if paper:
-        ofname = f"fig_{typename[itype_]}_{label_suffix}_{outfname.replace(".png",".eps")}"
+        oufname_eps=outfname.replace(".png",".eps")
+        ofname = f"fig_{typename[itype_]}_{label_suffix}_{oufname_eps}"
         plt.savefig(ofname)
         print(f"[def fit_histogram] {ofname} is created.")        
     if show: 
