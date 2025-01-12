@@ -30,7 +30,7 @@ def read_fit_results(directory):
     return pd.DataFrame(data)
 
 # データをプロット
-def plot_fit_results(df, outpng="default_fitMnKa.png"):
+def plot_fit_results(df, outpng="default_fitMnKa.png", debug=False):
     fig, ax = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
     parameters = ["Sigma", "Const", "Gain"]
     colors = ["blue", "green", "red"]
@@ -64,19 +64,23 @@ def plot_fit_results(df, outpng="default_fitMnKa.png"):
     plt.tight_layout()
     plt.savefig(outpng)
     print(f"{outpng} is saved.")
-    plt.show()
+    if debug:
+        plt.show()
 
 # メイン処理
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract values from a file based on search text.")
     parser.add_argument("--directory", type=str, default="./", help="directory where 55Fe_PIXELdd_fitresult.csv exist.")
     parser.add_argument('--outpng', '-o', type=str, default='resolve_xspec_fitMnKa.png', help='output file name')
+    parser.add_argument('--debug', '-d', action='store_true', default=False, help='The debug flag')
 
     args = parser.parse_args()
 
     directory = args.directory
     outpng = args.outpng
+    debug = args.debug
+
     fit_results = read_fit_results(directory)
     fit_results.sort_values("PIXEL", inplace=True)  # PIXEL順にソート
-    plot_fit_results(fit_results, outpng=outpng)
+    plot_fit_results(fit_results, outpng=outpng, debug=debug)
 
