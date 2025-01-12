@@ -17,7 +17,7 @@ flag_configs = {
         "temptrend", "plotghf", "plotgti", "spec-eachgti", "lc-eachgti", "mkbratio"
     ],
     "calflags": [
-        "lsdist", "lsdetail", "specratio6x6", "statusitype", "statitype", "antico"
+        "lsdist", "lsdetail", "specratio6x6", "statusitype", "statitype", "antico", "fe55fit"
     ],
     "deeplsflags": ["addprevnext", "defcluster"],
     "anaflags": ["genpharmfarf", "qlfit", "compcluf"]
@@ -389,6 +389,10 @@ def main():
         arguments=f"{obsid}"
         dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_antico", linkfiles=[f"../{ufacevt}",f"../../../auxil/{ehk}"], gdir=f"{obsid}/resolve/event_uf/")
 
+    if flag_dicts["calflags"]["fe55fit"]:
+        runprog="resolve_ana_pixel_ql_fit_MnKa_v2_EPI2.py"
+        arguments=f"{uf50evt} --paper -n timeave_epi2"
+        dojob(obsid, runprog, arguments = arguments, fwe = fwe, subdir="checkcal_fe55fit", linkfiles=[f"../{uf50evt}"], gdir=f"{obsid}/resolve/event_uf/")
 
 ################### deepls ###################################################################
     if flag_dicts["deeplsflags"]["addprevnext"]:
