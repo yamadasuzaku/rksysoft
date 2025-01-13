@@ -234,6 +234,16 @@ def plot_physical_potential(
             tangent_y_30 = [        0, 0.8 * math.sqrt(3) * d_scaled]
             ax.plot(tangent_x_30, tangent_y_30, color="yellow", linestyle="--", label=f"Inclination (deg): 30")
 
+            if title=="Centaurus X-3":
+                tangent_x_70 = [r1_scaled, r2_scaled]
+                # inclintion 70度は、星からみると20度なので、20度を変換
+                angle_deg = 90 - 70 
+                angle_rad = math.radians(angle_deg)  # 度をラジアンに変換
+                # tan(70°) を計算
+                tan_70 = math.tan(angle_rad)                
+                tangent_y_70 = [        0, d_scaled * tan_70]
+                ax.plot(tangent_x_70, tangent_y_70, color="magenta", linestyle="--", label=f"Inclination (deg): 70")
+
 
     # Optionally add plot title
     if title:
@@ -307,4 +317,15 @@ if __name__ == "__main__":
     distance_cygx1 = calculate_mean_distance(M_bh, M_star, period_days)
     plot_physical_potential(M_bh, M_star, distance_cygx1, unit="solar_radius", star_radius=R_star, \
     plot_center=True, title="Cygnus X-1", savefig="roche_cygx1.png",\
+    contour_levels=100, contour_levels_line=400, star_radius_tangent=True)
+
+
+    # Example: Centaurus X-3 
+    period_days = 2.08  # Orbital period [days]
+    M_ns = 1.2 * M_sun  # Neutron Star mass [kg]
+    M_star = 40.6 * M_sun  # Companion star mass [kg]
+    R_star = 11.8 * SOLAR_RADIUS # Companion star radius [m]
+    distance_cenx3 = calculate_mean_distance(M_ns, M_star, period_days)
+    plot_physical_potential(M_ns, M_star, distance_cenx3, unit="solar_radius", star_radius=R_star, \
+    plot_center=True, title="Centaurus X-3", savefig="roche_cenx3.png",\
     contour_levels=100, contour_levels_line=400, star_radius_tangent=True)
