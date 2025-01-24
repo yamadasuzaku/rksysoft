@@ -95,7 +95,9 @@ def parse_arguments():
     parser.add_argument('--hk1', '-k', type=str, help='hk1file', default=None)
     parser.add_argument('--reverse_axes', '-r', action='store_false', help='Reverse x-axis to show only time instead of date and time')
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
-    parser.add_argument('--paper', '-p', action='store_true', help='論文モード (eps保存、タイトルにファイル名非表示)')    
+    parser.add_argument('--paper', '-pa', action='store_true', help='論文モード (eps保存、タイトルにファイル名非表示)')    
+    parser.add_argument('--plotpixels', '-p', type=str, help='Comma-separated list of pixels to plot', default=','.join(map(str, range(36))))
+
     return parser.parse_args()
 
 def open_fits_data(fname):
@@ -135,7 +137,8 @@ def save_pixel_data_to_csv(pixel, time, temp_fit):
         df.to_csv(csv_filename, index=False)
         print(f"Data for pixel {pixel_} saved to {csv_filename}")
 
-def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfname="mkpi.png", title="test", show=False, paper=False):
+def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, \
+            outfname="mkpi.png", title="test", show=False, paper=False, plotpixels=[0]):
     k2mk = 1e3 
     if paper:
         fig, ax1 = plt.subplots(figsize=(7, 6))
@@ -164,7 +167,7 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         ax1.set_title(title)
 
     # Plot histograms for each pixel
-    for pixel_ in np.arange(36):
+    for pixel_ in plotpixels:
         pixelcut = (pixel == pixel_)
         px_time = x_data[pixelcut]
         px_temp_fit = temp_fit[pixelcut]
@@ -175,7 +178,7 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
         color = scalarMap.to_rgba(pixel_)
         event_number = len(px_time)
         ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.8, fmt=ishape[pixel_ % 5], label=f"P{pixel_} ({event_number})")
-        ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.2, fmt="-", label=None)
+        ax1.errorbar(px_time, px_temp_fit * k2mk, color=color, alpha=0.6, fmt="-", label=None)
 
     ax1.legend(bbox_to_anchor=(1.2, 1.11), loc='upper left', borderaxespad=0., fontsize=7.5)
 
@@ -199,12 +202,12 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
                 ax3.plot(dtime_hk1time[(hk1fwpos > 329.36) &  (hk1fwpos < 329.40)][::40], hk1fwpos_330Fe55[::40], 'o', color="springgreen",alpha=0.5, label="FW Fe55", ms=2)
                 ax3.set_ylim(140,340)
             else:
-                ax3.plot(dtime_hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
+                ax3.plot(dtime_hk1time, hk1fwpos, '-', color="gray", alpha=0.3, label="FW Position")
         else:
-            ax3.plot(hk1time, hk1fwpos, 'g-', alpha=0.5, label="FW Position")
+            ax3.plot(hk1time, hk1fwpos, '-', color="gray", alpha=0.3, label="FW Position")
 
 #        ax3.legend(loc='upper right', fontsize=8)
-        legend_ax3 = ax3.legend(bbox_to_anchor=(0.9, 1.01), loc='lower left', borderaxespad=0., fontsize=9)
+        legend_ax3 = ax3.legend(bbox_to_anchor=(0.9, 1.05), loc='lower left', borderaxespad=0., fontsize=9)
 
     ofname = f"fig_{outfname}"
     plt.savefig(ofname)
@@ -224,6 +227,9 @@ def plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=False, hk1=None, outfnam
     
 def main():
     args = parse_arguments()
+
+    plotpixels = list(map(int, args.plotpixels.split(',')))  
+
     if not args.filename or (args.hk1 and not os.path.isfile(args.hk1)):
         print("Usage: resolve_ecal_plot_ghf_with_FWE.py <filename> [--hk1 <hk1file>] [--reverse_axes]")
         print("Example: resolve_ecal_plot_ghf_with_FWE.py xa300065010rsl_000_fe55.ghf --hk1 xa300065010rsl_a0.hk1 --reverse_axes")
@@ -236,7 +242,8 @@ def main():
     # Save pixel data to CSV
     save_pixel_data_to_csv(pixel, time, temp_fit)
 
-    plot_ghf(time, dtime, pixel, temp_fit, reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}", show=args.show, paper=args.paper)
+    plot_ghf(time, dtime, pixel, temp_fit, plotpixels=plotpixels, \
+        reverse_axes=args.reverse_axes, hk1=args.hk1, outfname=f"ql_plotghf_{args.filename.replace('.ghf', '').replace('ghf.gz', '')}.png", title=f"Gain history of {args.filename}", show=args.show, paper=args.paper)
 
 if __name__ == "__main__":
     main()

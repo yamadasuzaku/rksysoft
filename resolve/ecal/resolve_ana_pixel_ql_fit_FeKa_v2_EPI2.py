@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 params = {
     'xtick.labelsize': 16,  # x軸目盛りのフォントサイズ
     'ytick.labelsize': 16,  # y軸目盛りのフォントサイズ
-    'legend.fontsize': 14,   # 凡例のフォントサイズ
+    'legend.fontsize': 12,   # 凡例のフォントサイズ
     'axes.labelsize': 15  # xlabel, ylabel のフォントサイズを変更
 }
 plt.rcParams['font.family'] = 'serif'  # フォントファミリを設定します
@@ -46,7 +46,9 @@ def pi_to_ev(pi):
     return pi * 0.5 + 0.5 # pi * 0.5 + 0.25 
 
 # Define the energy range
-emin, emax = 5870, 5920  # Energy range in eV
+#emin, emax = 5870, 5920  # Energy range in eV for Mn Ka
+emin, emax = 6350, 6450  # Energy range in eV for Fe Ka
+
 pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
 binnum = int(pimax - pimin)
 
@@ -62,11 +64,11 @@ def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Analyze MnKa spectra from a FITS file.',
     	usage='''
-    python resolve_ana_pixel_ql_fit_MnKa_v1.py xa900001010rsl_p0px5000_cl.evt
-    python resolve_ana_pixel_ql_fit_MnKa_v1.py xa900001010rsl_p0px5000_cl.evt  -s 161805543 --name after 
-    python resolve_ana_pixel_ql_fit_MnKa_v1.py xa900001010rsl_p0px5000_cl.evt  -e 161801172 --name before
+    python resolve_ana_pixel_ql_fit_FeKa_v1.py xa900001010rsl_p0px3000_cl.evt
+    python resolve_ana_pixel_ql_fit_FeKa_v1.py xa900001010rsl_p0px3000_cl.evt  -s 161805543 --name after 
+    python resolve_ana_pixel_ql_fit_FeKa_v1.py xa900001010rsl_p0px3000_cl.evt  -e 161801172 --name before
     ''')
-    	
+    
     parser.add_argument('filename', help='The filename of the FITS file to process.')
     parser.add_argument('-d', '--debug', action='store_true', help='flag for debug')
     parser.add_argument('--show', action='store_true', help='flag for plt.show')
@@ -131,7 +133,8 @@ def mymodel(x,params, consts, tailonly = False):
     # bkg2 : linearity of background    
     initparams = [norm,gw,gain,bkg1,bkg2]
     def rawfunc(x): # local function, updated when mymodel is called 
-        return MnKalpha(x,initparams,consts=consts)               
+        return FeKalpha(x,initparams,consts=consts)               
+#        return MnKalpha(x,initparams,consts=consts)               
     return rawfunc(x)
 
 def MnKalpha(xval,params,consts=[]):
@@ -161,6 +164,35 @@ def MnKalpha(xval,params,consts=[]):
     model_y = model_y + background
     return model_y
 
+
+def FeKalpha(xval,params,consts=[]):
+    norm,gw,gain,bkg1,bkg2 = params
+    # norm : normalization 
+    # gw : sigma of the gaussian 
+    # gain : if gain changes
+    # consttant facter if needed 
+    # Fe K alpha lines, Holzer, et al., 1997, Phys. Rev. A, 56, 4554, + an emperical addition
+    energy = np.array([6404.148, 6403.295, 6400.653, 6402.077, 6391.190, 6389.106, 6390.275])
+    lgamma = np.array([ 1.613, 1.965, 4.833, 2.803, 2.487, 2.339, 4.433])
+    amp = np.array([ 0.697, 0.376, 0.088, 0.136, 0.339, 0.060, 0.102])
+
+    prob = (amp * lgamma) / np.sum(amp * lgamma) # probabilites for each lines. 
+
+    model_y = 0 
+    if len(consts) == 0:
+        consts = np.ones(len(energy))
+    else:
+        consts = consts
+
+    for i, (ene,lg,pr,con) in enumerate(zip(energy,lgamma,prob,consts)):
+        voi = voigt(xval,[ene*gain,lg*0.5,gw])
+        model_y += norm * con * pr * voi
+
+    background = bkg1 * np.ones(len(xval)) + (xval - np.mean(xval)) * bkg2
+    model_y = model_y + background
+    return model_y
+
+
 def voigt(xval,params):
     center,lw,gw = params
     # center : center of Lorentzian line
@@ -187,7 +219,7 @@ def process_data(data, TRIGTIME_FLAG=False, AC_FLAG=False):
 
 def plot_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0.9):
 
-    outfname=f"ql_plotspec_MnK_{filename.replace('.evt', '').replace('.gz', '')}.png"
+    outfname=f"ql_plotspec_FeKa_{filename.replace('.evt', '').replace('.gz', '')}.png"
     title=f"Spectra of {filename}"
 
     plt.figure(figsize=(11, 7))
@@ -214,7 +246,7 @@ def plot_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0
 
 def fit_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0.9, debug = False, show=False, paper=False):
 
-    outfname=f"ql_plotspec_fitMnK_{filename.replace('.evt', '').replace('.gz', '')}.png"    
+    outfname=f"ql_plotspec_fitFeK_{filename.replace('.evt', '').replace('.gz', '')}.png"    
 
     hist, binedges = np.histogram(epi2_filtered, bins=binnum, range=(emin, emax))
     bincenters = 0.5 * (binedges[1:] + binedges[:-1])
@@ -225,9 +257,9 @@ def fit_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0.
 
     gfwhm = 4
     gw = gfwhm / 2.35
-    norm = np.sum(hist)/2
+    norm = np.sum(hist)/100
     gain = 1.00000001
-    bkg1 = 0.0
+    bkg1 = 150.0
     bkg2 = 0.0
     init_params=[norm,gw,gain,bkg1,bkg2]
     consts = [1,1,1,1,1,1,1,1]
@@ -235,14 +267,14 @@ def fit_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0.
     model_y = mymodel(ene,init_params,consts)
 
     plt.figure(figsize=(10,6))
-    plt.title("Mn Kalpha fit (initial values)")
+    plt.title("Fe Kalpha fit (initial values)")
     plt.xlabel("Energy (eV)")
     plt.errorbar(ene, hist, yerr=np.sqrt(hist), fmt='ko', label = "data")
     plt.plot(ene, model_y, 'r-', label = "model")
     plt.legend(numpoints=1, frameon=False, loc="upper left")
     plt.grid(linestyle='dotted',alpha=0.5)
-    plt.savefig("fit_MnKalpha_init.png")
-    print("[def fit_histogram] fit_MnKalpha_init.png is created.")
+    plt.savefig("fit_FeKalpha_init.png")
+    print("[def fit_histogram] fit_FeKalpha_init.png is created.")
 
     if show:
 	    plt.show()
@@ -293,8 +325,8 @@ def fit_histogram(epi2_filtered, color, itype_, filename, label_suffix, alpha=0.
     plt.xscale('linear')
     plt.yscale('linear')
     plt.xlabel(r'Energy (eV)')
-    plt.ylabel(r'Residual')
-    resi = hist - fitmodel
+    plt.ylabel(r'Resisual')
+    resi = fitmodel - hist 
     plt.errorbar(ene, np.zeros(len(ene)), fmt='k--', color="gray", alpha=0.5, label=None)
     plt.errorbar(ene, resi, yerr = np.sqrt(hist), fmt='ko', ms=2)
 
