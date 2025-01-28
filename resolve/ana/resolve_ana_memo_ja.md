@@ -185,6 +185,31 @@ resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 ``` 
 
 と実行すると、prev/next interval をつけて、Ls の quick check (`tolerance=100`(default)以下の連続したイベントの数の分布を計算)をしてくれる。
+(2025.01.28) これはちょっと古いので、clustering は下記に改訂
+
+### Ls の clustering 
+
+- (時間がある時) 全 pixel に対して clustering を実行する。`-a` をつけて、`-f` で evt ファイルを指定する。
+
+```
+resolve_ana_pixel_run_Ls_define_cluster.sh -f xa097093500rsl_a0pxpr_uf_fillprenext.evt -a
+```
+
+
+- (時間がない時) pixel 13 だけ、fselect でカットして、その evt file 対して clustering を実行する。`-p` で pixel 番号を指定する。
+
+```
+resolve_ana_pixel_run_Ls_define_cluster.sh -f xa097093500rsl_a0pxpr_uf_fillprenext.evt -p 33 
+```
+
+- 結果の確認方法
+
+DERIV_MAX,IMEMBER,ICLUSTER vs. TIME の分布を見て、正常動作かを確認する。
+
+
+```
+resolve_util_fplot.py addcluster_xa097093500rsl_a0pxpr_uf_fillprenext.evt TIME 1,1,1 DERIV_MAX,IMEMBER,ICLUSTER 1,1,1 -p --filter "PIXEL==12,IMEMBER>0" -o pixelall -k 3 
+```
 
 
 ## NEXT_INTERVAL 以下の分布と、clipped event or saturated event の関係の調査
