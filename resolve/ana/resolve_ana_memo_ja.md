@@ -189,7 +189,17 @@ resolve_ana_run_addprevnext_Lscheck.sh xa300049010rsl_p0px3000_uf.evt
 
 ### Ls の clustering 
 
+**clustering** を実行するスクリプト
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_Ls_define_cluster.py
+
+ファイル名に従って、**clustering** を実行し、ftselect で event ファイルの分割まで実行する script 
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_run_Ls_define_cluster.sh
+
+
 - (時間がある時) 全 pixel に対して clustering を実行する。`-a` をつけて、`-f` で evt ファイルを指定する。
+
 
 ```
 resolve_ana_pixel_run_Ls_define_cluster.sh -f xa097093500rsl_a0pxpr_uf_fillprenext.evt -a
