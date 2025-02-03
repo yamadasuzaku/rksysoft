@@ -1,0 +1,1 @@
+python compmcg6_plot_spec_resolve.py rsl_source_Hp_all_optene6200to8100binned2p5eV.qdp mcg6_rsl_source_Hp_all_r3010.qdp

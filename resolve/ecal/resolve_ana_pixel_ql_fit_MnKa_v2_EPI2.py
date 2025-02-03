@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 
 # プロットのパラメータを設定します
 params = {
-    'xtick.labelsize': 16,  # x軸目盛りのフォントサイズ
-    'ytick.labelsize': 16,  # y軸目盛りのフォントサイズ
-    'legend.fontsize': 14,   # 凡例のフォントサイズ
-    'axes.labelsize': 15  # xlabel, ylabel のフォントサイズを変更
+    'xtick.labelsize': 17,  # x軸目盛りのフォントサイズ
+    'ytick.labelsize': 17,  # y軸目盛りのフォントサイズ
+    'legend.fontsize': 15,   # 凡例のフォントサイズ
+    'axes.labelsize': 17  # xlabel, ylabel のフォントサイズを変更
 }
 plt.rcParams['font.family'] = 'serif'  # フォントファミリを設定します
 plt.rcParams.update(params)
