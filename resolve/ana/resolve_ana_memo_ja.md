@@ -495,7 +495,7 @@ resolve_xtend_runproc.py
 
 ## GTIごとにスペクトルを生成する
 
-https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_mkspec_eachgti.py
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_mkspec_eachgti_EPI2.py
 
 ``` bash:
 resolve_ana_pixel_mkspec_eachgti.py xa300036010rsl_p0px1000_cl2_filt.evt -i 6600 -x 7200 -y 0 -m 5 -r 4 -t -v 0.002 --ymin 0.002 --ymax 0.017

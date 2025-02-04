@@ -53,7 +53,7 @@ def parse_arguments():
     parser.add_argument('--specoffset', '-t', action='store_true', help='Offset for the spectrum')    
     parser.add_argument('--specoffsetval', '-v', type=float, default=0.001, help='Offset value for the spectrum')    
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
-    parser.add_argument('--ylog', '-rl', action='store_true', help='yscale is log') 
+    parser.add_argument('--ylog', action='store_true', help='yscale is log') 
 
     return parser.parse_args()
 
