@@ -176,11 +176,11 @@ def main():
     parser = argparse.ArgumentParser(description="Parse and plot QDP file data.")
     parser.add_argument('file1', type=str, help="Path to the QDP file. (Resolve)")
     parser.add_argument('file2', type=str, help="Path to the QDP file. (Xend)")
-    parser.add_argument('--output', type=str, default="spec_resolve_xtend_cygx1", help="Output prefix for saved files.")
+    parser.add_argument('--output', type=str, default="spec_resolve_xtend_cygx1_mcg6", help="Output prefix for saved files.")
     parser.add_argument('--xlim', type=float, nargs=2, help="X-axis limits as 'xmin xmax'.", default=[4,10])
     parser.add_argument('--ylim', type=float, nargs=2, help="Y-axis limits as 'ymin ymax'.", default=[0,3.4])
     parser.add_argument('--debug', action='store_true', help="Enable debug mode.")
-    parser.add_argument('-c','--color2', type=str, default="crimson", help="Color for file2")
+    parser.add_argument('-c','--color2', type=str, default="royalblue", help="Color for file2")
 
     args = parser.parse_args()
     debug = args.debug 

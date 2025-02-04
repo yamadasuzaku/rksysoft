@@ -53,6 +53,7 @@ def parse_arguments():
     parser.add_argument('--specoffset', '-t', action='store_true', help='Offset for the spectrum')    
     parser.add_argument('--specoffsetval', '-v', type=float, default=0.001, help='Offset value for the spectrum')    
     parser.add_argument('--show', '-s', action='store_true', help='plt.show()を実行するかどうか。defaultはplotしない。')    
+    parser.add_argument('--ylog', '-rl', action='store_true', help='yscale is log') 
 
     return parser.parse_args()
 
@@ -82,7 +83,7 @@ def process_data(data, TRIGTIME_FLAG=False, AC_FLAG=False):
 
 def plot_pi(epi2, itype, pixel, time, gtistart, gtistop, emin=0, emax=20000, ymin=None, ymax=None, rebin=10,
             outfname="mkpi.png", title="test", brcor=False, itypenames=[0], mgti=3,
-            plotpixels=[0], specoffset=True, specoffsetval=0.001, show=False):
+            plotpixels=[0], specoffset=True, specoffsetval=0.001, show=False, ylog=False):
     """Plot the PI spectrum."""
 #    pimin, pimax = ev_to_pi(emin), ev_to_pi(emax)
 #    ene_rebin = rebin  # dE = 0.5 * dPI
@@ -95,6 +96,8 @@ def plot_pi(epi2, itype, pixel, time, gtistart, gtistop, emin=0, emax=20000, ymi
         plt.ylabel(f"Counts/{rebin:.1f}eV/s")
         plt.xlabel("Energy (eV)")
         plt.grid(alpha=0.4)
+        if ylog:
+            plt.yscale("log")
         plt.title(title + " TYPE = " + g_typename[itype_])
         plt.figtext(0.55, 0.01, "pixel = " + ",".join(map(str, plotpixels)), fontsize=6, alpha=0.4)
         cumulative_hist = np.zeros(binnum)
@@ -193,7 +196,7 @@ def main():
             title=f"Spectra of {args.filename}",
             itypenames=itypenames, plotpixels=plotpixels, mgti=args.mgti, 
             specoffset=args.specoffset, specoffsetval=args.specoffsetval, 
-            show=args.show)
+            show=args.show, ylog=args.ylog)
 
 if __name__ == "__main__":
     main()
