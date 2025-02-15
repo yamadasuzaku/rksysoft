@@ -98,7 +98,7 @@ def main():
     # 入力パラメータのテキスト表示
     input_text_str = (f"Input Parameters:\n"
                       f"Flux: {flux} erg/cm²/s\n"
-                      f"Mass: {mass_solar} M$_\odot$\n"
+                      f"Mass: {mass_solar}" r"$M_{\odot}$\n"
                       f"Distance: {distance_kpc} kpc")
 
     # 計算結果のテキスト表示
