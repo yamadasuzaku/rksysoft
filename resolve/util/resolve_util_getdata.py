@@ -3,39 +3,52 @@
 import csv
 import subprocess
 import os
+import argparse
 
-# Define the filename
-filename = 'data.csv'
+def main():
+    # argparse の設定
+    parser = argparse.ArgumentParser(description="Download files based on a CSV file.")
+    parser.add_argument("--filename", "-f", type=str, default="data.csv", help="CSV file containing the download information.")
+    args = parser.parse_args()
 
-# Open the file and read the content
-with open(filename, mode='r', encoding='utf-8') as file:
-    reader = csv.reader(file)
-    next(reader)  # Skip the header row
+    # 指定された CSV ファイルを開く
+    filename = args.filename
+    if not os.path.exists(filename):
+        print(f"Error: The specified file '{filename}' does not exist.")
+        return
 
-    for row in reader:
-        if len(row) == 4:
-            obsid, name, key, svpath = row
+    with open(filename, mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        next(reader)  # ヘッダー行をスキップ
 
-            # Create the directory for the current name
-            if not os.path.exists(name):
-                os.makedirs(name)
-            
-            # Change to the created directory
-            os.chdir(name)
-            
-            # Construct the bash command
-            bash_command = f'wget -nv -m -np -nH --cut-dirs=6 -R "index.html*" --execute robots=off --wait=1 {svpath}/{obsid}/ .'
-            print("CMD: ",bash_command)
-            # Execute the bash command
-            try:
-                result = subprocess.run("pwd; date", shell=True, check=True, capture_output=True, text=True)                
-                print(f"Start for {name} ({obsid}): {result.stdout}")
-                
-                result = subprocess.run(bash_command, shell=True, check=True, capture_output=True, text=True)
-                print(f"End   for {name} ({obsid}): {result.stdout}")
-                
-            except subprocess.CalledProcessError as e:
-                print(f"Error for {name} ({obsid}): {e.stderr}")
+        for row in reader:
+            if len(row) == 4:
+                obsid, name, key, svpath = row
 
-            # Change back to the original directory
-            os.chdir('..')            
+                # ディレクトリ作成
+                if not os.path.exists(name):
+                    os.makedirs(name)
+
+                # カレントディレクトリを変更
+                os.chdir(name)
+
+                # wget コマンドを構築
+                bash_command = f'wget -nv -m -np -nH --cut-dirs=6 -R "index.html*" --execute robots=off --wait=1 {svpath}/{obsid}/ .'
+                print("CMD: ", bash_command)
+
+                # コマンドを実行
+                try:
+                    result = subprocess.run("pwd; date", shell=True, check=True, capture_output=True, text=True)
+                    print(f"Start for {name} ({obsid}): {result.stdout}")
+
+                    result = subprocess.run(bash_command, shell=True, check=True, capture_output=True, text=True)
+                    print(f"End   for {name} ({obsid}): {result.stdout}")
+
+                except subprocess.CalledProcessError as e:
+                    print(f"Error for {name} ({obsid}): {e.stderr}")
+
+                # 元のディレクトリに戻る
+                os.chdir('..')
+
+if __name__ == "__main__":
+    main()
