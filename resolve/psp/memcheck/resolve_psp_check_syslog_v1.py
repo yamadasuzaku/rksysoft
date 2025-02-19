@@ -112,6 +112,11 @@ for onef in file_paths:
 # Remove duplicates from outstr_list
 unique_outstr_list = list(set(outstr_list))
 
+# Check if unique_outstr_list is empty
+if not unique_outstr_list:
+    print(color_text("Error: No unique_outstr_list found matching the search pattern.", "red"))
+    exit(1)
+
 # Write unique messages to file
 for outstr in unique_outstr_list:
     write_to_file(args.file_path, outstr + "\n")
