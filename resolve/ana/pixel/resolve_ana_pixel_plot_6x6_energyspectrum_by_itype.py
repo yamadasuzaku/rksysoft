@@ -77,7 +77,7 @@ def gen_energy_hist(pi, bin_width):
     return energy, ncount, bin_half_width, ncount_sqrt
 
 def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonymax = True, ratioflag=False, \
-                  outtag="auto", ylogflag=False, plotflag=False):
+                  outtag="auto", ylogflag=False, plotflag=False, commonymaxvalue = None):
     pixel_map = np.array([
         [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6], # DETY
         [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6], # DETX
@@ -171,7 +171,9 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
             ax[5, i].set_xlabel(rf'$\rm Energy\ (eV)$')
 
     if commonymax:
-        print("..... enter commonymax")                
+        if commonymaxvalue:
+            g_ymax = commonymaxvalue
+        print("..... enter commonymax with g_ymax = ", g_ymax)                
         for i in range(36):
             dety = 6 - pixel_map.T[i][0]
             detx = pixel_map.T[i][1] - 1
@@ -224,6 +226,7 @@ Example (2): plot spectral ratios from 2keV to 20 keV witn 400 eV bin, Hp only
     parser.add_argument('--ene_min', '-l', type=float, default=6300, help='Minimum energy')
     parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
     parser.add_argument('--commonymax', '-c', action='store_false', help='Flag to set global ymax')
+    parser.add_argument('--commonymaxvalue', '-cval', type=float, default=None, help='max value used when commonymax is true.')
     parser.add_argument('--ratioflag', '-r', action='store_true', help='Flag to make a spectral ratio to average of central four pixels')
     parser.add_argument('--ylogflag', '-g', action='store_false', help='Flag not to make y log (linear when used.)')
     parser.add_argument('--itypenames', '-y', type=str, help='Comma-separated list of itype', default='0,1,2,3,4')
@@ -235,7 +238,7 @@ Example (2): plot spectral ratios from 2keV to 20 keV witn 400 eV bin, Hp only
 
     plot_spec_6x6(ifile=args.filename, bin_width=args.bin_width, ene_min=args.ene_min, ene_max=args.ene_max, \
                   itypenames = itypenames, commonymax = args.commonymax, ratioflag=args.ratioflag, outtag=itypeinfo,\
-                  ylogflag=args.ylogflag, plotflag=args.plotflag)
+                  ylogflag=args.ylogflag, plotflag=args.plotflag, commonymaxvalue = args.commonymaxvalue)
 
 if __name__ == "__main__":
     main()
