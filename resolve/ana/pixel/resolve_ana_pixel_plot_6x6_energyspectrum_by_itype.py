@@ -225,7 +225,7 @@ Example (2): plot spectral ratios from 2keV to 20 keV witn 400 eV bin, Hp only
     parser.add_argument('--ene_max', '-x', type=float, default=6900, help='Maximum energy')
     parser.add_argument('--commonymax', '-c', action='store_false', help='Flag to set global ymax')
     parser.add_argument('--ratioflag', '-r', action='store_true', help='Flag to make a spectral ratio to average of central four pixels')
-    parser.add_argument('--ylogflag', '-g', action='store_false', help='Flag to make y log')
+    parser.add_argument('--ylogflag', '-g', action='store_false', help='Flag not to make y log (linear when used.)')
     parser.add_argument('--itypenames', '-y', type=str, help='Comma-separated list of itype', default='0,1,2,3,4')
     parser.add_argument('--plotflag', '-p', action='store_true', help='Flag to do show')
 
