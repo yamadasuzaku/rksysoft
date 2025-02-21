@@ -59,21 +59,6 @@ def get_filename_without_extension(filepath):
     filename_without_extension = os.path.splitext(basename)[0]
     return filename_without_extension
 
-# def pi2e(pi):
-#     """
-#     Convert PI to energy using the formula:
-#     energy = PI * 0.5 + 0.5
-#     """
-#     return pi * 0.5 + 0.5 
-
-def pi_to_ev(pi):
-    """Convert PI units to energy in eV."""
-    return pi * 0.5 + 0.25
-
-def ev_to_pi(ev):
-    """Convert energy in eV to PI units."""
-    return 2 * ev - 0.5
-
 def gen_energy_hist(pi, bin_width):
     bins = np.arange(0, 40e3, bin_width)
     ncount, bin_edges = np.histogram(pi, bins)

@@ -30,13 +30,21 @@ g_ishape = [".", "s", "D", "*", "x"]
 CMAX = 20
 colors = plt.cm.tab20(np.linspace(0, 1, CMAX))
 
-def ev_to_pi(ev):
-    """Convert energy in eV to PI units."""
-    return (ev - 0.5) * 2
-
 def pi_to_ev(pi):
     """Convert PI units to energy in eV."""
-    return pi * 0.5 + 0.5
+    return pi * 0.5 + 0.25
+
+def ev_to_pi(ev):
+    """Convert energy in eV to PI units."""
+    return 2 * ev - 0.5
+
+# def ev_to_pi(ev):
+#     """Convert energy in eV to PI units."""
+#     return (ev - 0.5) * 2
+
+# def pi_to_ev(pi):
+#     """Convert PI units to energy in eV."""
+#     return pi * 0.5 + 0.5
 
 def parse_arguments():
     """Parse command line arguments."""
