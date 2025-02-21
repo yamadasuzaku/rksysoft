@@ -59,12 +59,20 @@ def get_filename_without_extension(filepath):
     filename_without_extension = os.path.splitext(basename)[0]
     return filename_without_extension
 
-def pi2e(pi):
-    """
-    Convert PI to energy using the formula:
-    energy = PI * 0.5 + 0.5
-    """
-    return pi * 0.5 + 0.5 
+# def pi2e(pi):
+#     """
+#     Convert PI to energy using the formula:
+#     energy = PI * 0.5 + 0.5
+#     """
+#     return pi * 0.5 + 0.5 
+
+def pi_to_ev(pi):
+    """Convert PI units to energy in eV."""
+    return pi * 0.5 + 0.25
+
+def ev_to_pi(ev):
+    """Convert energy in eV to PI units."""
+    return 2 * ev - 0.5
 
 def gen_energy_hist(pi, bin_width):
     bins = np.arange(0, 40e3, bin_width)
@@ -72,7 +80,7 @@ def gen_energy_hist(pi, bin_width):
     bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
     bin_half_width = bin_width / 2
     ncount_sqrt = np.sqrt(ncount)
-    energy = pi2e(bin_centers)
+    energy = pi_to_ev(bin_centers)
     return energy, ncount, bin_half_width, ncount_sqrt
 
 def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonymax = True, ratioflag=False, \
