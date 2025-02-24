@@ -142,7 +142,7 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_sta
 resolve_util_stat_itype.py xa300049010rsl_p0px5000_uf.evt
 ```
 
-## grade 毎の pixel map を生成します。
+## grade 毎の pixel map と、pixel ごとのカウント数の  1D plot を生成する
 
 [resolve_plot_detxdety.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_plot_detxdety.py) を利用して、カウント数が map の上に表示されます。
 
@@ -155,6 +155,13 @@ PHA のカットをかけられるようになっています。
 ``` sh:
 resolve_plot_detxdety.py xa300049010rsl_p0px3000_cl.evt -min 60000 -max 65537
 ```
+
+二つの event ファイルを引数に与えると、それぞれの pixel map、1D plot、に加えて、最初のファイル - ２つ目のファイル (data - backgroundのイメージ) の差分をとった map  と 1D plot も生成します。
+
+``` sh:
+resolve_plot_detxdety_test.py addcluster_xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt im0_addcluster_xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt
+```
+
 
 # cal用のツール
 
