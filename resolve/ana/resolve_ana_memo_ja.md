@@ -615,6 +615,17 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_fts
 resolve_util_ftselect.sh xa000114000rsl_p0px1000_uf_prevnext_cutclgti.fits "ITYPE==0" itype0
 ```
 
+## quick に あるファイルの GTI を別のファイルに適用したい場合
+
+引数の一つ目のファイルの GTI を２つ目のファイルに ftselect でカットをかける。xselect ではないので、exposureなどは正しく設定されないことに注意。
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_screen_ufcl_quick.sh
+
+
+```
+resolve_util_screen_ufcl_quick.sh addcluster_xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt xa000114000rsl_a0pxpr_uf_fillprenext.evt
+
+```
 
 ## STATUS を grade ごとに分離してプロットする
 
