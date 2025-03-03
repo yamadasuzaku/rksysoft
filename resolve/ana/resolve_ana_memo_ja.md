@@ -508,6 +508,16 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana
 resolve_ana_pixel_mkspec_eachgti.py xa300036010rsl_p0px1000_cl2_filt.evt -i 6600 -x 7200 -y 0 -m 5 -r 4 -t -v 0.002 --ymin 0.002 --ymax 0.017
 ```
 
+- "-i 6600 -x 7200" : 6600 eV から 7200 eV まで表示
+- "-y 0"    ITYPE==0 (=Hp) のみ表示
+- " -m 5"   GTIを５つ分積算する
+- "-r 4"     エネルギーのビンまとめと 4eV にする
+- "-t"        スペクトルの縦軸に offset を用いて表示する
+- "-v 0.002"  オフセット量
+- "--ymin 0.002 --ymax 0.017"  y軸の範囲
+
+
+
 ## GTIごとにライトカーブを生成する
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_mklc_branch.py
