@@ -36,6 +36,11 @@ def run_shell_script(script_content, script_name):
     subprocess.run(f"./{script_name}", shell=True)
     os.remove(script_name)
 
+
+    itypelist = [0, 1, 2, 3, 4]
+    typenamelist = ["Hp", "Mp", "Ms", "Lp", "Ls"]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Process XRISM data files.")
     parser.add_argument('eventfile', help="Path to the input FITS file")    
@@ -60,16 +65,23 @@ def main():
     primary_header = fits.open(eventfile)[0].header
     ra_source = primary_header["RA_NOM"]
     dec_source = primary_header["DEC_NOM"]
-    itypelist = [0, 1, 2, 3, 4]
-    typenamelist = ["Hp", "Mp", "Ms", "Lp", "Ls"]
+    itypelist = [0]
+    typenamelist = ["Hp"]
+#    itypelist = [0, 1, 2, 3, 4]
+#    typenamelist = ["Hp", "Mp", "Ms", "Lp", "Ls"]
+
     pifile = eventfilename + "_" + gtifilename + ".pi"
     outevtfile = eventfilename + "_" + gtifilename + ".evt"
 
     subprocess.run(f"rm -f {pifile}", shell=True, check=True)
     subprocess.run(f"rm -f {outevtfile}", shell=True, check=True)
 
-    print(color_text(f"Stage 1: Running xselect for {args.eventfile}", "blue"))
-    xselect_script = f"""#!/bin/sh
+    for n, (itype, typename) in enumerate(zip(itypelist, typenamelist)):
+        # xselect commands
+
+        print(color_text(f"Stage 1: Running xselect for {typename}", "blue"))
+        xselect_script = f"""#!/bin/sh
+rm -rf rsl_source_{typename}_{gtifilename}.lc rsl_source_{typename}_{gtifilename}.img rsl_source_{typename}_{gtifilename}.pha rsl_source_{typename}_{gtifilename}.evt
 xselect << EOF
 xsel
 no
@@ -79,26 +91,58 @@ read event
 yes
 
 filter time file {gtifile}
-
 show filter
 
-extract event 
-save event {outevtfile} 
-
 extract all
-
-save spec {pifile} 
-
-
+set image det
+extract all
+filter column "PIXEL=0:11,13:35"
+filter GRADE {itype}
+extract all
+save all
+rsl_source_{typename}_{gtifilename}
+extract events
+save events
+rsl_source_{typename}_{gtifilename}.evt
 no
 exit
 no
 EOF
         """
+        run_shell_script(xselect_script, f"run_xselect_{typename}_{gtifilename}.sh")
+        check_file_exists(f"rsl_source_{typename}_{gtifilename}.evt")
 
-    run_shell_script(xselect_script, f"run_xselect_mkevt.sh")
-    check_file_exists(f"{pifile}")
-    check_file_exists(f"{outevtfile}")
+#     print(color_text(f"Stage 1: Running xselect for {args.eventfile}", "blue"))
+#     xselect_script = f"""#!/bin/sh
+# xselect << EOF
+# xsel
+# no
+# read event
+# ./
+# {eventfile}
+# yes
+
+# filter time file {gtifile}
+
+# show filter
+
+# extract event 
+# save event {outevtfile} 
+
+# extract all
+
+# save spec {pifile} 
+
+
+# no
+# exit
+# no
+# EOF
+#         """
+
+#     run_shell_script(xselect_script, f"run_xselect_mkevt.sh")
+#     check_file_exists(f"{pifile}")
+#     check_file_exists(f"{outevtfile}")
         
        
 if __name__ == "__main__":
