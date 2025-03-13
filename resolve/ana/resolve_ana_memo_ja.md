@@ -750,12 +750,14 @@ resolve_ana_pixel_ql_fit_MnKa_v2_EPI2.py xa300049010rsl_p0px5000_uf_gcor.evt --p
 
 栗原くん製のプログラムを整理したもの。
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_RV_calc.py
+
 ```
 resolve_util_RV_calc.py 
 ``` 
 
 - 地球の公転運動 (30km/s)  (季節依存は含んでない適当なもの)
-- 太陽の天の川銀河の公転運動 (200km/s) 
+- 太陽の天の川銀河の公転運動 (220km/s)  https://astro-dic.jp/kinematic-distance/ を使う。
 - 太陽の固有運動 (20km/s)
 
 の３つの効果を計算する。
