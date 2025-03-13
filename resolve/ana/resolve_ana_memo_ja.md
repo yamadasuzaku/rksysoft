@@ -754,6 +754,13 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_RV_
 
 ```
 resolve_util_RV_calc.py 
+# ex) Cyg X-1 
+$ python resolve_util_RV_calc.py
+max of projected_velocity = 6.72, min=-6.71
+rv.png is created.
+LSR velocity projection: 11.32 km / s
+Solar motion projection: 18.19 km / s
+Earth orbit velocity projection: 3.55 km / s
 ``` 
 
 - 地球の公転運動 (30km/s)  (季節依存は含んでない適当なもの)
