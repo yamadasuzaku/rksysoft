@@ -746,3 +746,21 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ecal/resolve_ana_pixe
 resolve_ana_pixel_ql_fit_MnKa_v2_EPI2.py xa300049010rsl_p0px5000_uf_gcor.evt --paper -n timeave_epi2
 ```
 
+## RVを計算するスクリプト
+
+栗原くん製のプログラムを整理したもの。
+
+```
+resolve_util_RV_calc.py 
+``` 
+
+- 地球の公転運動 (30km/s)  (季節依存は含んでない適当なもの)
+- 太陽の天の川銀河の公転運動 (200km/s) 
+- 太陽の固有運動 (20km/s)
+
+の３つの効果を計算する。
+
+ただし、厳密な計算ではなく、オーダーの目安を与えるものと思うとよい。
+
+
+
