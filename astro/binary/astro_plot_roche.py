@@ -329,3 +329,14 @@ if __name__ == "__main__":
     plot_physical_potential(M_ns, M_star, distance_cenx3, unit="solar_radius", star_radius=R_star, \
     plot_center=True, title="Centaurus X-3", savefig="roche_cenx3.png",\
     contour_levels=100, contour_levels_line=400, star_radius_tangent=True)
+
+
+    # Example: 4U1700-377
+    period_days = 3.41  # Orbital period [days]
+    M_ns = 2.44 * M_sun  # Neutron Star mass [kg]
+    M_star = 34 * M_sun  # Companion star mass [kg]
+    R_star = 19 * SOLAR_RADIUS # Companion star radius [m]
+    distance_cenx3 = calculate_mean_distance(M_ns, M_star, period_days)
+    plot_physical_potential(M_ns, M_star, distance_cenx3, unit="solar_radius", star_radius=R_star, \
+    plot_center=True, title="4U1700-377", savefig="roche_4u1700-377.png",\
+    contour_levels=100, contour_levels_line=400, star_radius_tangent=True)

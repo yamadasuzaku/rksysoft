@@ -46,6 +46,8 @@ def calculate_los_velocity(df, target_coords):
     c = SkyCoord(ra_TEME, dec_TEME, unit="rad", frame=FK5, equinox='J2024.0')
     
     vel_XRISM = np.sqrt(df["vx"].values**2 + df["vy"].values**2 + df["vz"].values**2)
+    print(f"max of velocity of XRISM = {np.amax(vel_XRISM):.2f}, min={np.amin(vel_XRISM):.2f}")
+
     v_XRISM = radec_to_vector([c.icrs.ra.deg, c.icrs.dec.deg], degrees=True)
     v_target = radec_to_vector([target_coords.ra.deg, target_coords.dec.deg], degrees=True)
     los_velocity_of_XRISM = np.dot((vel_XRISM * v_XRISM).T, v_target)

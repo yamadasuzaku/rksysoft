@@ -1,0 +1,46 @@
+import pandas as pd
+
+# 会議の基本情報
+start_time = 10 * 60  # 開始時間（分単位） 10:00 → 600分
+end_time = 17 * 60  # 終了時間（分単位） 17:00 → 1020分
+lunch_break_start = 12 * 60  # 昼休憩開始 12:00 → 720分
+lunch_break_end = 13 * 60  # 昼休憩終了 13:00 → 780分
+break_duration = 10  # 休憩時間（10分）
+presentation_duration = 10  # 1人の発表時間（発表7分 + 質疑・交代3分 = 10分）
+
+# 計算
+total_minutes = end_time - start_time - (lunch_break_end - lunch_break_start)
+max_presentations = total_minutes // presentation_duration
+
+# 休憩の考慮（午前・午後それぞれ1回、10分ずつ）
+break_times = 2 * break_duration
+max_presentations_after_breaks = (total_minutes - break_times) // presentation_duration
+
+# スケジュール作成
+schedule = []
+current_time = start_time
+
+for i in range(max_presentations_after_breaks):
+    if current_time == lunch_break_start:
+        schedule.append(["12:00", "13:00", "昼休憩"])
+        current_time = lunch_break_end
+
+    if i == max_presentations_after_breaks // 2:
+        schedule.append([f"{current_time // 60:02d}:{current_time % 60:02d}", 
+                         f"{(current_time + break_duration) // 60:02d}:{(current_time + break_duration) % 60:02d}", "休憩"])
+        current_time += break_duration
+
+    end_presentation_time = current_time + presentation_duration
+    schedule.append([f"{current_time // 60:02d}:{current_time % 60:02d}", 
+                     f"{end_presentation_time // 60:02d}:{end_presentation_time % 60:02d}", 
+                     f"発表{i+1}"])
+    current_time = end_presentation_time
+
+df_schedule = pd.DataFrame(schedule, columns=["開始時間", "終了時間", "内容"])
+
+# 結果の表示
+import ace_tools as tools
+tools.display_dataframe_to_user(name="発表スケジュール", dataframe=df_schedule)
+
+# 出力する発表人数
+max_presentations_after_breaks
