@@ -4,6 +4,10 @@ import h5py
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams.update(params)
+
 from scipy.signal import find_peaks
 
 PERIOD_25Hz=0.04 # 0.04 sec = 25 Hz
@@ -55,8 +59,9 @@ def process_timestamps(input_file, period=1/25, bins=400):
     # Get the x and y values of the peak with the maximum y value
     max_peak_x = bin_edges[max_peak_index]
     max_peak_y = counts[max_peak_index]
+    event_count = len(all_timestamps_array)
 
-    return max_peak_x, max_peak_y
+    return max_peak_x, max_peak_y, event_count
 
 def main():
     """
@@ -67,8 +72,9 @@ def main():
     parser.add_argument('input_file', type=str, help="Path to the input HDF5 file.")
     parser.add_argument('--period_min', type=float, default=0.0399999, help="Minimum period value (default: 0.0399999).")
     parser.add_argument('--period_max', type=float, default=0.0400001, help="Maximum period value (default: 0.0400001).")
-    parser.add_argument('--period_step', type=float, default=1e-8, help="Step size for period (default: 1e-7).")
+    parser.add_argument('--period_step', type=float, default=0.25e-8, help="Step size for period (default: 1e-7).")
     parser.add_argument('--bins', type=int, default=400, help="Number of bins for histogram (default: 400).")
+    parser.add_argument('-o', '--output_file', type=str, default='output_find_bestphase.png', help="Output PNG file name (default: output.png).")
     
     # Parse arguments
     args = parser.parse_args()
@@ -81,7 +87,7 @@ def main():
     # Loop through the period range and calculate the peak values for each period
     period = args.period_min
     while period <= args.period_max:
-        max_peak_x, max_peak_y = process_timestamps(args.input_file, period=period, bins=args.bins)
+        max_peak_x, max_peak_y, event_count = process_timestamps(args.input_file, period=period, bins=args.bins)
         
         # Store the results
         periods.append(period)
@@ -94,18 +100,20 @@ def main():
     periods = np.array(periods)
     # Plot the period vs. max_peak_x and period vs. max_peak_y
     plt.figure(figsize=(12, 6))
-
     # Plot period vs max_peak_x
     plt.subplot(1, 2, 1)
     plt.plot(periods - PERIOD_25Hz, max_peak_x_values, color='blue', marker='o', markersize=4)
-    plt.title("Period vs max_peak_x")
+    plt.title(f"Period vs max_peak_x\n {args.input_file}")
     plt.xlabel("Period (s) - 0.04 sec ")
     plt.ylabel("max_peak_x")
     plt.grid(alpha=0.8)
     
     # Plot period vs max_peak_y
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 2, 2)    
     plt.plot(periods - PERIOD_25Hz, max_peak_y_values, color='red', marker='o', markersize=4)
+    plt.text(0.05, 0.25, f"event_count = {event_count}", 
+        transform=plt.gca().transAxes, fontsize=10, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.7))
+
     plt.title("Period vs max_peak_y")
     plt.xlabel("Period (s) - 0.04 sec")
     plt.ylabel("max_peak_y")
@@ -113,6 +121,7 @@ def main():
 
     # Display the plots
     plt.tight_layout()
+    plt.savefig(args.output_file)
     plt.show()
 
 if __name__ == "__main__":
