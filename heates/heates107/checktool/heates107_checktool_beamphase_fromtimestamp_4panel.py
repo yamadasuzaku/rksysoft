@@ -138,5 +138,18 @@ plt.tight_layout()
 # Save the plot to the specified output file
 plt.savefig(args.output_file)
 
+
+# plot 1D hist
+bin_edges = np.arange(10000, 70000 + 10, 10)  # +10で70000を含むようにする
+hist, bins = np.histogram(all_energy, bins=bin_edges)
+plt.figure(figsize=(10, 5))
+plt.title(f'Histogram of energy \n({args.input_file})')
+plt.bar(bins[:-1], hist, width=10, align='edge', edgecolor='black')
+plt.xlabel('Photon Energy (eV)')
+plt.ylabel('Counts')
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("enehist_" + args.output_file)
+
 # Display the plot
 plt.show()
