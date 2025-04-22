@@ -41,8 +41,8 @@ def compute_phase(name, ut_str, Do, To, apply_hjd=False):
     print(f"{name:16s} | {ut_str} → Phase = {phase:.5f}")
 
 # === Example comparison for one observation time ===
-obs_time_1 = "2024-04-07 17:55:48.99"
-obs_time_2 = "2024-04-10 11:48:20.93"
+obs_time_1 = "2024-04-07 16:55:04"
+obs_time_2 = "2024-04-10 13:41:04"
 
 print("Compare orbital phase computed in 3 slightly different methods:")
 print("-" * 70)
