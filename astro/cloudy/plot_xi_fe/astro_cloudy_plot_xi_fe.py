@@ -119,7 +119,7 @@ def extract_acol_array(grids, acol="depth"):
     # リスト内の NumPy 配列を結合して1つの配列にする
     return np.concatenate(acol_values)
 
-def plot_ionic_probabilities(iongrids, output_file, xi_list_from_file, verbose=0, show=False):
+def plot_ionic_probabilities(iongrids, output_file, xi_list_from_file, verbose=0):
     """
     GRIDデータをプロットする関数
 
@@ -177,12 +177,10 @@ def plot_ionic_probabilities(iongrids, output_file, xi_list_from_file, verbose=0
     plt.savefig(output_file)
     if verbose >= 1:
         print(f"プロットを '{output_file}' に保存しました。")
-    if show:
-        plt.show()
     plt.close()
 
 
-def plot_basic(xi_list_from_file, te_list, output_file, verbose=0, lastcut=1, show=False):
+def plot_basic(xi_list_from_file, te_list, output_file, verbose=0, lastcut=1):
     """
     GRIDデータをプロットする関数
 
@@ -205,9 +203,84 @@ def plot_basic(xi_list_from_file, te_list, output_file, verbose=0, lastcut=1, sh
     plt.savefig("te_" + output_file)
     if verbose >= 1:
         print(f"プロットを '{"te_" + output_file}' に保存しました。")
-    if show:
-        plt.show()
     plt.close()
+
+def plot_combined(iongrids, xi_list_from_file, te_list, output_file, verbose=0, lastcut=1):
+    """
+    イオン分布と電子温度を縦2段、X軸共有でプロットする関数
+
+    Parameters:
+        iongrids (dict): IONのGRIDごとのデータフレーム辞書
+        xi_list_from_file (list): xi のリスト
+        te_list (list or np.ndarray): 電子温度のリスト
+        output_file (str): 出力PNGファイル名
+        verbose (int): 詳細出力レベル
+        lastcut (int): te_list の末尾除外数 (デフォルト1)
+    """
+
+    num_colors = 27
+    usercmap = plt.get_cmap('jet')
+    cNorm = colors.Normalize(vmin=0, vmax=num_colors)
+    scalarMap = cm.ScalarMappable(norm=cNorm, cmap=usercmap)
+
+    fig, axs = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
+
+    # ===== 上段: イオン確率プロット =====
+    ax1 = axs[0]
+    grid0_df = iongrids.get('grid000000000')
+    if grid0_df is None:
+        print("警告: 'grid000000000' のデータが見つかりませんでした。")
+        return
+
+    for i, column in enumerate(grid0_df.columns[1:]):  # depth以外の列をプロット
+        if column == "Fe":
+            ionnum = 0
+        elif column == "Fe+":
+            ionnum = 1
+        else:
+            ionnum = int(column.replace("Fe", "").replace("+", ""))
+
+        color = scalarMap.to_rgba(ionnum)
+        xi_list = []
+        ion_list = []
+
+        for grid_name, df in iongrids.items():
+            if df.empty or len(df.columns) <= 1:
+                continue
+            if column not in df:
+                continue
+
+            gridint = int(grid_name.replace("grid", ""))
+            xi_list.append(xi_list_from_file[gridint])
+            ion_list.append(df[column].values[0])
+
+        ax1.plot(xi_list, ion_list, "-", label=f"{column}", color=color)
+
+    ax1.grid(alpha=0.3)
+    ax1.set_ylabel('Probability')
+#    ax1.set_title('Relative population of the ionization stages of iron')
+    ax1.legend(bbox_to_anchor=(1.04, 1), loc='upper left', borderaxespad=0., fontsize=10)
+    ax1.set_xlim(-1,4)
+
+    # ===== 下段: 電子温度プロット =====
+    ax2 = axs[1]
+    ax2.plot(xi_list_from_file[:-lastcut], te_list, "-", label="Te", color='black')
+    ax2.set_xlabel(r'Ionization Parameter $\xi$')
+    ax2.set_ylabel('Electron Temperature [K]')
+#    ax2.set_title('Electron Temperature')
+    ax2.set_yscale("log")
+    ax2.grid(alpha=0.3)
+    ax2.legend(loc='best', fontsize=10)
+    ax2.set_xlim(-1,4)
+
+    # ===== 全体レイアウト調整 =====
+    plt.tight_layout(rect=[0, 0.02, 0.98, 0.98])
+    plt.subplots_adjust(hspace=0.0)  # ← 追加！ここで「間」をゼロに詰める
+    plt.savefig("combined_" + output_file)
+    if verbose >= 1:
+        print(f"プロットを '{"combined_" + output_file}' に保存しました。")
+    plt.close()
+
 
 def main():
     # 引数の設定
@@ -237,10 +310,17 @@ def main():
     te_list = extract_acol_array(ovrgrids, acol="Te")
 
     # プロット
-    plot_ionic_probabilities(iongrids, args.output, xi_list_from_file, verbose=args.verbose, show=args.show)
+    plot_ionic_probabilities(iongrids, args.output, xi_list_from_file, verbose=args.verbose)
 
     # プロット
-    plot_basic(xi_list_from_file, te_list, args.output, verbose=args.verbose, show=args.show)
+    plot_basic(xi_list_from_file, te_list, args.output, verbose=args.verbose)
+
+    # プロット
+    plot_combined(iongrids, xi_list_from_file, te_list, args.output, verbose=args.verbose)
+
+    # プロットの表示 (オプション)
+    if args.show:
+        plt.show()
 
 if __name__ == "__main__":
     main()
