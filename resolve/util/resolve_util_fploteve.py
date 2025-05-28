@@ -9,6 +9,7 @@ import datetime
 import numpy as np
 import re
 from astropy.io import fits
+import ast  # To safely evaluate string into dictionary
 
 # Set default plot parameters
 params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
@@ -19,19 +20,19 @@ plt.rcParams.update(params)
 MJD_REFERENCE_DAY = 58484  # Reference MJD (Modified Julian Date)
 REFERENCE_TIME = Time(MJD_REFERENCE_DAY, format='mjd')  # Set the reference time using astropy
 
-# Define y-axis ranges for different columns (min, max values for scaling)
-y_ranges = {
-    "PHA": (0, 16383),
-#    "PHA": (-32768, 65535),
+# Default y_ranges dictionary
+default_y_ranges = {
+    "PHA": (0, 65535),
     "RISE_TIME": (0, 255),
     "LO_RES_PH": (0, 16383),
     "DERIV_MAX": (0, 32767),
-    "EPI": (0, 31000),
-    "EPI2": (0, 31000),
+    "EPI": (0, 33000),
+    "EPI2": (0, 33000),
     "PI": (0, 20000),
     "ITYPE": (0, 7),
     "PIXEL": (0, 35),
-    "TICK_SHIFT": (-8,7)
+    "TICK_SHIFT": (-8, 7),
+    "NEXT_INTERVAL": (0, 300)
 }
 
 # Custom tick positions for specific columns
@@ -166,12 +167,12 @@ def plot_fits_data_eachevent(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales
             for i in range(event_number):
                 one_set = []  # List to store one event's data
                 x_one = x_data[y_cols[0]][i]
-                min_val, max_val = y_ranges[x_col]
+                min_val, max_val = default_y_ranges[x_col]
                 scaled_val = manual_scale(x_one, min_val, max_val)
                 one_set.append(scaled_val)
                 for ycol in y_cols:
-                    print("y_data[ycol] = ", ycol, i, y_data[ycol][i])
-                    min_val, max_val = y_ranges[ycol]
+#                    print("y_data[ycol] = ", ycol, i, y_data[ycol][i])
+                    min_val, max_val = default_y_ranges[ycol]
                     scaled_val = manual_scale(y_data[ycol][i], min_val, max_val)
                     one_set.append(scaled_val)
                 print("one_set = ", one_set)
@@ -192,7 +193,7 @@ def plot_fits_data_eachevent(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales
 
             # Add auxiliary y-axes for each y-column
             for j, ycol in enumerate(x_labels):
-                y_min, y_max = y_ranges[ycol]
+                y_min, y_max = default_y_ranges[ycol]
                 ticks_orig = generate_ticks(y_min, y_max, n)  # Generate ticks for this range
                 ticks_orig = y_ticks_dict.get(ycol, ticks_orig)  # Use custom ticks if defined
                 ticks_scaled = [(t - y_min) / (y_max - y_min) for t in ticks_orig]  # Scale ticks to [0, 1]
@@ -245,8 +246,8 @@ if __name__ == "__main__":
         description='This program is used to check deltaT distribution for each pixel',
         epilog='''
             Example:
-            resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME TRIG_LP,WFRB_WRITE_LP,WFRB_SAMPLE_CNT -f "PIXEL==9" -p
-            resolve_util_fplot.py xa300049010rsl_p0px3000_uf_prevnext_cutclgti.fits PHA 1,1 PI,EPI 1,1 --plot --filters itype==0
+            resolve_util_fploteve.py xa000114000rsl_p0px1000_cl.evt TIME TRIG_LP,WFRB_WRITE_LP,WFRB_SAMPLE_CNT -f "PIXEL==9" -p
+            resolve_util_fploteve.y xa300049010rsl_p0px3000_uf_prevnext_cutclgti.fits PHA 1,1 PI,EPI 1,1 --plot --filters itype==0
         ''',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     
@@ -262,6 +263,8 @@ if __name__ == "__main__":
     parser.add_argument("--outname", "-o", type=str, help="Output file name tag", default="_p_")
     parser.add_argument('--use_sort', '-s', action='store_false', default=True, help='Flag to use sort')
     parser.add_argument('--use_colorsort', '-c', action='store_true', default=False, help='Flag to use color for sort')
+    # Argument for y_ranges (as a string that can be converted into a dictionary)
+    parser.add_argument("--y_ranges", type=str, help="Dictionary of y_ranges, e.g., '{\"PHA\": (0, 16383), \"RISE_TIME\": (0, 255)}'")
 
     # Parse arguments and run the plotting function
     args = parser.parse_args()
@@ -278,6 +281,15 @@ if __name__ == "__main__":
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None    
     title = f"{args.file_names} : filtered with {args.filters}"
     outfname = "fplot_" + args.file_names.replace(",", "_").replace(".", outname) + ".png"
+
+    # If y_ranges argument is provided, update the default dictionary with the new values
+    if args.y_ranges:
+        user_y_ranges = ast.literal_eval(args.y_ranges)  # Convert string to dictionary
+        # Update the default dictionary with user-provided values
+        default_y_ranges.update(user_y_ranges)
+
+    # Print out the final y_ranges (either default or updated)
+    print(f"Final y_ranges: {default_y_ranges}")
 
     plot_fits_data_eachevent(file_names, args.x_col, x_hdus, y_cols, y_hdus, None, title, outfname,
                              filters=filter_conditions, plotflag=args.plot, markers=args.markers, markersize=args.markersize,

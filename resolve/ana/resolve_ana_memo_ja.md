@@ -773,3 +773,17 @@ Earth orbit velocity projection: 3.55 km / s
 
 
 
+## event ファイルの event by event plot の生成方法
+
+- resolve_util_fploteve.py
+- run_resolve_util_fploteve_many.sh 
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/run_resolve_util_fploteve_many.sh
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_fploteve.py
+
+```
+ resolve_util_fploteve.py xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt PHA 1,1,1,1 DERIV_MAX,RISE_TIME,EPI,LO_RES_PH 1,1,1,1 --filters "ITYPE==3" -p -o _pixel00_
+ ```
+
+ 
