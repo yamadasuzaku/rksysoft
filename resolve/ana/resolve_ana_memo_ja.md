@@ -773,7 +773,7 @@ Earth orbit velocity projection: 3.55 km / s
 
 
 
-## event ファイルの event by event plot の生成方法
+## event ファイルの event by event plot の生成方法 (fploteve)
 
 - resolve_util_fploteve.py
 - run_resolve_util_fploteve_many.sh 
@@ -786,4 +786,8 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_fpl
  resolve_util_fploteve.py xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt PHA 1,1,1,1 DERIV_MAX,RISE_TIME,EPI,LO_RES_PH 1,1,1,1 --filters "ITYPE==3" -p -o _pixel00_
  ```
 
- 
+オプションとして、 `--y_ranges '{"PHA": (0, 65535)}` などつけると、表示範囲を変更できる。
+LpとLsは、`LO_RES_PH = PHA` のはずだが、negative lo_res_ph event の存在により、Ls は異常に大きな値を取ることがある。
+default は、`"PHA": (0, 65535),`　となってる。
+
+
