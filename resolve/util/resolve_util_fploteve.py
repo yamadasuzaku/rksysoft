@@ -32,7 +32,8 @@ default_y_ranges = {
     "ITYPE": (0, 7),
     "PIXEL": (0, 35),
     "TICK_SHIFT": (-8, 7),
-    "NEXT_INTERVAL": (0, 300)
+    "NEXT_INTERVAL": (0, 300),
+    "PREV_INTERVAL": (0, 300)
 }
 
 # Custom tick positions for specific columns
