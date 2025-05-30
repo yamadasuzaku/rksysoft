@@ -112,7 +112,7 @@ def get_deriv(ydata, step=8):
 
 
 
-def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, prevflag=False, xlims=None, ylims=None, \
+def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, prevflag=False, nextflag=False, xlims=None, ylims=None, \
                   usederiv=False, step=8, check_qd = False):
     """
     Plots the pulse record data from a FITS file in a 6x6 grid format.
@@ -134,6 +134,7 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
     pix_num_list = data[1].data['PIXEL']
     itype_list = data[1].data['ITYPE']
     prev_list = data[1].data['PREV_INTERVAL']
+    next_list = data[1].data['NEXT_INTERVAL']
     derivmax_list = data[1].data['DERIV_MAX']
     pha_list = data[1].data['PHA']
     risetime_list = data[1].data['RISE_TIME']
@@ -176,6 +177,7 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
 
             pulse_p_pix_itype = pulse[pix_mask][itype_mask]
             prev_p_pix_itype  = prev_list[pix_mask][itype_mask]
+            next_p_pix_itype  = next_list[pix_mask][itype_mask]
             derivmax_p_pix_itype = derivmax_list[pix_mask][itype_mask]
             pha_p_pix_itype = pha_list[pix_mask][itype_mask]
             risetime_p_pix_itype = risetime_list[pix_mask][itype_mask]
@@ -190,7 +192,7 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
             ax[dety, detx].text(-0.05, 0.92, f'#{num_of_evt}', fontsize=8, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
             if usederiv: # plot derivative
-                for j, (pulserecord, prev, derivmax, pha, risetime, tickshift, onetime) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype, derivmax_p_pix_itype, pha_p_pix_itype, risetime_p_pix_itype, tickshift_p_pix_itype, time_p_pix_itype)):
+                for j, (pulserecord, prev, next_intval, derivmax, pha, risetime, tickshift, onetime) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype, next_p_pix_itype, derivmax_p_pix_itype, pha_p_pix_itype, risetime_p_pix_itype, tickshift_p_pix_itype, time_p_pix_itype)):
                     color = colors[j % len(colors)]  # get color 
                     one_deriv, deriv_max, deriv_max_i, deriv_min, deriv_min_i, deriv_peak, deriv_peak_i = get_deriv(pulserecord, step=step)
                     # print(f"..... check j={j}, prev={prev}, derivmax={derivmax} <=> (recalc) {deriv_max}")                                        
@@ -217,9 +219,13 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
                         # plot text
                         if prevflag:
                             ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+                        # plot text
+                        if nextflag:
+                            ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{next_intval}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+
 
             else: # plot raw pulse
-                for j, (pulserecord, prev) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype)):
+                for j, (pulserecord, prev, next_intval) in enumerate(zip(pulse_p_pix_itype, prev_p_pix_itype, next_p_pix_itype)):
                     color = colors[j % len(colors)]  # get color 
                     # plot pulse
                     if usetime:
@@ -230,6 +236,10 @@ def plot_data_6x6(prevt, itypes, dumptext=False, plotflag=False, usetime=False, 
                     # plot text
                     if prevflag:
                         ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{prev}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
+
+                    # plot text
+                    if nextflag:
+                        ax[dety, detx].text(0.5, 0.9 - 0.1 * j, f'{next_intval}', fontsize=8, color=color, ha='center', va='center', transform=ax[dety, detx].transAxes)
 
             if dumptext and num_of_evt > 0:
                 if usederiv:
@@ -343,17 +353,17 @@ def main():
     parser.add_argument('--xlims', '-x', type=parse_limits, help='Comma-separated x-axis limits (xmin,xmax)')
     parser.add_argument('--ylims', '-y', type=parse_limits, help='Comma-separated y-axis limits (ymin,ymax)')
     parser.add_argument('--prevflag', '-pr', action='store_true', help='Flag to plot previous interval values as text')
+    parser.add_argument('--nextflag', '-nr', action='store_true', help='Flag to plot next interval values as text')
     parser.add_argument('--deriv', '-dr', action='store_true', help='Flag to plot derivative')
     parser.add_argument('--usetime', '-t', action='store_true', help='Flag to usetime')
     parser.add_argument('--step', '-s', type=int, default='8', help='Step size to created deriavtive')
     parser.add_argument('--check_qd', '-c', action='store_true', help='check qd by myself')
 
-
     args = parser.parse_args()
     itypes = [int(itype) for itype in args.itypelist.split(',')]
     
     plot_data_6x6(args.prevt, itypes, args.dumptext, \
-        plotflag=args.plot, usetime=args.usetime, prevflag=args.prevflag, xlims=args.xlims, ylims=args.ylims, \
+        plotflag=args.plot, usetime=args.usetime, prevflag=args.prevflag, nextflag=args.nextflag, xlims=args.xlims, ylims=args.ylims, \
                     usederiv=args.deriv, step=args.step, check_qd=args.check_qd)
 
 if __name__ == "__main__":
