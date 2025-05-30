@@ -573,6 +573,8 @@ resolve_pr_plot_timeseries.py xa097093500rsl_a0pxpr_uf_fillprenext_oneclip.evt -
 
 ## 微分波形を差し引く
 
+### 単純に adjusted derivative の波形を差し引く場合
+
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_pr_plot_derivsub.py
 
 ``` bash:
@@ -580,6 +582,24 @@ resolve_ana_pixel_pr_plot_derivsub.py xa097093500rsl_a0pxpr_uf_fillprenext_itype
 ```
 
 平均微分波形を差し引いてプロットする。
+
+### small な pseudo event 解析向けに、一回だけ adjusted 波形を差し引く場合
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_pr_plot_derivsub_primary.py
+
+``` bash:
+./resolve_ana_pixel_pr_plot_derivsub_primary.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_DMbelow500_Lp.fits -p
+```
+
+### large な pseudo event 解析向けに、数回 adjusted 波形を差し引く場合
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana_pixel_pr_plot_derivsub_negativeloresph.py
+
+``` bash:
+./resolve_ana_pixel_pr_plot_derivsub_negativeloresph.py xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti_DMbelow500_Lp.fits -p
+```
+
+
 
 
 ## slopediffer, quickdouble, itype で場合分けしたイベントファイルを生成する
