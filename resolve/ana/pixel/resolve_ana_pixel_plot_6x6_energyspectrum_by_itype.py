@@ -142,10 +142,17 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
                     ratio, ratio_err = propagate_division_error(ncount, yerr, ave_ncount, ave_yerr)      
                     # ax[dety, detx].errorbar(energy, ncount/ave_ncount, \
                     #       yerr=ncount/ave_ncount * np.sqrt( (yerr/ncount)**2 + (ave_yerr/ave_ncount)**2),ls='-')
-                    ax[dety, detx].errorbar(energy, ratio, xerr=xerr, yerr=ratio_err, ls='-')
+                    handle = ax[dety, detx].errorbar(energy, ratio, xerr=xerr, yerr=ratio_err, ls='-')
+                    # Set error bar transparency
+                    for bar in handle[2]:
+                        bar.set_alpha(0.2)            
 
                 else:
-                    ax[dety, detx].errorbar(energy, ncount, xerr=xerr, yerr=yerr, ls='-')
+                    handle = ax[dety, detx].errorbar(energy, ncount, xerr=xerr, yerr=yerr, ls='-')
+                    # Set error bar transparency
+                    for bar in handle[2]:
+                        bar.set_alpha(0.2)            
+
 
                 ax[dety, detx].set_xlim(ene_min, ene_max)
 
