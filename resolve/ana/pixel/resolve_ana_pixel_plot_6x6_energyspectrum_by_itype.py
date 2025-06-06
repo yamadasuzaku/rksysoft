@@ -67,13 +67,14 @@ def ev_to_pi(ev):
     """Convert energy in eV to PI units."""
     return 2 * ev - 0.5
 
-def gen_energy_hist(pi, bin_width):
+def gen_energy_hist(epi2, bin_width):
     bins = np.arange(0, 40e3, bin_width)
-    ncount, bin_edges = np.histogram(pi, bins)
+    ncount, bin_edges = np.histogram(epi2, bins)
     bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
     bin_half_width = bin_width / 2
     ncount_sqrt = np.sqrt(ncount)
-    energy = pi_to_ev(bin_centers)
+#    energy = pi_to_ev(bin_centers)
+    energy = bin_centers
     return energy, ncount, bin_half_width, ncount_sqrt
 
 def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonymax = True, ratioflag=False, \
@@ -90,7 +91,7 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
 
     itype_list = data[1].data['ITYPE']
     pix_num_list = data[1].data['PIXEL']
-    pi = data[1].data['PI']
+    epi2 = data[1].data['EPI2']
 
     fig, ax = plt.subplots(6, 6, figsize=(21.3, 12), sharex=True)
     fig.suptitle(f'{ifile}: {objectname}, energy {ene_min}-{ene_max} eV, itype {outtag}')
@@ -102,8 +103,8 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
         stored_hist_dic = {}
         for itype in itypenames:
             cutid = np.where( (itype_list==itype)&((pix_num_list==0)|(pix_num_list==17)|(pix_num_list==18)|(pix_num_list==35)) )[0]
-            pi_itype_allpixel = pi[cutid]
-            energy, ncount, xerr, yerr = gen_energy_hist(pi_itype_allpixel, bin_width)
+            epi2_itype_allpixel = epi2[cutid]
+            energy, ncount, xerr, yerr = gen_energy_hist(epi2_itype_allpixel, bin_width)
             stored_hist_dic[itype] = (energy, ncount, xerr, yerr)
 
     for i in range(36):
@@ -111,7 +112,7 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
         detx = pixel_map.T[i][1] - 1
         pixel = pixel_map.T[i][2]
         mask_pix = pix_num_list == pixel
-        pi_pix = pi[mask_pix]
+        epi2_pix = epi2[mask_pix]
         itype_pix = itype_list[mask_pix]
 
         y_min, y_max = np.inf, -np.inf
@@ -119,9 +120,9 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
         for itype in itypenames:
             print(f"{objectname} PIXEL={pixel}: ITYPE={itype}, {itype_name[itype]}")
             mask_itype = itype_pix == itype
-            pi_pix_itype = pi_pix[mask_itype]
+            epi2_pix_itype = epi2_pix[mask_itype]
 
-            energy, ncount, xerr, yerr = gen_energy_hist(pi_pix_itype, bin_width)
+            energy, ncount, xerr, yerr = gen_energy_hist(epi2_pix_itype, bin_width)
             mask = (ene_min < energy) & (energy < ene_max)
 
             energy, ncount, yerr = energy[mask], ncount[mask], yerr[mask]
@@ -189,9 +190,9 @@ def plot_spec_6x6(ifile, bin_width, ene_min, ene_max, itypenames = [0], commonym
     plt.tight_layout()
     ftag = get_filename_without_extension(ifile)
     if ratioflag:
-        outfile = f'resolve_spec_plot6x6_{ftag}_EneRan{ene_min}-{ene_max}eV_itype{outtag}_ratio.png'
+        outfile = f'resolve_spec_plot6x6_{ftag}_EneRan{ene_min}-{ene_max}eV_itype{outtag}_bin{bin_width}_ratio.png'
     else:
-        outfile = f'resolve_spec_plot6x6_{ftag}_EneRan{ene_min}-{ene_max}eV_itype{outtag}.png'        
+        outfile = f'resolve_spec_plot6x6_{ftag}_EneRan{ene_min}-{ene_max}eV_itype{outtag}_bin{bin_width}.png'        
     print(f'..... {outfile} is created.')    
     plt.savefig(outfile)
 
