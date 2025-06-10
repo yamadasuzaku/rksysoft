@@ -815,9 +815,14 @@ default は、`"PHA": (0, 65535),`　となってる。
 
 このPythonスクリプトは、FITSファイルのSTATUSカラム（16ビットのbool配列）を指定条件に従ってフィルタし、新しいFITSファイルを出力します。
 
-## 使用方法
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_cut_event_statusbit.py
+
+### 使用方法
 
 ```bash
-python filter_status_fits.py 入力ファイル 出力ファイル --status パターン
+python resolve_util_cut_event_statusbit.py 入力ファイル 出力ファイル --status パターン
+```
 
-
+```bash
+python resolve_util_cut_event_statusbit.py xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt tmp.evt --status 0,-1,-1,-1,1,-1,0,0,0,0,0,0,0,0,0,0
+```
