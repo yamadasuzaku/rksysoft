@@ -811,3 +811,13 @@ LpとLsは、`LO_RES_PH = PHA` のはずだが、negative lo_res_ph event の存
 default は、`"PHA": (0, 65535),`　となってる。
 
 
+## STATUSビットに基づくFITSファイルのフィルタリングスクリプト
+
+このPythonスクリプトは、FITSファイルのSTATUSカラム（16ビットのbool配列）を指定条件に従ってフィルタし、新しいFITSファイルを出力します。
+
+## 使用方法
+
+```bash
+python filter_status_fits.py 入力ファイル 出力ファイル --status パターン
+
+
