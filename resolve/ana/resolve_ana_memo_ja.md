@@ -811,18 +811,18 @@ LpとLsは、`LO_RES_PH = PHA` のはずだが、negative lo_res_ph event の存
 default は、`"PHA": (0, 65535),`　となってる。
 
 
-## STATUSビットに基づくFITSファイルのフィルタリングスクリプト
+## STATUSビットに基づいてFITSファイルをフィルタするPythonスクリプト
 
-このPythonスクリプトは、FITSファイルのSTATUSカラム（16ビットのbool配列）を指定条件に従ってフィルタし、新しいFITSファイルを出力します。
+このスクリプトでは、FITSファイル内の`STATUS`カラムに対して、各ビットの条件を以下のアルファベットで指定してフィルタできます：
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_cut_event_statusbit.py
 
-### 使用方法
+- `T`：そのビットが `True`（bitが立っている）ことを要求
+- `F`：そのビットが `False`（bitが立っていない）ことを要求
+- `X`：そのビットの値は無視（条件に含めない）
+
+### 実行方法
 
 ```bash
-python resolve_util_cut_event_statusbit.py 入力ファイル 出力ファイル --status パターン
-```
-
-```bash
-python resolve_util_cut_event_statusbit.py xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt tmp.evt --status 0,-1,-1,-1,1,-1,0,0,0,0,0,0,0,0,0,0
+python resolve_util_cut_event_statusbit.py input.evt output.evt --status="X,X,T,F,X,X,X,X,X,X,X,X,X,X,X,X"
 ```
