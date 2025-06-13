@@ -32,9 +32,11 @@ def map_intervals(source_file, target_file, output_file=None, dT=10.0, debug=Fal
 
             source_prev_intervals = source_data['PREV_INTERVAL'][source_pixel_mask].astype(np.int32)
             source_next_intervals = source_data['NEXT_INTERVAL'][source_pixel_mask].astype(np.int32)
+            source_status = source_data['STATUS']
 
             target_prev_intervals = target_data['PREV_INTERVAL'][target_pixel_mask].astype(np.int32)
             target_next_intervals = target_data['NEXT_INTERVAL'][target_pixel_mask].astype(np.int32)
+            target_status = target_data['STATUS']
 
             # Ensure source_times are sorted
             sorted_indices = np.argsort(source_times)
@@ -56,6 +58,8 @@ def map_intervals(source_file, target_file, output_file=None, dT=10.0, debug=Fal
                 if abs(source_times[index] - target_times[i]) <= dT:
                     target_prev_intervals[i] = source_prev_intervals[index]
                     target_next_intervals[i] = source_next_intervals[index]
+                    target_status[i] = source_status[index]
+
                     if debug:
                         print("**debug** difference is small", source_times[index], target_times[i], source_times[index] - target_times[i])
                         print("**debug**                    ", source_prev_intervals[index], source_next_intervals[index])                        
