@@ -87,7 +87,7 @@ outfile_suffix=cutclgti
 
 # (3-a) uf.evtの出力ファイルを cl.gti でフィルタリング
 resolve_util_ftselect.sh $outfile1 "gtifilter(\"${outgti}\")" $outfile_suffix
-outfile1_cutcl="${outfile1%.evt}_${outfile_suffix}.fits"
+outfile1_cutcl="${outfile1%.evt}_${outfile_suffix}.evt"
 
 # フィルタリング結果の確認
 if [ -e "$outfile1_cutcl" ]; then
@@ -99,7 +99,7 @@ fi
 
 # (3-b) pr.evtの出力ファイルを cl.gti でフィルタリング
 resolve_util_ftselect.sh $outfile2 "gtifilter(\"${outgti}\")" $outfile_suffix
-outfile2_cutcl="${outfile2%.evt}_${outfile_suffix}.fits"
+outfile2_cutcl="${outfile2%.evt}_${outfile_suffix}.evt"
 
 # フィルタリング結果の確認
 if [ -e "$outfile2_cutcl" ]; then
