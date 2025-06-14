@@ -1,4 +1,4 @@
-# Event File Processing Script for XRISM/Resolve
+# Script for XRISM/Resolve: Add PREV/NEXT interval columns to Event File Processing 
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/resolve_ftools_add_prevnext.sh
 
