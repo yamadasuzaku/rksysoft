@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# デフォルト値の設定
+# Set default values
 pixel=19
 evtfile=""
 allpixel=false
 
-# 使用方法の表示
+# Display usage instructions
 usage() {
     echo "Usage: $0 -f <evtfile> [-p <pixel_number>] [-a]"
     echo "  -f <evtfile>       Input event file (required)"
-    echo "  -p <pixel_number>  Pixel number (default: 19, range: 0-35)"
-    echo "  -a                 Process all pixels (ignores pixel number)"
+    echo "  -p <pixel_number>  Pixel number (default: 19, range: 0–35)"
+    echo "  -a                 Process all pixels (overrides pixel selection)"
     exit 1
 }
 
-# 引数の解析
+# Parse command-line arguments
 while getopts ":f:p:a" opt; do
     case $opt in
         f)
@@ -36,43 +36,43 @@ while getopts ":f:p:a" opt; do
     esac
 done
 
-# 必須引数 evtfile の確認
+# Check if the required input file is specified
 if [ -z "$evtfile" ]; then
     echo "Error: evtfile is required."
     usage
 fi
 
-# ファイルの存在確認
+# Check if the specified file exists
 if [ ! -f "$evtfile" ]; then
     echo "Error: File '$evtfile' not found."
     exit 1
 fi
 
-# 処理の分岐
+# Branch depending on whether all pixels are processed or just one
 if $allpixel; then
     echo "Processing all pixels for evtfile: $evtfile"
     resolve_ana_pixel_Ls_define_cluster.py "$evtfile"
     
-    # 全ピクセルの結果ファイル名
+    # Output filenames for all-pixel case
     cluster_outfile="addcluster_${evtfile%.evt}.evt"
     cluster_outfile_imposi="addcluster_${evtfile%.evt}_imposi.evt"
     cluster_outfile_im1="addcluster_${evtfile%.evt}_im1.evt"
 else
-    # ファイル名用に pixel を 2 桁にゼロ埋め
+    # Format the pixel number as a two-digit string
     pixel_padded=$(printf "%02d" "$pixel")
-    # 個別ピクセルの結果ファイル名    
+    # Output filenames for individual pixel
     pixelcut_outfile="${evtfile%.evt}_p${pixel_padded}.evt"
     cluster_outfile="addcluster_${evtfile%.evt}_p${pixel_padded}.evt"
     cluster_outfile_imposi="addcluster_${evtfile%.evt}_p${pixel_padded}_imposi.evt"
     cluster_outfile_im1="addcluster_${evtfile%.evt}_p${pixel_padded}_im1.evt"
 
-    echo "Processing pixel $pixel for evtfile: $evtfile (outfile: $outfile)"
+    echo "Processing pixel $pixel for evtfile: $evtfile (outfile: $pixelcut_outfile)"
     ftselect infile="$evtfile" outfile="$pixelcut_outfile" expr="PIXEL==$pixel" chatter=5 clobber=yes
 
     resolve_ana_pixel_Ls_define_cluster.py "$pixelcut_outfile"
 fi
 
-# 共通処理
+# Common post-processing: apply selection based on IMEMBER column
 ftselect infile="$cluster_outfile" \
          outfile="$cluster_outfile_imposi" \
          expr="IMEMBER>0" chatter=5 clobber=yes
@@ -81,6 +81,7 @@ ftselect infile="$cluster_outfile" \
          outfile="$cluster_outfile_im1" \
          expr="IMEMBER==1" chatter=5 clobber=yes
 
+# Display output file summary
 echo "Processing completed. Output files:"
 echo "  $cluster_outfile"
 echo "  $cluster_outfile_imposi"
