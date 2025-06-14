@@ -1,5 +1,7 @@
 # Event File Processing Script for XRISM/Resolve
 
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/resolve_ftools_add_prevnext.sh
+
 This Bash script automates a series of preprocessing steps on XRISM/Resolve event files, including event filtering, column augmentation, GTI generation, and final GTI filtering. 
 It is designed to ensure reproducibility and robustness in an international collaborative data analysis environment.
 
@@ -18,7 +20,7 @@ The script performs the following operations:
 The following command-line tools must be available in your `$PATH`:
 
 - `resolve_util_ftselect.sh`
-- `resolve_tool_addcol_prev_next_interval.py`
+- [`resolve_tool_addcol_prev_next_interval.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py)
 - `resolve_util_ftmgtime.sh`
 
 Ensure these tools are installed or callable from the shell.
