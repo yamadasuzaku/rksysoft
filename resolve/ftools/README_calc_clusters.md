@@ -79,11 +79,3 @@ For all-pixel mode (`-a`):
 * Pixel numbers must be integers between 0 and 35.
 * The script exits with an error if the input file does not exist.
 * Output filenames are automatically generated using zero-padded pixel indices.
-
-## License
-
-This script is distributed under the MIT License. See `LICENSE` for details.
-
-## Acknowledgments
-
-This tool was developed to support data processing tasks for pixel-based detectors, such as the XRISM/Resolve instrument. It facilitates consistent preprocessing and clustering analysis across research teams.
