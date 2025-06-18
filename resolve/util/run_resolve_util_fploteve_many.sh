@@ -40,7 +40,7 @@ for pixel in {0..35}; do
 for itype in 4; do
     pixel_str=__epiwide_pixel$(printf "%02d" $pixel)_itype$(printf "%01d" $itype)__  # 2桁ゼロパディング
     echo "Processing Pixel $pixel..."
-./resolve_util_fploteve.py $EVENT_FILE DERIV_MAX 1,1,1,1,1,1,1 LO_RES_PH,PHA,EPI,RISE_TIME,,PREV_INTERVAL,ITYPE,PIXEL 1,1,1,1,1,1,1 --filters "PIXEL==${pixel},ITYPE==${itype}" -o ${pixel_str} -c --y_ranges '{"PHA": (0, 65535),"EPI":(0,50000)}'
+./resolve_util_fploteve.py $EVENT_FILE DERIV_MAX 1,1,1,1,1,1,1 LO_RES_PH,PHA,EPI,RISE_TIME,PREV_INTERVAL,ITYPE,PIXEL 1,1,1,1,1,1,1 --filters "PIXEL==${pixel},ITYPE==${itype}" -o ${pixel_str} -c --y_ranges '{"PHA": (0, 65535),"EPI":(0,50000)}'
     echo "Completed Pixel $pixel."
 done
 done 

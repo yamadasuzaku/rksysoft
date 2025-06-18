@@ -115,7 +115,9 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
                 ax2.xaxis.set_ticks_position('top')
 
             plt.suptitle(f"{title}")
-    plt.figtext(0.05,0.02,f"OBSID={obsid} {target} {dateobs}", fontsize=8,color="gray")
+
+    print(f"OBSID={obsid} {target} {dateobs} #={len(data)}")
+    plt.figtext(0.05,0.02,f"OBSID={obsid} {target} {dateobs} #={len(data)}", fontsize=8,color="gray")
     plt.tight_layout()
     plt.subplots_adjust(hspace=0, top=0.9)  # Adjust space between plots and top margin
 #    fig.autofmt_xdate()  # does not work for tile plots

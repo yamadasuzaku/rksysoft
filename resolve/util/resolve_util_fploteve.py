@@ -152,7 +152,7 @@ def plot_fits_data_eachevent(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales
             # Print data lengths for debugging
             print("len(data) = ", len(data))
             print("len(x_data) = ", len(x_data[ycol]))
-            print("y_data = ", y_data)
+#            print("y_data = ", y_data)
 
             # Get the number of events (rows in the data)
             event_number = len(x_data[y_cols[0]])
@@ -176,7 +176,7 @@ def plot_fits_data_eachevent(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales
                     min_val, max_val = default_y_ranges[ycol]
                     scaled_val = manual_scale(y_data[ycol][i], min_val, max_val)
                     one_set.append(scaled_val)
-                print("one_set = ", one_set)
+#                print("one_set = ", one_set)
                 # Get color for the current event from the "cool" colormap
                 color = cmap(color_norm(i)) if use_colorsort else None
                 ax.plot(range(len(one_set)), one_set, 'o-', label=f"Event {i}", alpha=0.4, color=color, linewidth=0.4)

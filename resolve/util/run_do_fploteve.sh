@@ -1,0 +1,8 @@
+#!/bin/bash
+
+./run_resolve_util_fploteve_many.sh xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti_status_Bit34_01.evt
+./run_resolve_util_fploteve_many.sh xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti_status_Bit34_11.evt
+./run_resolve_util_fploteve_many.sh xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti_status_Bit34_00.evt
+./run_resolve_util_fploteve_many.sh xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti_status_Bit34_10.evt
+
+
