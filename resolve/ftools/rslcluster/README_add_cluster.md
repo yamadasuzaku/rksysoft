@@ -1,8 +1,6 @@
-# resolve\_ftools\_add\_cluster.py: XRISM Resolve Pseudo-Event Clustering Tool
+# RISM Resolve Pseudo-Event Clustering Tool
 
-* Name 
-
-- [resolve_ftools_add_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py
+* [resolve_ftools_add_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py
 )
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py
