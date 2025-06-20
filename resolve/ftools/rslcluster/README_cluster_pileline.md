@@ -58,9 +58,9 @@ The script generates intermediate and final files by appending prefixes and suff
 
 The script depends on the following tools being available in the system `PATH`:
 
-* `[resolve_ftools_add_prevnext.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh)`
-* `[resolve_ftools_add_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py)`
-* `[resolve_ftools_qlcheck_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_qlcheck_cluster.py)`
+* [`resolve_ftools_add_prevnext.sh`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh)
+* [`resolve_ftools_add_cluster.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py)
+* [`resolve_ftools_qlcheck_cluster.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_qlcheck_cluster.py)
 
 These tools are assumed to be part of the `rslcluster` or similar analysis package.
 
