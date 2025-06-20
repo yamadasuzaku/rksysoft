@@ -1,0 +1,44 @@
+@startuml
+title identify_clusters_large
+
+start
+
+:Initialize cluster_indices[];
+:Set i = 0;
+:Set n_events = len(events[]);
+
+while (i < n_events?)
+  :Check if ITYPE == 3 and LO_RES_PH > threshold;
+
+  note right
+  Cluster start condition:
+  - ITYPE[i] == 3
+  - LO_RES_PH[i] > threshold_large
+  end note
+
+  if (is cluster start?) then (yes)
+    :cluster_indices.append(i);
+    :i += 1;
+
+    while (is cluster continuation?)
+
+      note right
+      Cluster continuation condition:
+      - ITYPE[i] is 3 or 4
+      - PREV_INTERVAL[i] < interval_limit
+        or == SECOND_THRES_USE_LEN
+      end note
+
+      :cluster_indices.append(i);
+      :i += 1;
+    endwhile
+
+  else (no)
+    :cluster_indices.append(i);
+    :i += 1;
+  endif
+endwhile
+
+:return cluster_indices[];
+stop
+@enduml

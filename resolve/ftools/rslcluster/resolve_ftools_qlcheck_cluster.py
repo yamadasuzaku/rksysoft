@@ -19,12 +19,12 @@ npix = 36
 LO_RES_PH_RANGE = (-1000 + 0, 16383 + 1000)
 NEXT_INTERVAL_RANGE = (0, 255)
 
-def add_bar_labels(ax, bars):
+def add_bar_labels(ax, bars, color="black", fontsize=8):
     for bar in bars:
         height = bar.get_height()
         if height > 0:
             ax.text(bar.get_x() + bar.get_width()/2, height, f"{int(height)}",
-                    ha='center', va='bottom', fontsize=8)
+                    ha='center', va='bottom', fontsize=8, color = color)
 
 def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
     os.makedirs(output_dir, exist_ok=True)
@@ -51,14 +51,14 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
             print(f"  Events with both > 0      : {n_both}")
             print(f"  Events with both == 0     : {n_both_zero}")
 
-            fig, axes = plt.subplots(2, 2, figsize=(10, 7))
+            fig, axes = plt.subplots(2, 2, figsize=(12, 7))
             fig.suptitle(f"Pixel {pixel} - Diagnostic Summary")
 
             # 1. ITYPE distribution
 
             counts = [np.sum(itype_vals == t) for t in itype_interest]
             bars = axes[0, 0].bar(g_typename[:5], counts, color='skyblue')
-            add_bar_labels(axes[0, 0], bars)
+            add_bar_labels(axes[0, 0], bars, "black")
             axes[0, 0].set_title("ITYPE Distribution")
             axes[0, 0].set_ylabel("Counts")
 
@@ -69,10 +69,10 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
 
             # クラスタタイプに応じたマーカー形式
             cluster_types = {
-                'ICLUSTERL>0': ((icl_l > 0) & (icl_s == 0), 'o'),
-                'ICLUSTERS>0': ((icl_s > 0) & (icl_l == 0), '^'),
-                'Both>0':      ((icl_l > 0) & (icl_s > 0),   's'),
-                'ICLUSTERL/S==0': ((icl_l == 0) & (icl_s == 0), 'x'),
+                'ICLUSTERL>0': ((icl_l > 0), 'o'),
+                'ICLUSTERS>0': ((icl_s > 0), '^'),
+                'Either>0':      ((icl_l > 0) | (icl_s > 0),   's'),
+                'Both==0': ((icl_l == 0) & (icl_s == 0), 'x'),
             }
 
             # 描画データ抽出
@@ -85,6 +85,7 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
                 for i, itype_val in enumerate([3,4]): # Lp, Ls
                     mask = (itype_all == itype_val) & cluster_mask
                     count = np.sum(mask)                    
+                    print(cluster_label, itype_labels[itype_val], count)
                     if count > 0:
                         axes[0, 1].scatter(
                             x_all[mask],
@@ -108,18 +109,18 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
             only_s = np.sum((icl_s > 0) & (icl_l == 0))
             both = np.sum((icl_l > 0) | (icl_s > 0))
 
-            bar_labels = ['ICLUSTERL>0', 'ICLUSTERS>0', 'Both>0']
+            bar_labels = ['ICLUSTERL>0', 'ICLUSTERS>0', 'Either>0']
             bar_values = [only_l, only_s, both]
             bar_colors = ['red', 'orange', 'green']
 
             bars = axes[1, 0].bar(bar_labels, bar_values, color=bar_colors)
             axes[1, 0].set_title("Pseudo Events by Type (Independent)")
             axes[1, 0].set_ylabel("Counts")
-            add_bar_labels(axes[1, 0], bars)
+            add_bar_labels(axes[1, 0], bars, "black")
 
             # 4. ITYPEs of Clustered Events (separate by cluster type)
-            itypes_only_l = itype_vals[(icl_l > 0) & (icl_s == 0)]
-            itypes_only_s = itype_vals[(icl_s > 0) & (icl_l == 0)]
+            itypes_only_l = itype_vals[(icl_l > 0)]
+            itypes_only_s = itype_vals[(icl_s > 0)]
             itypes_both = itype_vals[(icl_l > 0) | (icl_s > 0)]
 
             counts_only_l = [np.sum(itypes_only_l == t) for t in itype_interest]
@@ -131,7 +132,7 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
 
             bars1 = axes[1, 1].bar(x - bar_width, counts_only_l, width=bar_width, color='red', label='ICLUSTERL>0')
             bars2 = axes[1, 1].bar(x,             counts_only_s, width=bar_width, color='orange', label='ICLUSTERS>0')
-            bars3 = axes[1, 1].bar(x + bar_width, counts_both,   width=bar_width, color='green', label='Both>0')
+            bars3 = axes[1, 1].bar(x + bar_width, counts_both,   width=bar_width, color='green', label='Either>0')
 
             axes[1, 1].set_xticks(x)
             axes[1, 1].set_xticklabels(g_typename[:5])
@@ -139,7 +140,7 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
             axes[1, 1].set_ylabel("Counts")
             axes[1, 1].legend()
 
-            add_bar_labels(axes[1, 1], bars1 + bars2 + bars3)
+            add_bar_labels(axes[1, 1], bars1 + bars2 + bars3, "black")
 
             plt.tight_layout(rect=[0, 0, 1, 0.95])
             outpath = os.path.join(output_dir, f"pixel_{pixel:02d}_diagnostic.png")
@@ -149,21 +150,21 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
             plt.close(fig)
 
         # Summary view: Discarded Events per Pixel by Cluster Type
-        fig, axes = plt.subplots(4, 1, figsize=(12, 8), sharey=True)
+        fig, axes = plt.subplots(4, 1, figsize=(13, 8), sharey=True)
         all_pixels = data['PIXEL']
         all_itype = data['ITYPE']
         all_icl_l = data['ICLUSTERL']
         all_icl_s = data['ICLUSTERS']
 
-        # 1. ICLUSTERL > 0 & ICLUSTERS == 0 (Only L)
-        only_l_counts_lp = [np.sum((all_pixels == pix) & (all_icl_l > 0) & (all_icl_s == 0) & (all_itype == 3)) for pix in range(npix)]
-        only_l_counts_ls = [np.sum((all_pixels == pix) & (all_icl_l > 0) & (all_icl_s == 0) & (all_itype == 4)) for pix in range(npix)]
+        # 1. ICLUSTERL > 0
+        only_l_counts_lp = [np.sum((all_pixels == pix) & (all_icl_l > 0)  & (all_itype == 3)) for pix in range(npix)]
+        only_l_counts_ls = [np.sum((all_pixels == pix) & (all_icl_l > 0)  & (all_itype == 4)) for pix in range(npix)]
 
-        # 2. ICLUSTERS > 0 & ICLUSTERL == 0 (Only S)
-        only_s_counts_lp = [np.sum((all_pixels == pix) & (all_icl_s > 0) & (all_icl_l == 0) & (all_itype == 3)) for pix in range(npix)]
-        only_s_counts_ls = [np.sum((all_pixels == pix) & (all_icl_s > 0) & (all_icl_l == 0) & (all_itype == 4)) for pix in range(npix)]
+        # 2. ICLUSTERS > 0
+        only_s_counts_lp = [np.sum((all_pixels == pix) & (all_icl_s > 0) & (all_itype == 3)) for pix in range(npix)]
+        only_s_counts_ls = [np.sum((all_pixels == pix) & (all_icl_s > 0) & (all_itype == 4)) for pix in range(npix)]
 
-        # 3. Both > 0
+        # 3. Either > 0
         both_counts_lp = [np.sum((all_pixels == pix) & ((all_icl_l > 0) | (all_icl_s > 0)) & (all_itype == 3)) for pix in range(npix)]
         both_counts_ls = [np.sum((all_pixels == pix) & ((all_icl_l > 0) | (all_icl_s > 0)) & (all_itype == 4)) for pix in range(npix)]
 
@@ -174,7 +175,7 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
         all_lpls_except_for_pixel12 = [np.sum((all_pixels == pix) & ((all_itype == 3) | (all_itype == 4))) for pix in range(npix) if pix != 12]
         ymax = np.amax(all_lpls_except_for_pixel12)
 
-        def plot_cluster_summary(ax, lp_counts, ls_counts, title):
+        def plot_cluster_summary(ax, lp_counts, ls_counts, title, color, fontsize = 8):
             x = np.arange(npix)
             width = 0.4
             bars1 = ax.bar(x - width/2, lp_counts, width=width, color="cyan", label="Lp")
@@ -183,21 +184,22 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
 #            ax.set_xlabel("Pixel")
             ax.set_ylabel(f"Event Count \n {title}")
             ax.set_xticks(x)
-            ax.set_xlim(-1,37)            
+            ax.set_xlim(-0.6,35.7)            
             ax.set_ylim(0,ymax)            
             ax.set_xticklabels(x)
-            add_bar_labels(ax, bars1 + bars2)
+            add_bar_labels(ax, bars1 + bars2, color, fontsize = fontsize)
             ax.legend()
 
-        plot_cluster_summary(axes[0], all_lp, all_ls, "All Lp Ls")
-        plot_cluster_summary(axes[1], only_l_counts_lp, only_l_counts_ls, "ICLUSTERL > 0")
-        plot_cluster_summary(axes[2], only_s_counts_lp, only_s_counts_ls, "ICLUSTERS > 0")
-        plot_cluster_summary(axes[3], np.array(all_lp) - np.array(both_counts_lp), np.array(all_ls) - np.array(both_counts_ls), "ALL - (L+S)")
+        plot_cluster_summary(axes[0], all_lp, all_ls, "All Lp Ls", "black", fontsize=6)
+        plot_cluster_summary(axes[1], only_l_counts_lp, only_l_counts_ls, "ICLUSTERL > 0", "red", fontsize=6)
+        plot_cluster_summary(axes[2], only_s_counts_lp, only_s_counts_ls, "ICLUSTERS > 0", "green", fontsize=6)
+        plot_cluster_summary(axes[3], np.array(all_lp) - np.array(both_counts_lp), np.array(all_ls) - np.array(both_counts_ls), "ALL - (L+S)", "blue", fontsize=6)
 
         plt.figtext(0.05,0.02,f"{fits_file}", fontsize=8,color="gray")
   
         axes[-1].set_xlabel("Pixel")
-        plt.tight_layout()
+#        plt.tight_layout()
+        plt.subplots_adjust(top=0.98, bottom=0.07, left=0.08, right=0.98)        
         summary_path = os.path.join(output_dir, "summary_discarded_per_pixel_by_type.png")
         fig.savefig(summary_path)
         print(f"\nSaved cluster-type-separated summary plot to: {summary_path}")
