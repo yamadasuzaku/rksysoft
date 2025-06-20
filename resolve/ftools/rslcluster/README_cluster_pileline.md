@@ -5,10 +5,10 @@ This script automates a three-step process to identify and analyze pseudo event 
 ## Script Name
 
 ```bash
-[resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh)
+resolve_ftools_cluster_pileline.sh
 ```
 
-
+- [resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh)
 
 
 ---
