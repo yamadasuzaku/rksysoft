@@ -585,7 +585,7 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
 
         for j, pix in enumerate(plotpixels):
 
-            fig, ax = plt.subplots(figsize=(10, 6))
+            fig, ax = plt.subplots(figsize=(10, 7))
             ax.set_xscale(yscale_ingratio)
             ax.set_yscale(yscale_ingratio)
             ax.set_xlabel("all grade rate (c/s/pixel)")
@@ -596,6 +596,7 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
                 ax.set_ylim(1e-5,rate_max_ingratio)
                 ax.set_xlim(1e-2,rate_max_ingratio)
 
+            itype_counts = []
             for k, itype_ in enumerate(itypenames):
                 print(f"ピクセル{pix}とタイプ{itype_}のデータを処理中 (obsid {obsid})")
                 type_color = type_colors[k % len(type_colors)]
@@ -612,6 +613,9 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
                 if len(time_) == 0:
                     print(f"エラー: ピクセル{pix}とタイプ{itype_}のデータが空です。")
                     continue
+
+                # save count
+                itype_counts.append(f"{itype_}: {len(time_)}")
 
                 if gtiuse:
                     pixel_x_lc, pixel_x_err, pixel_y_lc, pixel_y_err = fast_lc(time[0], time[-1], timebinsize, pixel_time_, \
@@ -638,6 +642,9 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
                 ax.errorbar(pixel_y_lc, y_lc, fmt=ms_gratio, label=f"pix={pix}, itype={itype_}", color=type_color)
 
             ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+            # make text showing all counts
+            count_text = f"{fname}" + "# are " + " ".join(itype_counts)
+            fig.text(0.03, 0.02, count_text, va='top', fontsize=6, color="gray", alpha=0.7)
             plt.tight_layout()
             outpng = f"{output}_rate_vs_grade_pixel{pix:02d}.png"
             plt.savefig(outpng)

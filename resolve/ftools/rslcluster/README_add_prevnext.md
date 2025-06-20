@@ -1,6 +1,6 @@
 # Script for XRISM/Resolve: Add PREV/NEXT interval columns to Event File Processing 
 
-https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/resolve_ftools_add_prevnext.sh
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh
 
 This Bash script automates a series of preprocessing steps on XRISM/Resolve event files, including event filtering, column augmentation, GTI generation, and final GTI filtering. 
 It is designed to ensure reproducibility and robustness in an international collaborative data analysis environment.
