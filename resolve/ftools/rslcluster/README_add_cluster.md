@@ -93,9 +93,8 @@ The tool operates in two clustering modes, **small** and **large**, which differ
 
 * **Large Cluster Mode:** In large mode, the algorithm can group any events that occur within a short interval, much shorter than typical astrophysical event coincidence probability. If two or more events are found nearly simultaneous, they are clustered as one “large” event group. The output will flag **all** events in such a cluster as potential pseudo events (since they presumably originate from a single particle/cosmic event rather than separate X-rays). 
 
-* For normal or moderately bright X-ray sources, use both **small** and **large** mode.
-
-* For very high background conditions or calibration data, or if you want to be very strict, use **large** to catch everything coincident
+For normal or moderately bright X-ray sources, use both **small** and **large** mode.
+For very high background conditions or calibration data, or if you want to be very strict, use **large** to catch everything coincident
 
 ## Output
 
