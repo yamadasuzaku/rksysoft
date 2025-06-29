@@ -13,7 +13,7 @@ while (i < n_events?)
   note right
   Cluster start condition:
   - ITYPE[i] == 3
-  - LO_RES_PH[i] > threshold_large
+  - LO_RES_PH[i] <= threshold_large
   - NEXT_INTERVAL < interval_limit | NEXT_INTERVAL==SECOND_THRES_USE_LEN
   - rt_min < RISE_TIME < rt_max
   end note

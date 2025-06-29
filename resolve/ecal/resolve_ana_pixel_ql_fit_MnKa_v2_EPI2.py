@@ -110,7 +110,7 @@ def solve_least_squares(xvalues,yvalues,yerrors,param_init,consts,model_func):
     residuals = result.fun
     sigma2 = np.sum(residuals**2) / (n - p) 
     # 共分散行列を計算
-    covariance_matrix = np.linalg.inv(J.T.dot(J)) * sigma2    
+    covariance_matrix = np.linalg.pinv(J.T.dot(J)) * sigma2    
     # パラメータの標準誤差を抽出
     error_result = np.sqrt(np.diag(covariance_matrix))    
     # 結果表示

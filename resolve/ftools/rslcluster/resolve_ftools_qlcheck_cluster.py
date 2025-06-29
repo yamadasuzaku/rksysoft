@@ -150,7 +150,7 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
             plt.close(fig)
 
         # Summary view: Discarded Events per Pixel by Cluster Type
-        fig, axes = plt.subplots(4, 1, figsize=(13, 8), sharey=True)
+        fig, axes = plt.subplots(4, 1, figsize=(13, 8), sharey=False)
         all_pixels = data['PIXEL']
         all_itype = data['ITYPE']
         all_icl_l = data['ICLUSTERL']
@@ -175,7 +175,7 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
         all_lpls_except_for_pixel12 = [np.sum((all_pixels == pix) & ((all_itype == 3) | (all_itype == 4))) for pix in range(npix) if pix != 12]
         ymax = np.amax(all_lpls_except_for_pixel12)
 
-        def plot_cluster_summary(ax, lp_counts, ls_counts, title, color, fontsize = 8):
+        def plot_cluster_summary(ax, lp_counts, ls_counts, title, color, fontsize = 8, fixy=True):
             x = np.arange(npix)
             width = 0.4
             bars1 = ax.bar(x - width/2, lp_counts, width=width, color="cyan", label="Lp")
@@ -185,15 +185,17 @@ def analyze_and_plot(fits_file, output_dir="diagnostic_plots"):
             ax.set_ylabel(f"Event Count \n {title}")
             ax.set_xticks(x)
             ax.set_xlim(-0.6,35.7)            
-            ax.set_ylim(0,ymax)            
+            if fixy:
+                print("fix scale to ", ymax)
+                ax.set_ylim(0,ymax)            
             ax.set_xticklabels(x)
             add_bar_labels(ax, bars1 + bars2, color, fontsize = fontsize)
             ax.legend()
 
-        plot_cluster_summary(axes[0], all_lp, all_ls, "All Lp Ls", "black", fontsize=6)
-        plot_cluster_summary(axes[1], only_l_counts_lp, only_l_counts_ls, "ICLUSTERL > 0", "red", fontsize=6)
-        plot_cluster_summary(axes[2], only_s_counts_lp, only_s_counts_ls, "ICLUSTERS > 0", "green", fontsize=6)
-        plot_cluster_summary(axes[3], np.array(all_lp) - np.array(both_counts_lp), np.array(all_ls) - np.array(both_counts_ls), "ALL - (L+S)", "blue", fontsize=6)
+        plot_cluster_summary(axes[0], all_lp, all_ls, "All Lp Ls", "black", fontsize=6, fixy=True)
+        plot_cluster_summary(axes[1], only_l_counts_lp, only_l_counts_ls, "ICLUSTERL > 0", "red", fontsize=6, fixy=False)
+        plot_cluster_summary(axes[2], only_s_counts_lp, only_s_counts_ls, "ICLUSTERS > 0", "green", fontsize=6, fixy=False)
+        plot_cluster_summary(axes[3], np.array(all_lp) - np.array(both_counts_lp), np.array(all_ls) - np.array(both_counts_ls), "ALL - (L+S)", "blue", fontsize=6, fixy=True)
 
         plt.figtext(0.05,0.02,f"{fits_file}", fontsize=8,color="gray")
   

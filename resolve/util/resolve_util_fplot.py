@@ -6,7 +6,7 @@ import sys
 from astropy.time import Time
 import datetime
 
-params = {'xtick.labelsize': 11, 'ytick.labelsize': 11, 'legend.fontsize': 8}
+params = {'xtick.labelsize': 10, 'ytick.labelsize': 10, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams.update(params)
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     filter_conditions = parse_filter_conditions(args.filters) if args.filters else None    
 
-    title = f"{args.file_names} : filtered with {args.filters}"
+    title = f"{args.file_names} : \nfiltered {args.filters}"
     outfname = "fplot_" + args.file_names.replace(",", "_").replace(".", outname) + ".png"
     plot_fits_data(file_names, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname,
                    filters=filter_conditions, plotflag=args.plot, markers=args.markers, markersize=args.markersize, gtifiles=args.gtifiles)
