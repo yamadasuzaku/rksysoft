@@ -27,7 +27,7 @@ def parse_filter_conditions(conditions):
         match = condition_pattern.match(condition.strip())
         if match:
             col, op, value = match.groups()
-            filters.append((col.strip(), op, float(value.strip())))
+            filters.append((col.strip(), op, value.strip()))
         else:
             raise ValueError(f"Invalid filter condition: {condition}")
     return filters
@@ -35,18 +35,42 @@ def parse_filter_conditions(conditions):
 def apply_filters(data, filters):
     mask = np.ones(len(data), dtype=bool)
     for col, op, value in filters:
-        if op == "==":
-            mask &= (data[col] == value)
-        elif op == "!=":
-            mask &= (data[col] != value)
-        elif op == "<":
-            mask &= (data[col] < value)
-        elif op == "<=":
-            mask &= (data[col] <= value)
-        elif op == ">":
-            mask &= (data[col] > value)
-        elif op == ">=":
-            mask &= (data[col] >= value)
+
+        # STATUSビット指定かどうか判定
+        m = re.match(r"STATUS(\d\d)", col)
+        if m:
+            bit_index = int(m.group(1))
+            status_bits = data["STATUS"]  # shape: (N, 16)
+            if not (0 <= bit_index < 16):
+                raise ValueError(f"Bit index {bit_index} out of range for STATUS (0–15)")
+            # b00, b01などを整数に変換
+            if value.startswith("b"):
+                val_int = int(value[1:], 2)
+            else:
+                val_int = int(value)
+            target_bit = status_bits[:, bit_index]
+
+            if op == "==":
+                mask &= (target_bit == val_int)
+            elif op == "!=":
+                mask &= (target_bit != val_int)
+            else:
+                raise ValueError(f"Unsupported operator for STATUS filtering: {op}")
+
+        else:
+            value=float(value)
+            if op == "==":
+                mask &= (data[col] == value)
+            elif op == "!=":
+                mask &= (data[col] != value)
+            elif op == "<":
+                mask &= (data[col] < value)
+            elif op == "<=":
+                mask &= (data[col] <= value)
+            elif op == ">":
+                mask &= (data[col] > value)
+            elif op == ">=":
+                mask &= (data[col] >= value)
     return data[mask]
 
 def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, filters=None,\
@@ -94,7 +118,15 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
                 if filters:
                     print("..... filters applied")
                     data = apply_filters(data, filters)
-                y_data[ycol] = data[ycol]
+
+                if ycol == "STATUS":
+                    # 各ビットの重み (MSBが左側: bit 15, ..., bit 0)
+                    weights = 2**np.arange(15, -1, -1)  # array([32768, 16384, ..., 1])
+                    # 各行を1つの整数に変換
+                    status_int = np.sum(data["STATUS"] * weights, axis=1).astype(np.uint16)  # shape (N,)
+                    y_data[ycol] = status_int
+                else:
+                    y_data[ycol] = data[ycol]
 
             if num_plots == 1:
                 axs = [axs]  # Ensure axs is always a list for consistency
