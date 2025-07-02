@@ -12,13 +12,21 @@ import astropy.io.fits as fits
 import os
 import numpy as np
 
-def ev_to_pi(ev):
-    # PI = (E [eV] -0.5)*2
-    return (ev - 0.5) * 2
-
 def pi_to_ev(pi):
-    # E [eV] = PI*0.5+0.5
-    return pi * 0.5 + 0.5
+    """Convert PI units to energy in eV."""
+    return pi * 0.5 + 0.25
+
+def ev_to_pi(ev):
+    """Convert energy in eV to PI units."""
+    return 2 * ev - 0.5
+
+# def ev_to_pi(ev):
+#     # PI = (E [eV] -0.5)*2
+#     return (ev - 0.5) * 2
+
+# def pi_to_ev(pi):
+#     # E [eV] = PI*0.5+0.5
+#     return pi * 0.5 + 0.5
 
 def pha_to_csv(input_pha):
     data = fits.open(input_pha)[1].data
