@@ -73,8 +73,9 @@ def apply_filters(data, filters):
                 mask &= (data[col] >= value)
     return data[mask]
 
-def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname, filters=None,\
-                      plotflag = False, markers = "o", debug=True, markersize = 1, gtifiles = None):
+def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname,
+                   filters=None, plotflag=False, markers="o", debug=True, markersize=1,
+                   gtifiles=None, yranges=None, xlim=None):
     # Open the FITS file
 
     num_plots = len(y_cols)
@@ -131,11 +132,31 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
             if num_plots == 1:
                 axs = [axs]  # Ensure axs is always a list for consistency
 
-            for ax, y_col, yscale in zip(axs, y_cols, y_scales):
+            for i, (ax, y_col, yscale) in enumerate(zip(axs, y_cols, y_scales)):
                 ax.plot(x_data[y_col], y_data[y_col], markers, label=y_col, markersize=markersize)
                 ax.set_ylabel(y_col)
                 ax.set_yscale(yscale)
                 ax.legend()
+
+                # y軸の範囲を設定
+                if yranges and i * 2 + 1 < len(yranges):
+                    ymin = yranges[i * 2]
+                    ymax = yranges[i * 2 + 1]
+                    if ymin != 'auto' and ymax != 'auto':
+                        ax.set_ylim(float(ymin), float(ymax))
+                    elif ymin != 'auto':
+                        ax.set_ylim(bottom=float(ymin))
+                    elif ymax != 'auto':
+                        ax.set_ylim(top=float(ymax))
+
+                if xlim:
+                    if 'xmin' in xlim and 'xmax' in xlim:
+                        ax.set_xlim(xlim['xmin'], xlim['xmax'])
+                    elif 'xmin' in xlim:
+                        ax.set_xlim(left=xlim['xmin'])
+                    elif 'xmax' in xlim:
+                        ax.set_xlim(right=xlim['xmax'])
+
 
             axs[-1].set_xlabel(x_col)  # Set x-axis label only on the bottom plot
 
@@ -179,6 +200,8 @@ if __name__ == "__main__":
     parser.add_argument("--y_cols_scale", '-s', type=str, help="Comma-separated column names for the y-axis", default=None)
     parser.add_argument("--gtifiles", type=str, help="Comma-separated column names for gtifiles", default=None)
     parser.add_argument("--outname", "-o", type=str, help="outputfile name tag", default="_p_")
+    parser.add_argument("--yrange", "-yr", type=str, help="Comma-separated ymin,ymax values or 'auto' for each y axis", default=None)
+    parser.add_argument("--xrange", "-xr", type=str, help="x-axis range as 'min,max' or use 'auto' for autoscale", default=None)
 
     args = parser.parse_args()
     outname = args.outname
@@ -196,6 +219,28 @@ if __name__ == "__main__":
     else:
         y_scales = ["linear" for _ in range(len(y_cols))]
 
+    if args.yrange:
+        yranges = args.yrange.split(",")
+        # 長さが2*num_plotsになるよう調整する（autoを補う）
+        if len(yranges) % 2 != 0:
+            raise ValueError("Invalid --yrange format. Provide even number of entries (min,max per plot).")
+    else:
+        yranges = None
+
+    if args.xrange:
+        xrange_parts = args.xrange.split(",")
+        if len(xrange_parts) != 2:
+            raise ValueError("Invalid --xrange format. Use 'min,max' or 'auto,auto'")
+        xmin, xmax = xrange_parts
+        xlim = {}
+        if xmin != 'auto':
+            xlim['xmin'] = float(xmin)
+        if xmax != 'auto':
+            xlim['xmax'] = float(xmax)
+    else:
+        xlim = None
+
+
     print(f'x_col = {args.x_col}')
     print(f'y_cols = {y_cols}')
     print(f'y_scales = {y_scales}')
@@ -205,5 +250,7 @@ if __name__ == "__main__":
 
     title = f"{args.file_names} : \nfiltered {args.filters}"
     outfname = "fplot_" + args.file_names.replace(",", "_").replace(".", outname) + ".png"
+
     plot_fits_data(file_names, args.x_col, x_hdus, y_cols, y_hdus, y_scales, title, outfname,
-                   filters=filter_conditions, plotflag=args.plot, markers=args.markers, markersize=args.markersize, gtifiles=args.gtifiles)
+               filters=filter_conditions, plotflag=args.plot, markers=args.markers,
+               markersize=args.markersize, gtifiles=args.gtifiles, yranges=yranges, xlim=xlim)

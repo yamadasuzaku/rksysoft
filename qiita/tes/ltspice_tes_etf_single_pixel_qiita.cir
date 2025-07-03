@@ -1,0 +1,38 @@
+* /Users/syamada/Dropbox/ltspice/tes/tes_ETF_sim/ltspice_tes_etf_single_pixel.asc
+Ibias 0 1 200µ
+Rs 1 0 5m
+Rp 1 TES+ 1m
+Lin TES- 4 0.2µ
+Vsquid 4 0 0
+C1 Pout 0 1.0p
+Iphoton 0 Pout PULSE(0 960p 1m 0 0 1u)
+R_in 0 Pout 0.1G
+R_in2 Pout 0 10000g
+V_0 TES+ COM 0
+B_tes COM TES- I = V(TES+,TES-) / (R0 + A * R0/T * V(Pout))
+B_power 11 0 V = I(V_0) * v(COM,TES-)
+Ccut 11 12 10
+Rcut 12 0 10
+Geft Pout 0 0 12 1.0
+C1_noETF noETF 0 1.0p
+Iphoton_noETF 0 noETF PULSE(0 960p 1m 0 0 1u)
+R_in_noETF 0 noETF 0.1G
+.tran 5m
+.option temp=-273.07 tnom=-273.07
+.params R0=50m A=150 T=0.10
+* TES_linear
+* thermal circuit\n(ETF)
+* thermal circuit\n(no ETF)
+* X-ray heat
+* X-ray heat
+* CR high-pass filter
+* TES Joule power feedback to thermal circ.
+* temperature increase = Vin
+* heat capacity
+* thermal conductance
+* thermal conductance
+* heat capacity
+* parastic resistance of TES
+* shunt resistance
+.backanno
+.end
