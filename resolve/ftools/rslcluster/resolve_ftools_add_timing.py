@@ -186,7 +186,8 @@ def process_all_pixels(data, pixel_list, debug=False):
 
     for pixel in pixel_list:
         mask = data["PIXEL"] == pixel
-        mintime_sec, mintime_pixel, mintime_loresph = identify_timing_min(data[mask], data[~mask], debug=debug)
+        mask_notself_notcal = ~mask & (data["PIXEL"] != 12)
+        mintime_sec, mintime_pixel, mintime_loresph = identify_timing_min(data[mask], data[mask_notself_notcal], debug=debug)
         mintime_sec_total[mask] = mintime_sec
         mintime_pixel_total[mask] = mintime_pixel
         mintime_loresph_total[mask] = mintime_loresph
@@ -217,11 +218,51 @@ def process_all_pixels_withAC(data, pixel_list, acfile, debug=False):
         print(f"..... debug : len(ac_data_all)={len(ac_data_all)} to len(ac_data)={len(ac_data)} ")
 
         for pixel in pixel_list:
+
+            # Total number of events
+            total_events = len(data)
+
+            print(f"\n=== Checking pixel {pixel} ===")
+            
+            # a) Number of events where PIXEL == current pixel
             mask = data["PIXEL"] == pixel
+            count_a = np.sum(mask)
+            print(f"a) PIXEL == {pixel}: {count_a}")
+
+            # b) Number of events where PIXEL != current pixel
+            mask_notself = ~mask
+            count_b = np.sum(mask_notself)
+            print(f"b) PIXEL != {pixel}: {count_b}")
+
+            # c) Number of events where PIXEL != 12
+            mask_not12 = data["PIXEL"] != 12
+            count_c = np.sum(mask_not12)
+            print(f"c) PIXEL != 12: {count_c}")
+
+            # d) Number of events where PIXEL != current pixel and PIXEL != 12
+            mask_notself_notcal = mask_notself & mask_not12
+            count_d = np.sum(mask_notself_notcal)
+            print(f"d) PIXEL != {pixel} AND PIXEL != 12: {count_d}")
+
+            # Check 1: a + b should match the total number of events
+            if count_a + count_b == total_events:
+                print(f"Check 1 passed: a + b == total_events ({total_events})")
+            else:
+                print(f"Check 1 failed: a + b = {count_a + count_b}, expected {total_events}")
+
+            # Check 2: d should be less than or equal to b because PIXEL=12 is excluded
+            if count_d <= count_b:
+                print(f"Check 2 passed: d <= b ({count_d} <= {count_b})")
+                if count_d < count_b:
+                    print(f"  Reduced by excluding PIXEL=12 ({count_b - count_d} events removed)")
+                else:
+                    print("  No events removed; no PIXEL=12 found in ~mask")
+            else:
+                print(f"Check 2 failed: d > b ({count_d} > {count_b})")
 
             mintime_sec, mintime_pixel, mintime_loresph, mintime_ac_sec, \
                 mintime_ac_duration, mintime_ac_adc_sample_max, mintime_ac_pi, mintime_ac_pha \
-            = identify_timing_min_withAC(data[mask], data[~mask], ac_data, debug=debug)
+            = identify_timing_min_withAC(data[mask], data[mask_notself_notcal], ac_data, debug=debug)
 
             mintime_sec_total[mask] = mintime_sec
             mintime_pixel_total[mask] = mintime_pixel
