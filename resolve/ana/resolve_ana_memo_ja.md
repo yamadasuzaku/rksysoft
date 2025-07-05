@@ -826,3 +826,28 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_cut
 ```bash
 python resolve_util_cut_event_statusbit.py input.evt output.evt --status="X,X,T,F,X,X,X,X,X,X,X,X,X,X,X,X"
 ```
+
+
+##  timing analysis for STATUS[3] and [4]
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_timing.py
+
+```
+python resolve_ftools_add_timing.py xa000114000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt -a xa000114000rsl_a0ac_uf.evt -d
+[INFO] Filtered AC data: 5796580 → 2831717 rows
+
+=== Processing pixel 0 ===
+a) PIXEL == 0: 2697
+b) PIXEL != 0: 655130
+c) PIXEL != 12: 104247
+d) PIXEL != 0 AND PIXEL != 12: 101550
+Check 1 passed: a + b == total_events (657827)
+Check 2 passed: d <= b (101550 <= 655130)
+[DEBUG] t1=153571892.9914, t2A=153571892.9914, t2B=153571892.9914, mintime=-0.0000, pixel=17, loresph=12248, mintime_ac=-0.0004
+[DEBUG] t1=153571936.0061, t2A=153571936.0047, t2B=153571936.8472, mintime=0.0014, pixel=28, loresph=95, mintime_ac=1.6416
+[DEBUG] t1=153571948.8384, t2A=153571948.8378, t2B=153571948.8384, mintime=-0.0001, pixel=17, loresph=252, mintime_ac=-0.0005
+[DEBUG] t1=153571975.1835, t2A=153571974.9280, t2B=153571977.9799, mintime=0.2555, pixel=28, loresph=449, mintime_ac=-0.0001
+[DEBUG] t1=153572000.5558, t2A=153572000.5558, t2B=153572000.5559, mintime=0.0000, pixel=20, loresph=72, mintime_ac=0.0009
+[INFO] Finished pixel 0, 2697 events
+
+```
