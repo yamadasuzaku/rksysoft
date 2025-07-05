@@ -18,7 +18,7 @@ def identify_timing_min(events, events_not, debug=False):
 
     indices = np.searchsorted(time2_sorted, time1)
 
-    # 安全な t2A, t2B の生成
+    # generate safe t2A, t2B
     t2A = np.full_like(time1, np.nan, dtype=np.float64)
     t2B = np.full_like(time1, np.nan, dtype=np.float64)
 
@@ -302,11 +302,11 @@ def main():
 
             mintime_sec, mintime_pixel, mintime_loresph = process_all_pixels(data, pixel_list, debug=args.debug)
 
-            # 上書き防止
+            # avoid overwrite 
             col_names_to_remove = {"MINTIME_SEC", "MINTIME_PIXEL",  "MINTIME_LORESPH"}
             new_coldefs = fits.ColDefs([col for col in cols if col.name not in col_names_to_remove])
 
-            # 新しいカラムを追加
+            # add new columns
             new_coldefs += fits.ColDefs([
                 fits.Column(name="MINTIME_SEC", format="D", array=mintime_sec),
                 fits.Column(name="MINTIME_PIXEL", format="1I", array=mintime_pixel),
@@ -329,11 +329,11 @@ def main():
                             mintime_ac_duration, mintime_ac_adc_sample_max, mintime_ac_pi, mintime_ac_pha \
                      = process_all_pixels_withAC(data, pixel_list, args.acfile, debug=args.debug)
 
-            # 上書き防止
+            # to avoid overwrite
             col_names_to_remove = {"MINTIME_SEC", "MINTIME_PIXEL",  "MINTIME_LORESPH"}
             new_coldefs = fits.ColDefs([col for col in cols if col.name not in col_names_to_remove])
 
-            # 新しいカラムを追加
+            # add new columns
             new_coldefs += fits.ColDefs([
                 fits.Column(name="MINTIME_SEC", format="D", array=mintime_sec),
                 fits.Column(name="MINTIME_PIXEL", format="1I", array=mintime_pixel),
