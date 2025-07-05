@@ -89,7 +89,8 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
             # obtain header info 
             header = hdul[0].header
             obsid = header["OBS_ID"]
-            target = header["OBJECT"]
+            target = header.get("OBJECT", "NOT FILLED")            
+#            target = header["OBJECT"]
             dateobs = header["DATE-OBS"]
 
             # Apply filters if any
