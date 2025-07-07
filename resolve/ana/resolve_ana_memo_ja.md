@@ -851,3 +851,25 @@ Check 2 passed: d <= b (101550 <= 655130)
 [INFO] Finished pixel 0, 2697 events
 
 ```
+
+
+## 時間が合致するデータだけを切り出すスクリプト
+
+ユーザー入力:
+- pixel: 抽出対象のPIXEL番号
+- file1: 1つ目のFITSファイルのパス
+- file2: 2つ目のFITSファイルのパス
+- -o: 出力ファイル名（省略可、デフォルトは matched_output.fits）
+
+1つ目のFITSから指定PIXELの行を見つけ、その行の3列の値セットを保持。
+2つ目のFITSから PIXEL番号と3列の全てが一致する行 を抽出。
+新しいFITSファイルに一致行を保存。
+
+
+``` python:
+resolve_tool_extract_matching_rows.py 35 cluster00_abell_pixel35.evt xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.evt -d
+```
+
+で pixel35 で、時間が合致するデータを抽出する。
+
+```
