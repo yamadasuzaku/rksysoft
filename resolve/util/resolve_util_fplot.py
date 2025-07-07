@@ -183,12 +183,39 @@ def plot_fits_data(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales, title, o
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
       description='This program is used to check deltaT distribution for each pixel',
-      epilog='''
-        Example:
-        resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME TRIG_LP,WFRB_WRITE_LP,WFRB_SAMPLE_CNT -f "PIXEL==9" -p
-        resolve_util_fplot.py xa300049010rsl_p0px3000_uf_prevnext_cutclgti.fits PHA 1,1 PI,EPI 1,1 --plot --filters itype==0
-    ''',
-    formatter_class=argparse.RawDescriptionHelpFormatter)
+
+        epilog='''
+        Examples:
+
+        1. Simple plot:
+           resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME 1 PI 1 --plot
+
+           - Plot TIME (x-axis) vs PI (y-axis) from HDU=1.
+
+        2. Apply filter conditions:
+           resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME 1 PHA,EPI 1,1 -f "PIXEL==9,STATUS00==1" --plot
+
+           - Filter data where PIXEL equals 9 and STATUS bit 0 equals 1.
+           - Plot PHA and EPI vs TIME.
+
+        3. Log scale and custom output name:
+           resolve_util_fplot.py xa300049010rsl_p0px3000_uf_prevnext_cutclgti.fits TIME 1 RATE 1 -s log -o "_myplot_" --plot
+
+           - Use logarithmic scale for y-axis and save with custom tag "_myplot_".
+
+        4. Specify x-axis range:
+           resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME 1 PI 1 --xrange "1000,2000" --plot
+
+           - Limit x-axis range from 1000 to 2000.
+
+        5. Specify y-axis range:
+           resolve_util_fplot.py xa000114000rsl_p0px1000_cl.evt TIME 1 PI,STATUS 1,1 --yrange "0,100,auto,auto" --plot
+
+           - Set y-axis range for PI to 0–100 and let STATUS use autoscale.
+
+        ''',
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    
     parser.add_argument("file_names", type=str, help="List of Path to the FITS file")
     parser.add_argument("x_col", type=str, help="Column name for the x-axis")
     parser.add_argument('x_hdus', type=str, help='List of Number of FITS HDU for X')
