@@ -35,7 +35,8 @@ default_y_ranges = {
     "PIXEL": (0, 35),
     "TICK_SHIFT": (-8, 7),
     "NEXT_INTERVAL": (0, 300),
-    "PREV_INTERVAL": (0, 300)
+    "PREV_INTERVAL": (0, 300),
+    "MINTIME_SEC": (-0.1, 0.1),
 }
 
 # Custom tick positions for specific columns
@@ -205,7 +206,12 @@ def plot_fits_data_eachevent(file_names, x_col, x_hdus, y_cols, y_hdus, y_scales
                 ax_twin = ax.twinx()
                 ax_twin.set_frame_on(True)
                 ax_twin.set_yticks(ticks_scaled)
-                ax_twin.set_yticklabels([f"{int(t)}" for t in ticks_orig])  # Display ticks as integers
+                # 判定してフォーマットを切り替え
+                if all(isinstance(t, int) for t in ticks_orig):
+                    ax_twin.set_yticklabels([f"{t}" for t in ticks_orig])  # 整数表示
+                else:
+                    ax_twin.set_yticklabels([f"{t:.2f}" for t in ticks_orig])  # 小数点1桁表示
+#                ax_twin.set_yticklabels([f"{t}" for t in ticks_orig])  # Display ticks as integers
                 ax_twin.spines['right'].set_position(('axes', j / len(x_labels)))  # Position of twin axis
                 ax_twin.set_ylabel(ycol, rotation=270, labelpad=15, fontsize=9)
 
