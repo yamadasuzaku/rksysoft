@@ -5,7 +5,7 @@ software of yamadasuzaku since 20230519
 
 https://qiita.com/yamadasuzaku と一部連携しています。
 
---- 
+-------------------
 山田真也
 https://sites.google.com/rikkyo.ac.jp/syamada-lab/
 
