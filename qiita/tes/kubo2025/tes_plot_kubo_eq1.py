@@ -29,10 +29,14 @@ def u_exact(Tc, alpha, beta):
 
 def f_equation(Tc, alpha, beta):
     """
-    f(T) = ln(T/Tc1) - [ α/(1+α) * { ln( 1 + (1+α)/((Θ1/Tc1) α β) ) - u(T) } ]
+    f(T) = ln(T/Tc1) - { A(α,β) - [α/(1+α)] u(T) }
+         = ln(T/Tc1) - A + [α/(1+α)] u(T)
     これが 0 になる Tc を求める
     """
-    return np.log(Tc/Tc1) - (alpha/(1.0+alpha)) * ( np.log(1.0 + (1.0+alpha)/((Theta1/Tc1)*alpha*beta)) - u_exact(Tc, alpha, beta) )
+    r = alpha / (1.0 + alpha)           # α/(1+α)
+    A = rhs_log_term(alpha, beta)       # = r * ln(1 + (1+α)/((Θ1/Tc1) α β))
+    u = u_exact(Tc, alpha, beta)        # digamma 項
+    return np.log(Tc / Tc1) - (A - r * u)
 
 def _find_bracket(f, T_min, T_max, n_points=300, expand_iters=3,
                   expand_low=10.0, expand_high=10.0,
