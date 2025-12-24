@@ -533,7 +533,7 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ana/pixel/resolve_ana
 resolve_ana_pixel_mklc_branch.py f.list -l -u -y 0 -p 0,17,18,35 -t 256 -o p0_17_18_35 -s
 ```
 
-### Branching ratio を生成する方法
+### Grade Branching ratio を生成する方法
 
 `-g` オプションを使う。
 
