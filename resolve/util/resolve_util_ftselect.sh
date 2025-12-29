@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "$(dirname "$0")/resolve_env.sh"
+
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     echo "Error: Invalid number of arguments."
     cat << EOF
@@ -43,6 +45,13 @@ echo "Selected event file: $obs"
 echo "Selection expression: $expr"
 echo "Output file: $outfile"
 echo "Extension: $extention"
+
+
+echo "which ftselect: $(command -v ftselect)"
+echo "HEADAS=$HEADAS"
+echo "PATH=$PATH"
+echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
+echo "DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH"
 
 # ftselectコマンドの実行
 ftselect \
