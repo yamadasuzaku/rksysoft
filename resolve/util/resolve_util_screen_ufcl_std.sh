@@ -22,7 +22,7 @@ check_program_in_path() {
 }
 
 # Check for required programs
-check_program_in_path "resolve_util_ftmgtime.sh"
+check_program_in_path "resolve_util_ftmgtime.py"
 check_program_in_path "resolve_util_ftselect.sh"
 check_program_in_path "ftlist"
 check_program_in_path "ftcopy"
@@ -69,9 +69,9 @@ fi
 rm -f "$outgti"
 
 # Execute commands with status messages
-printf "${CYAN}Running resolve_util_ftmgtime.sh...${RESET}\n"
-resolve_util_ftmgtime.sh "$clevt"
-printf "${GREEN}Completed: resolve_util_ftmgtime.sh${RESET}\n"
+printf "${CYAN}Running resolve_util_ftmgtime.py...${RESET}\n"
+resolve_util_ftmgtime.py "$clevt"
+printf "${GREEN}Completed: resolve_util_ftmgtime.py${RESET}\n"
 
 
 printf "${CYAN}Running xselect with $outgti...${RESET}\n"

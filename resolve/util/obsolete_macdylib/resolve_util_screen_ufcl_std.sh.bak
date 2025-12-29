@@ -1,4 +1,5 @@
 #!/bin/bash
+. "$(dirname "$0")/heasoft_env.sh"
 
 # Define colors for output using printf-compatible ANSI codes
 GREEN=$(printf '\033[32m')

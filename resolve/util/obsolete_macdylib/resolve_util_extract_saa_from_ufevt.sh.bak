@@ -1,4 +1,5 @@
 #!/bin/bash
+. "$(dirname "$0")/heasoft_env.sh"
 
 echo "[INFO] Starting the script..."
 

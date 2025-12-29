@@ -15,7 +15,7 @@ ufevt=$2
 clgti="${clevt%.evt}.gti"
 ufcutevt="${ufevt%.evt}_clgti.evt"
 
-resolve_util_ftmgtime.sh $clevt
+resolve_util_ftmgtime.py $clevt
 resolve_util_ftselect.sh $ufevt "gtifilter(\"${clgti}\")" clgti
 
 resolve_util_fplot.py ${ufcutevt} TIME 1,1,1 DERIV_MAX,LO_RES_PH,RISE_TIME 1,1,1 --filters "ITYPE==4,PIXEL==0"

@@ -16,7 +16,7 @@ clgti="${clevt%.evt}.gti"
 clinvgti="${clevt%.evt}_clinvgti.gti"
 ufcutevt="${ufevt%.evt}_clinvgti.evt"
 
-resolve_util_ftmgtime.sh $clevt
+resolve_util_ftmgtime.py $clevt
 gtiinvert infile=${clgti}[STDGTI] outfile=${clinvgti}
 resolve_util_ftselect.sh $ufevt "gtifilter(\"${clinvgti}\")" clinvgti
 

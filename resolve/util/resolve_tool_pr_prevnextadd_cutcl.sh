@@ -67,9 +67,9 @@ fi
 
 # (2) cl.evt の GTI ファイルを生成する。
 echo -e "---------------------------------------"
-echo -e "${BLUE}[INFO]${NC} Running resolve_util_ftmgtime.sh..."
-resolve_util_ftmgtime.sh $infile3
-echo -e "${GREEN}[DONE]${NC} resolve_util_ftmgtime.sh\n"
+echo -e "${BLUE}[INFO]${NC} Running resolve_util_ftmgtime.py..."
+resolve_util_ftmgtime.py $infile3
+echo -e "${GREEN}[DONE]${NC} resolve_util_ftmgtime.py\n"
 
 # GTI ファイルの生成と確認
 outgti="${infile3%.evt}.gti"
