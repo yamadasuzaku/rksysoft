@@ -21,7 +21,7 @@ The following command-line tools must be available in your `$PATH`:
 
 - [`resolve_util_ftselect.sh`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_util_ftselect.sh)
 - [`resolve_tool_addcol_prev_next_interval.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/util/resolve_tool_addcol_prev_next_interval.py)
-- [`resolve_util_ftmgtime.sh`](resolve_util_ftmgtime.sh)
+- [`resolve_util_ftmgtime.py`](resolve_util_ftmgtime.py)
 
 Ensure these tools are installed or callable from the shell.
 

@@ -35,7 +35,7 @@ cl_file="${base_top}_cl.evt"
 # --- Check availability of required commands ---
 check_command_exists \
     resolve_util_ftselect.sh \
-    resolve_util_ftmgtime.sh \
+    resolve_util_ftmgtime.py \
     resolve_tool_addcol_prev_next_interval.py
 
 # --- Check if required input files exist ---
@@ -56,8 +56,8 @@ resolve_tool_addcol_prev_next_interval.py "${base_name}.evt" -o "$evt_prevnext"
 echo "Completed: prev/next interval columns added"
 
 # --- Step 3: Generate GTI file from the CL file ---
-echo "Running resolve_util_ftmgtime.sh to create GTI..."
-resolve_util_ftmgtime.sh "$cl_file"
+echo "Running resolve_util_ftmgtime.py to create GTI..."
+resolve_util_ftmgtime.py "$cl_file"
 echo "Completed: GTI creation"
 
 # --- Step 4: Apply GTI filtering to the event file ---
