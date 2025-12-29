@@ -1,5 +1,4 @@
 #!/bin/bash
-. "$(dirname "$0")/heasoft_env.sh"
 
 # 引数のチェック
 if [ "$#" -ne 1 ]; then

@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/heasoft_env.sh"
 
 csvfile=${1:-data.csv}  # 引数がなければデフォルト 'data.csv'
 

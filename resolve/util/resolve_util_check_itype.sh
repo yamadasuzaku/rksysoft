@@ -1,4 +1,5 @@
 #!/bin/sh
+. "$(dirname "$0")/heasoft_env.sh"
 
 if [ _$1 = _ ];
 then

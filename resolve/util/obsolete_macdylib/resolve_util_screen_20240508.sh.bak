@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/heasoft_env.sh"
 
 usage() {
     echo "Usage: $0 inputevt outputevt"

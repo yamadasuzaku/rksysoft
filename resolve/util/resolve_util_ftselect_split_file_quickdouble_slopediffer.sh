@@ -1,4 +1,5 @@
 #!/bin/bash
+. "$(dirname "$0")/heasoft_env.sh"
 
 # 色の定義
 RED='\033[0;31m'

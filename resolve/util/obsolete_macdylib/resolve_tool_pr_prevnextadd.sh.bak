@@ -1,5 +1,4 @@
 #!/bin/bash
-. "$(dirname "$0")/heasoft_env.sh"
 
 # 引数が2つ指定されているか確認
 if [ "$#" -ne 2 ]; then

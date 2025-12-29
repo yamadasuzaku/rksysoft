@@ -1,5 +1,4 @@
 #!/bin/bash
-. "$(dirname "$0")/heasoft_env.sh"
 
 # 色の定義
 RED='\033[0;31m'
@@ -14,13 +13,13 @@ usage() {
 ${YELLOW}Usage:${NC} $0 infile
 
 ${YELLOW}Description:${NC}
-  This script is to split files into QUICK_DOUBLE, SLOPE_DIFFER, and ITYPE.
+  This script is to split files using IMEMBER
 
 ${YELLOW}Arguments:${NC}
   ${GREEN}infile${NC}       Path to the input event file.
 
 ${YELLOW}Example:${NC}
-  $0 xa000114000rsl_a0pxpr_uf_fillprenext_cutclgti.fits
+  $0 event.fits
 EOF
     exit 1
 }
@@ -37,14 +36,14 @@ infile="$1"
 # 入力されたパラメータを表示
 echo -e "${BLUE}[INFO]${NC} Input file: ${YELLOW}$infile${NC}"
 
-for itype in 0 1 2 3 4 
-do
-for qd in b00 b01
-do  
-for sd in b00 b01
-do 
-echo -e "${GREEN}[RUN]${NC}resolve_util_ftselect_split_file.py FLAG: QD=${YELLOW}$qd${NC} SD=${YELLOW}$sd${NC} ITYPE=${YELLOW}$itype${NC} "
-resolve_util_ftselect_split_file.py $infile -qd ${qd} -sd ${sd} -y ${itype}
-done 
-done 
-done 
+echo -e "${GREEN}[RUN]${NC} resolve_util_ftselect_split_file.py FLAG: QD=${YELLOW}$qd${NC} SD=${YELLOW}$sd${NC} "
+
+ofileim0=im0_${infile}
+ofileim1=im1_${infile}
+ofileim1a=imabove1_${infile}
+ofileim2a=imabove2_${infile}
+
+ftselect infile=${infile} outfile=${ofileim0} expr="IMEMBER==0" chatter=5 clobber=yes
+ftselect infile=${infile} outfile=${ofileim1} expr="IMEMBER==1" chatter=5 clobber=yes
+ftselect infile=${infile} outfile=${ofileim1a} expr="IMEMBER>0" chatter=5 clobber=yes
+ftselect infile=${infile} outfile=${ofileim2a} expr="IMEMBER>1" chatter=5 clobber=yes
