@@ -646,7 +646,7 @@ def plot_rate_vs_grade(event_list, plotpixels, itypenames, timebinsize, output, 
             count_text = f"{fname}" + "# are " + " ".join(itype_counts)
             fig.text(0.03, 0.02, count_text, va='top', fontsize=6, color="gray", alpha=0.7)
             plt.tight_layout()
-            outpng = f"{output}_rate_vs_grade_pixel{pix:02d}.png"
+            outpng = f"{output}_rate_vs_grade_pixel{pix:02d}_{outftag}.png"
             plt.savefig(outpng)
             print(f"..... {outpng} is created. ")
             print("show",show)
