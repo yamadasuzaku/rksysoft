@@ -16,7 +16,7 @@ resolve_ftools_cluster_pileline.sh
 ## Usage
 
 ```bash
-./run_cluster_pipeline.sh <input_file_uf.evt>
+./[resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh) <input_file_uf.evt>
 ```
 
 * `<input_file_uf.evt>`: The input event file with `_uf.evt` suffix.
