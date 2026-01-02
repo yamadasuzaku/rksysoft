@@ -28,7 +28,7 @@ Usage of [resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rk
 
 2. **Run Cluster Detection**
 
-   * Executes `resolve_ftools_add_cluster.py` twice:
+   * Executes [resolve_ftools_add_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py) twice:
 
      * First in `large` mode, to detect clusters caused by large signals (e.g., cosmic rays).
      * Then in `small` mode, to detect clusters caused by small/slow signals.
