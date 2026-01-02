@@ -1,13 +1,15 @@
 # CODE_README_resolve_ftools_add_cluster-py.md
 
 XRISM/Resolve 擬似イベント・クラスタリングスクリプト
-`resolve_ftools_add_cluster.py`
+[resolve_ftools_add_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py)
+
+https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py
 
 ---
 
 ## 概要（Overview）
 
-`resolve_ftools_add_cluster.py` は、XRISM/Resolve のイベント FITS ファイルに対して
+[resolve_ftools_add_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py) は、XRISM/Resolve のイベント FITS ファイルに対して
 **時間的に近接した擬似イベント（pseudo events）をクラスタとして同定し、
 その情報をイベントごとのカラムとして付加する Python スクリプト**である。
 
