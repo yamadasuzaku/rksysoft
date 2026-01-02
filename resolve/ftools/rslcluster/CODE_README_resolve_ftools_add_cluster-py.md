@@ -54,8 +54,8 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/res
 * `NEXT_INTERVAL`
 * `RISE_TIME`
 
-⚠️ `PREV_INTERVAL` および `NEXT_INTERVAL` は
-`resolve_ftools_add_prevnext.sh` によって **事前に追加されている必要がある**。
+\CID{220} `PREV_INTERVAL` および `NEXT_INTERVAL` は
+[resolve_ftools_add_prevnext.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh) によって **事前に追加されている必要がある**。
 
 ---
 
@@ -233,4 +233,253 @@ resolve_ftools_add_cluster.py clean.evt \
 * `resolve_ftools_add_prevnext.sh`
 * `resolve_ftools_cluster_pipeline.sh`
 * `resolve_ftools_qlcheck_cluster.py`
+
+---
+
+## `identify_clusters()` 関数の詳細解説
+
+（クラスタリング判定ロジックの正確な理解のために）
+
+### 目的
+
+`identify_clusters()` は、**1 ピクセル分のイベント列（時間順に並んだ配列）**に対して、
+
+* 擬似イベントの **クラスタ開始点** を判定し
+* その後に続くイベントを **同一クラスタとしてまとめ**
+* 各イベントに
+
+  * クラスタ ID
+  * クラスタ内の順序番号
+  * 直前イベントの情報
+
+を付与するための **中核ロジック**である。
+
+\CID{220} **この関数はイベントを削除しない**
+→ あくまで「注釈（annotation）」を付けるだけである。
+
+---
+
+## 入力引数
+
+```python
+identify_clusters(
+    events,
+    mode,
+    threshold_large,
+    threshold_small,
+    interval_limit,
+    rt_min,
+    rt_max,
+    SECOND_THRES_USE_LEN,
+    debug=False
+)
+```
+
+| 引数                     | 型                      | 意味                               |
+| ---------------------- | ---------------------- | -------------------------------- |
+| `events`               | FITS table / ndarray   | 単一ピクセルのイベント列（時間順）                |
+| `mode`                 | `"large"` or `"small"` | クラスタ判定モード                        |
+| `threshold_large`      | int                    | large 擬似イベントの LO_RES_PH 閾値       |
+| `threshold_small`      | int                    | small 擬似イベントの目安値（※開始条件には直接使われない） |
+| `interval_limit`       | int                    | クラスタ継続とみなす時間間隔                   |
+| `rt_min`, `rt_max`     | int                    | RISE_TIME の正常範囲                  |
+| `SECOND_THRES_USE_LEN` | int                    | PSP 定義の特殊値（通常 75）                |
+| `debug`                | bool                   | デバッグ出力                           |
+
+---
+
+## 出力
+
+```python
+return (
+    cluster_indices,
+    member_indices,
+    prev_lo_res_ph,
+    prev_itype
+)
+```
+
+| 配列                | 内容                 |
+| ----------------- | ------------------ |
+| `cluster_indices` | クラスタ ID（0 = 非クラスタ） |
+| `member_indices`  | クラスタ内の順序番号（1 始まり）  |
+| `prev_lo_res_ph`  | 直前イベントの LO_RES_PH  |
+| `prev_itype`      | 直前イベントの ITYPE      |
+
+---
+
+## 処理の全体構造
+
+```text
+イベント列を先頭から順にスキャン
+  ↓
+クラスタ開始条件を満たすか？
+  ├─ YES → クラスタ開始 → 継続条件を満たす限り連結
+  └─ NO  → 非クラスタとして 0 を付与
+```
+
+重要なのは：
+
+> **「クラスタ開始」と「クラスタ継続」は別条件**
+> であり、非常に意図的に分離されている点である。
+
+---
+
+## クラスタ開始条件（最重要）
+
+### `mode = "large"` の場合
+
+```python
+events["ITYPE"][i] == 3 and
+events["LO_RES_PH"][i] > threshold_large
+```
+
+#### 意味
+
+* **Lp イベント（ITYPE=3）**
+* **非常に大きな LO_RES_PH**
+
+→ 宇宙線や粒子ヒットなどの
+**明確に異常な「大擬似イベント」**をクラスタの起点とする。
+
+\CID{220} **Ls（ITYPE=4）からクラスタは始まらない**
+
+---
+
+### `mode = "small"` の場合
+
+```python
+events["ITYPE"][i] == 3 and
+events["LO_RES_PH"][i] <= threshold_large and
+(
+  events["NEXT_INTERVAL"][i] < interval_limit
+  or
+  events["NEXT_INTERVAL"][i] == SECOND_THRES_USE_LEN
+) and
+(
+  events["RISE_TIME"][i] < rt_min
+  or
+  events["RISE_TIME"][i] > rt_max
+)
+```
+
+#### 意味（1 条件ずつ）
+
+1. **Lp イベントである**
+2. **large ほど大きくない**
+3. **直後にイベントが非常に近接している**
+4. **RISE_TIME が異常（速すぎる or 遅すぎる）**
+
+→ クロストーク・微小擬似イベント・遅延応答などを想定。
+
+\CID{1828} **small モードは「単に小さいイベント」を拾っているのではない**
+\CID{1828} **「時間相関 × 波形異常」を同時に要求している**
+
+---
+
+## クラスタ継続条件（開始後）
+
+```python
+(events["ITYPE"][i] in (3, 4)) and
+(
+  events["PREV_INTERVAL"][i] < interval_limit
+  or
+  events["PREV_INTERVAL"][i] == SECOND_THRES_USE_LEN
+)
+```
+
+#### 重要ポイント
+
+* **Lp / Ls の両方を含める**
+* **「前のイベントとの時間差」で判定**
+
+つまり：
+
+> 「クラスタは、
+> 開始点から **時間的に連続している限り** Lp/Ls を区別せず含める」
+
+---
+
+## よくある誤解 \CID{220}%
+
+### \UTF{274C} 誤解 1
+
+> `cluster_indices` にはクラスタ番号が入っている
+
+#### 正解
+
+* `cluster_indices[i] == i`（開始点のインデックス）
+* 非クラスタは `0`
+
+→ **「クラスタ ID = 開始イベントの行番号」**
+
+---
+
+### \UTF{274C} 誤解 2
+
+> `threshold_small` が small 判定に使われている
+
+#### 正解
+
+* **現在のコードでは使われていない**
+* small 判定は `threshold_large` を境にしている
+
+（※ 将来拡張用・パラメータ互換のために残されている）
+
+---
+
+### \UTF{274C} 誤解 3
+
+> クラスタはピクセルをまたぐ
+
+#### 正解
+
+* **この関数は 1 ピクセル分のみ**
+* ピクセル間相関は上位ロジックで扱う設計
+
+---
+
+## 直前イベント情報の付加
+
+```python
+prev_lo_res_ph[k] = events["LO_RES_PH"][k-1]
+prev_itype[k]     = events["ITYPE"][k-1]
+```
+
+### 目的
+
+* **クラスタ検出の後処理**
+* 「このイベントは何の直後に来たか？」を解析可能にする
+
+\CID{1828} **クラスタ判定そのものには使っていない**
+
+---
+
+## この設計の哲学
+
+* **開始条件は厳密**
+* **継続条件は緩やか**
+* **削除しない**
+* **判断は後段に委ねる**
+
+これは、
+
+> *「オンボードではできなかった精密判定を、
+> 地上で情報を落とさず行う」*
+
+という XRISM/Resolve 解析思想に沿った設計である。
+
+---
+
+## まとめ（README 用短文）
+
+> `identify_clusters()` は、
+> **Lp イベントを起点とした時間相関に基づき、
+> 擬似イベント群を「クラスタ」として注釈付けする関数である。**
+>
+> large / small モードは「開始条件」のみが異なり、
+> クラスタ継続条件は共通である。
+> 本関数はイベントの削除を行わず、
+> 後続解析のための判断材料を提供することを目的としている。
+
 
