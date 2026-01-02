@@ -33,7 +33,8 @@ Usage of [resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rk
      * First in `large` mode, to detect clusters caused by large signals (e.g., cosmic rays).
      * Then in `small` mode, to detect clusters caused by small/slow signals.
 
-    * Please read "README_add_cluster.md" for more details located at [XRISM Resolve Pseudo-Event Clustering Tool](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_add_cluster.md)
+    * Please read "README_add_cluster.md" for more details located at 
+    [XRISM Resolve Pseudo-Event Clustering Tool](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_add_cluster.md)
 
 3. **Run Diagnostic Check**
 
