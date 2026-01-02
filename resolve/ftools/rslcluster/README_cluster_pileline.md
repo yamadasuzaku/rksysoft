@@ -35,7 +35,7 @@ Usage of [resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rk
 
 3. **Run Diagnostic Check**
 
-   * Uses `resolve_ftools_qlcheck_cluster.py` to verify and visualize the clustering results.
+   * Uses [resolve_ftools_qlcheck_cluster.py](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_qlcheck_cluster.py) to verify and visualize the clustering results.
 
 ---
 
