@@ -29,6 +29,7 @@ plt.rcParams["font.family"] = "serif"
 plt.rcParams.update({"xtick.labelsize": 11, "ytick.labelsize": 11, "legend.fontsize": 8})
 
 
+
 # -------------------------
 # CL_REASON bit definitions
 # -------------------------
@@ -55,6 +56,8 @@ BIT_CONT_OK = 15            # this row is used as a cluster continuation
 CLMODE_NONE = 0
 CLMODE_LARGE = 1
 CLMODE_SMALL = 2
+
+UNKNOWNS_SECOND_THRES_USE_LEN = 105
 
 def _setbit(x: int, bit: int) -> int:
     return x | (1 << bit)
@@ -157,7 +160,7 @@ def identify_clusters(
             is_cluster_start = (
                 (itype == 3)
                 and (lo <= params.threshold_large)
-                and ((nt < params.interval_limit) or (nt == params.SECOND_THRES_USE_LEN))
+                and ((nt < params.interval_limit) or (nt == params.SECOND_THRES_USE_LEN) or (nt == params.SECOND_THRES_UNKNOWN))
                 and ((rt < params.rt_min) or (rt > params.rt_max))
             )
 
@@ -200,7 +203,7 @@ def identify_clusters(
                 cont_reason = _setbit(cont_reason, BIT_PR_EQ_SECONDTHRES)
 
             cont_ok = (itype_j in (3, 4)) and (
-                (pr < params.interval_limit) or (pr == params.SECOND_THRES_USE_LEN)
+                (pr < params.interval_limit) or (pr == params.SECOND_THRES_USE_LEN) or (pr == params.SECOND_THRES_UNKNOWN) 
             )
             if not cont_ok:
                 # still keep start-style diag bits for this row already stored above (will be overwritten below only if cont_ok)
@@ -360,9 +363,24 @@ def process_pixel_data(
             mjdref=params.mjdref,
         )
 
+        # cluster stats + CL_REASON visualization
+        plot_cluster_stats_for_pixel(
+            events=pixel_events,
+            pixel=pixel,
+            cluster_ids=cluster_ids,
+            member_ids=member_ids,
+            cl_mode=cl_mode,
+            cl_reason=cl_reason,
+            outdir=output_dir,           # same figdir
+            outprefix=f"{outname}",      # keep prefix consistent
+            top_n_clusters=40,
+        )
+
     if debug:
         n_clustered = int(np.sum(cluster_ids > 0))
         print(f"..... Finished pixel {pixel}: clustered_rows={n_clustered} / events={len(pixel_events)}")
+
+
 
     return cluster_array, member_array, mode_array, reason_array, prev_lo_array, prev_type_array
 
@@ -403,6 +421,242 @@ def parse_args():
     p.add_argument("--mjdref", type=int, default=58484, help="Reference MJD for time conversion")
 
     return p.parse_args()
+
+
+#### added for visualize col_reason info 
+
+# -------------------------
+# CL_REASON utilities / visualization
+# -------------------------
+
+BIT_NAMES = {
+    BIT_IS_LP: "IS_LP(ITYPE=3)",
+    BIT_IS_LS: "IS_LS(ITYPE=4)",
+    BIT_LO_GT_LARGE: "LO>TH_LARGE",
+    BIT_LO_LE_LARGE: "LO<=TH_LARGE",
+    BIT_NT_LT_LIMIT: "NEXT<INT_LIMIT",
+    BIT_NT_EQ_SECONDTHRES: "NEXT==SECOND_THRES",
+    BIT_RT_LT_MIN: "RISE<RT_MIN",
+    BIT_RT_GT_MAX: "RISE>RT_MAX",
+    BIT_ITYPE_IN_34: "ITYPE in (3,4)",
+    BIT_PR_LT_LIMIT: "PREV<INT_LIMIT",
+    BIT_PR_EQ_SECONDTHRES: "PREV==SECOND_THRES",
+    BIT_START_OK: "START_OK",
+    BIT_CONT_OK: "CONT_OK",
+}
+
+BITS_TO_PLOT = sorted(BIT_NAMES.keys())
+
+
+def _hasbit(x: np.ndarray, bit: int) -> np.ndarray:
+    """Vectorized check for a bit in int array."""
+    return ((x.astype(np.int64) >> bit) & 1).astype(np.int8)
+
+
+def summarize_clusters_for_pixel(
+    events,
+    cluster_ids: np.ndarray,
+    member_ids: np.ndarray,
+    cl_mode: np.ndarray,
+    cl_reason: np.ndarray,
+):
+    """
+    Build per-cluster summary arrays for a single pixel stream.
+
+    Returns:
+      - cluster_unique: cluster IDs (>0)
+      - cluster_sizes: number of rows in each cluster
+      - n_lp, n_ls: ITYPE=3/4 counts per cluster
+      - n_start, n_cont: START_OK/CONT_OK counts per cluster (based on cl_reason bits)
+      - reason_bit_counts: (n_clusters, n_bits) matrix: counts of each bit within each cluster
+    """
+    clustered_mask = cluster_ids > 0
+    if not np.any(clustered_mask):
+        return None
+
+    cid = cluster_ids[clustered_mask].astype(np.int64)
+    itype = events["ITYPE"][clustered_mask].astype(np.int64)
+    reason = cl_reason[clustered_mask].astype(np.int64)
+
+    cluster_unique, inv = np.unique(cid, return_inverse=True)
+    n_clusters = len(cluster_unique)
+
+    # cluster sizes
+    cluster_sizes = np.bincount(inv, minlength=n_clusters)
+
+    # counts by ITYPE
+    n_lp = np.bincount(inv, weights=(itype == 3).astype(np.int64), minlength=n_clusters).astype(np.int64)
+    n_ls = np.bincount(inv, weights=(itype == 4).astype(np.int64), minlength=n_clusters).astype(np.int64)
+
+    # start/cont (from bits)
+    start_ok = _hasbit(reason, BIT_START_OK)
+    cont_ok = _hasbit(reason, BIT_CONT_OK)
+    n_start = np.bincount(inv, weights=start_ok, minlength=n_clusters).astype(np.int64)
+    n_cont = np.bincount(inv, weights=cont_ok, minlength=n_clusters).astype(np.int64)
+
+    # reason bit matrix per cluster
+    reason_bit_counts = np.zeros((n_clusters, len(BITS_TO_PLOT)), dtype=np.int64)
+    for j, b in enumerate(BITS_TO_PLOT):
+        bj = _hasbit(reason, b)
+        reason_bit_counts[:, j] = np.bincount(inv, weights=bj, minlength=n_clusters).astype(np.int64)
+
+    return cluster_unique, cluster_sizes, n_lp, n_ls, n_start, n_cont, reason_bit_counts
+
+
+def plot_cluster_stats_for_pixel(
+    *,
+    events,
+    pixel: int,
+    cluster_ids: np.ndarray,
+    member_ids: np.ndarray,
+    cl_mode: np.ndarray,
+    cl_reason: np.ndarray,
+    outdir: str,
+    outprefix: str,
+    top_n_clusters: int = 40,
+):
+    """
+    Save per-pixel cluster statistics & CL_REASON visualization.
+
+    Outputs:
+      - PNG: size histogram, bit frequency bar, heatmap(cluster x bit), start/cont summary
+      - CSV: per-cluster summary table (one row per cluster ID)
+    """
+    ensure_directory(outdir, verbose=False)
+
+    summary = summarize_clusters_for_pixel(
+        events=events,
+        cluster_ids=cluster_ids,
+        member_ids=member_ids,
+        cl_mode=cl_mode,
+        cl_reason=cl_reason,
+    )
+    if summary is None:
+        # nothing clustered for this pixel
+        return
+
+    (cluster_unique,
+     cluster_sizes,
+     n_lp,
+     n_ls,
+     n_start,
+     n_cont,
+     reason_bit_counts) = summary
+
+    # ------------------------------------------------------------
+    # Save per-cluster table
+    # ------------------------------------------------------------
+    csv_path = os.path.join(outdir, f"{outprefix}cluster_stats_pixel{pixel}.csv")
+    header_cols = [
+        "pixel", "cluster_id", "cluster_size", "n_lp", "n_ls", "n_start_ok", "n_cont_ok"
+    ] + [f"bit{b}_{BIT_NAMES[b]}" for b in BITS_TO_PLOT]
+
+    table = np.column_stack([
+        np.full_like(cluster_unique, pixel, dtype=np.int64),
+        cluster_unique,
+        cluster_sizes,
+        n_lp,
+        n_ls,
+        n_start,
+        n_cont,
+        reason_bit_counts,
+    ])
+
+    with open(csv_path, "w", encoding="utf-8") as f:
+        f.write(",".join(header_cols) + "\n")
+        for row in table:
+            f.write(",".join(map(str, row.tolist())) + "\n")
+
+    # ------------------------------------------------------------
+    # Aggregate bit frequencies across clustered rows (for this pixel)
+    # ------------------------------------------------------------
+    # Total counts per bit across all clusters
+    bit_total = reason_bit_counts.sum(axis=0)
+    bit_labels = [f"b{b}:{BIT_NAMES[b]}" for b in BITS_TO_PLOT]
+
+    # ------------------------------------------------------------
+    # Choose top-N clusters by size for heatmap
+    # ------------------------------------------------------------
+    order = np.argsort(cluster_sizes)[::-1]
+    top = order[: min(top_n_clusters, len(order))]
+    heat = reason_bit_counts[top, :]  # (topN, n_bits)
+
+    # Normalize heatmap rows by cluster size to show "fraction of rows in cluster with bit"
+    denom = cluster_sizes[top].reshape(-1, 1)
+    heat_frac = np.divide(heat, denom, out=np.zeros_like(heat, dtype=float), where=(denom > 0))
+
+    # ------------------------------------------------------------
+    # Figure 1: Cluster size distribution
+    # ------------------------------------------------------------
+    fig1 = plt.figure(figsize=(8, 4.5))
+    ax = fig1.add_subplot(1, 1, 1)
+    ax.hist(cluster_sizes, bins=np.arange(1, np.max(cluster_sizes) + 2), alpha=0.8)
+    ax.set_xlabel("Cluster size (#rows in cluster)")
+    ax.set_ylabel("Count (#clusters)")
+    ax.set_title(f"Pixel {pixel}: Cluster size distribution (Nclusters={len(cluster_sizes)})")
+    ax.grid(True, alpha=0.2)
+    fig1.tight_layout()
+    fig1.savefig(os.path.join(outdir, f"{outprefix}cluster_size_hist_pixel{pixel}.png"))
+    plt.close(fig1)
+
+    # ------------------------------------------------------------
+    # Figure 2: Bit frequency bar (total counts)
+    # ------------------------------------------------------------
+    fig2 = plt.figure(figsize=(12, 5))
+    ax = fig2.add_subplot(1, 1, 1)
+    x = np.arange(len(BITS_TO_PLOT))
+    ax.bar(x, bit_total)
+    ax.set_xticks(x)
+    ax.set_xticklabels(bit_labels, rotation=45, ha="right")
+    ax.set_ylabel("Count (clustered rows)")
+    ax.set_title(f"Pixel {pixel}: CL_REASON bit frequencies (clustered rows only)")
+    ax.grid(True, axis="y", alpha=0.2)
+    fig2.tight_layout()
+    fig2.savefig(os.path.join(outdir, f"{outprefix}cl_reason_bitfreq_pixel{pixel}.png"))
+    plt.close(fig2)
+
+    # ------------------------------------------------------------
+    # Figure 3: Heatmap (top clusters x bits) as fraction
+    # ------------------------------------------------------------
+    fig3 = plt.figure(figsize=(12, 6))
+    ax = fig3.add_subplot(1, 1, 1)
+    im = ax.imshow(heat_frac, aspect="auto", interpolation="nearest")
+    ax.set_xticks(np.arange(len(BITS_TO_PLOT)))
+    ax.set_xticklabels([f"b{b}" for b in BITS_TO_PLOT], rotation=0)
+    ax.set_yticks(np.arange(len(top)))
+    ax.set_yticklabels([f"cid={int(cluster_unique[i])}\nsize={int(cluster_sizes[i])}" for i in top])
+    ax.set_title(f"Pixel {pixel}: Top-{len(top)} clusters × CL_REASON bits (fraction per cluster)")
+    ax.set_xlabel("Bits")
+    ax.set_ylabel("Clusters (sorted by size)")
+    fig3.colorbar(im, ax=ax, label="Fraction of rows in cluster with bit")
+    fig3.tight_layout()
+    fig3.savefig(os.path.join(outdir, f"{outprefix}cl_reason_heatmap_pixel{pixel}.png"))
+    plt.close(fig3)
+
+    # ------------------------------------------------------------
+    # Figure 4: Simple composition summary (Lp/Ls, START/CONT)
+    # ------------------------------------------------------------
+    total_lp = int(n_lp.sum())
+    total_ls = int(n_ls.sum())
+    total_start = int(n_start.sum())
+    total_cont = int(n_cont.sum())
+
+    fig4 = plt.figure(figsize=(10, 4.5))
+    ax1 = fig4.add_subplot(1, 2, 1)
+    ax1.bar(["Lp", "Ls"], [total_lp, total_ls])
+    ax1.set_title(f"Pixel {pixel}: ITYPE composition (clustered rows)")
+    ax1.set_ylabel("Count")
+    ax1.grid(True, axis="y", alpha=0.2)
+
+    ax2 = fig4.add_subplot(1, 2, 2)
+    ax2.bar(["START_OK", "CONT_OK"], [total_start, total_cont])
+    ax2.set_title(f"Pixel {pixel}: START/CONT usage (clustered rows)")
+    ax2.set_ylabel("Count")
+    ax2.grid(True, axis="y", alpha=0.2)
+
+    fig4.tight_layout()
+    fig4.savefig(os.path.join(outdir, f"{outprefix}cluster_composition_pixel{pixel}.png"))
+    plt.close(fig4)
 
 
 def main():
