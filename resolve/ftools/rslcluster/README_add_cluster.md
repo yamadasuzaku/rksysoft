@@ -13,7 +13,7 @@ Beyond known cross-talk events, the tool can also catch *clustered events* such 
 
 ## Dependencies
 
-To run `resolve_ftools_add_cluster.py`, you will need the following Python environment and libraries:
+To run [`resolve_ftools_add_cluster.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py), you will need the following Python environment and libraries:
 
 * **Python 3.x** – The script is written in Python and requires a Python 3 interpreter.
 * **Astropy** – Used for reading and writing FITS files (e.g. `astropy.io.fits`).
@@ -35,8 +35,8 @@ The basic usage is to use pileline scripts:
 Please read befere you try.   
 * [README_cluster_pileline.md](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_cluster_pileline.md)
 
-In [run_cluster_pipeline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh), `resolve_ftools_add_cluster.py` 
- is used as follows. 
+In [run_cluster_pipeline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh), 
+[`resolve_ftools_add_cluster.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py) is used as follows. 
 
 ```bash:run_cluster_pipeline.sh
 # --- Step 1: Add prev/next interval columns ---
