@@ -4,6 +4,9 @@
 
 [`resolve_ftools_add_cluster.py`](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_cluster.py) is a Python-based tool for identifying *pseudo events* in X-ray event data from XRISM’s **Resolve** instrument. **pseudo events** are spurious detector triggers not caused by real astrophysical X-ray photons, but by cosmic rays or instrumental effects. 
 
+This is called from [run_cluster_pipeline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh), 
+which is described in [README_cluster_pileline.md](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_cluster_pileline.md). 
+
 Beyond known cross-talk events, the tool can also catch *clustered events* such as cosmic ray hits that trigger multiple pixels at once. By clustering events in time, `resolve_ftools_add_cluster.py` provides a systematic way to flag all events that are part of a nearly coincident group. The output is an augmented event file where each event is annotated with cluster information, making it clear which events are isolated genuine triggers versus which occur in coincident groups (the latter being candidates for pseudo events or particle-induced events). This tool helps users of XRISM Resolve data to detect and mark pseudo events, ensuring that only true X-ray events are used in scientific analysis.
 
 ## Dependencies
@@ -27,8 +30,8 @@ The basic usage is to use pileline scripts:
 ./run_cluster_pipeline.sh <input_file_uf.evt>
 ```
 
-Please read https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_cluster_pileline.md befere you try.   
-
+Please read befere you try.   
+* [README_cluster_pileline.md](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_cluster_pileline.md)
 
 In [run_cluster_pipeline.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_cluster_pileline.sh), `resolve_ftools_add_cluster.py` 
  is used as follows. 
