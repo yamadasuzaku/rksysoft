@@ -406,7 +406,7 @@ def plot_lightcurve(event_list, plotpixels, itypenames, timebinsize, output, ref
             branching_ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
             plt.tight_layout()
-            outpng = f"{output}_lightcurve_pixel{pix:02d}.png"
+            outpng = f"{output}_lightcurve_pixel{pix:02d}_{outftag}.png"
             plt.savefig(outpng)
             print(f"..... {outpng} is created. ")
             if show:
@@ -545,7 +545,7 @@ def plot_sumlightcurve(event_list, plotpixels, itypenames, timebinsize, output, 
             branching_ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
             plt.tight_layout()
-            outpng = f"{output}_sumlightcurve_type_{g_typename[itype_]}.png"
+            outpng = f"{output}_sumlightcurve_type_{g_typename[itype_]}_{outftag}.png"
             plt.savefig(outpng)
             print(f"..... {outpng} is created. ")
             if show:
@@ -685,7 +685,7 @@ def main():
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
                 gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh, \
                                             rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
-            print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
+            print(f"出力ファイル rate_vs_grade.png が作成されました。")
 
     else:
         if args.plot_lightcurve:
@@ -695,7 +695,7 @@ def main():
         if args.plot_rate_vs_grade:
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time, \
                 debug= args.debug, show = args.show, rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
-            print(f"出力ファイル {args.output}_rate_vs_grade.png が作成されました。")
+            print(f"出力ファイル rate_vs_grade.png が作成されました。")
 
 if __name__ == "__main__":
     main()

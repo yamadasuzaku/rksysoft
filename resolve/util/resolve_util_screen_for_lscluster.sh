@@ -28,10 +28,10 @@ check_program_in_path() {
 usage() {
   cat <<EOF
 Usage:
-  $(basename "$0") <input_ufevt.evt>
+  $(basename "$0") <input_ufevt.evt> <cl.evt>
 
 Example:
-  $(basename "$0") small_large_xa000154000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt
+  $(basename "$0") small_large_xa000154000rsl_p0px1000_uf_noBL_prevnext_cutclgti.evt xa000154000rsl_p0px1000_cl.evt
 EOF
   exit 1
 }
@@ -55,6 +55,8 @@ normalize_filter_expr() {
 run_xselect_make_clgti() {
   local infile_evt="$1"
   local outfile_evt="$2"
+  local gtifile="$3"
+
 
   log_info "Running xselect to create clgti event: $outfile_evt"
   rm -f "$outfile_evt"
@@ -67,6 +69,8 @@ no
 read event
 ./
 ${infile_evt}
+
+filter time file ${gtifile}
 
 show filter
 
@@ -100,6 +104,29 @@ run_ftcopy_with_filter() {
   log_ok "Created: $outfile_evt"
 }
 
+# ★追加：cl.evt から GTI を生成して、中身があることまでチェック
+run_make_gti_from_clevt() {
+  local clevt="$1"
+
+  log_info "Generating GTI from cl.evt: $clevt"
+  require_file "$clevt"
+
+  # cl.evt の GTI ファイルを生成する。
+  resolve_util_ftmgtime.py "$clevt"
+
+  # GTI ファイルの生成と確認
+  local outgti="${clevt%.evt}.gti"
+  if [[ -s "$outgti" ]]; then
+    log_ok "$outgti is ready (non-empty)"
+  else
+    if [[ -e "$outgti" ]]; then
+      die "$outgti exists but is EMPTY"
+    else
+      die "$outgti is not ready"
+    fi
+  fi
+}
+
 # -------------------------
 # Main
 # -------------------------
@@ -110,21 +137,25 @@ main() {
   check_program_in_path "ftlist"
   check_program_in_path "ftcopy"
   check_program_in_path "xselect"
+  check_program_in_path "resolve_util_ftmgtime.py"
 
-  # (必要なら残す)
-  # check_program_in_path "resolve_util_ftselect.sh"
-
-  [[ $# -eq 1 ]] || usage
+  [[ $# -eq 2 ]] || usage
 
   local ufevt="$1"
+  local clevt="$2"
   require_file "$ufevt"
+  require_file "$clevt"
 
+  # ★追加：clevt から gti 生成＆中身チェック
+  run_make_gti_from_clevt "$clevt"
+
+  local gtifile="${clevt%.evt}.gti"
   local ufclgtievt="${ufevt%.evt}_clgti.evt"
   local base_top
   base_top="$(basename "$ufevt" .evt)"
 
   # 1) xselectでベースイベント作成（GTI整形）
-  run_xselect_make_clgti "$ufevt" "$ufclgtievt"
+  run_xselect_make_clgti "$ufevt" "$ufclgtievt" "$gtifile"
 
   log_info "Input check: $ufclgtievt"
   ftlist "$ufclgtievt" H
@@ -155,14 +186,13 @@ main() {
 )
 '
 
-  # 例：クラスタ系の追加フィルタ（ダミー。あなたの実条件に置換してOK）
   local FILTER_CLUSTERCUT='
 (ITYPE < 5) &&
 (ICLUSTERL == 0) &&
 (ICLUSTERS == 0)
 '
 
-local FILTER_CLUSTERCUTSTDCUT="
+  local FILTER_CLUSTERCUTSTDCUT="
 (
 ${FILTER_STDCUT}
 )
@@ -172,20 +202,29 @@ ${FILTER_CLUSTERCUT}
 )
 "
 
-  # -------------------------
+local FILTER_NOT_CLUSTERCUT="
+(ITYPE < 5) &&
+(
+  (ICLUSTERL != 0) ||
+  (ICLUSTERS != 0)
+)
+"
+
+  # -------------------------------
   # Outputs table: name <-> filter
-  # 「出力ファイル名」と「適用する条件」をセットで管理
-  # -------------------------
+  # -------------------------------
   declare -a OUT_FILES=(
     "${ufevt%.evt}_clgti_stdcut.evt"
     "${ufevt%.evt}_clgti_clustercut.evt"
     "${ufevt%.evt}_clgti_clustercutstdcut.evt"
+    "${ufevt%.evt}_clgti_NOT_clustercut.evt"
   )
 
   declare -a OUT_FILTERS=(
     "$FILTER_STDCUT"
     "$FILTER_CLUSTERCUT"
     "$FILTER_CLUSTERCUTSTDCUT"
+    "$FILTER_NOT_CLUSTERCUT"
   )
 
   # 実行（まとめて生成）

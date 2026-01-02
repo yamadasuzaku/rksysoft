@@ -37,6 +37,12 @@ default_y_ranges = {
     "NEXT_INTERVAL": (0, 300),
     "PREV_INTERVAL": (0, 300),
     "MINTIME_SEC": (-0.1, 0.1),
+    "ICLUSTERL" : (0, 10),
+    "IMEMBERL"  : (0, 100),
+    "ICLUSTERS" : (0, 10),
+    "IMEMBERS"  : (0, 100),
+
+
 }
 
 # Custom tick positions for specific columns
