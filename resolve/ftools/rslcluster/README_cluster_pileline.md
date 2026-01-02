@@ -24,7 +24,7 @@ Usage of [resolve_ftools_cluster_pileline.sh](https://github.com/yamadasuzaku/rk
 
 1. **Add Prev/Next Interval Columns**
 
-   * Calls `[resolve_ftools_add_prevnext.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh)` to append `PREV_INTERVAL` and `NEXT_INTERVAL` columns to the input FITS file.
+   * Calls [resolve_ftools_add_prevnext.sh](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh) to append `PREV_INTERVAL` and `NEXT_INTERVAL` columns to the input FITS file.
 
 2. **Run Cluster Detection**
 
