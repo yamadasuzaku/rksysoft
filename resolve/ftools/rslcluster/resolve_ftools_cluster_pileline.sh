@@ -23,7 +23,12 @@ fi
 
 # --- Input file name ---
 input_file="$1"
+base_top=$(basename "$input_file" _uf.evt)
+cl_file="${base_top}_cl.evt"
+
 check_file_exists "$input_file"
+echo "[check] cl.evt file is needed to create cl.gti in resolve_ftools_add_prevnext.sh."
+check_file_exists "$cl_file" 
 
 # --- Step 1: Add prev/next interval columns ---
 echo ">>> Running resolve_ftools_add_prevnext.sh on $input_file"
