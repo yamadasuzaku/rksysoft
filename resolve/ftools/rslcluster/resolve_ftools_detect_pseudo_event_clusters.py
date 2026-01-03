@@ -590,11 +590,21 @@ def plot_cluster_stats_for_pixel(
     # ------------------------------------------------------------
     fig1 = plt.figure(figsize=(8, 4.5))
     ax = fig1.add_subplot(1, 1, 1)
-    ax.hist(cluster_sizes, bins=np.arange(1, np.max(cluster_sizes) + 2), alpha=0.8)
+
+    max_size = int(np.max(cluster_sizes))
+    # bins: 0.5, 1.5, 2.5, ... , max_size+0.5
+    bins = np.arange(0.5, max_size + 1.5, 1.0)
+
+    ax.hist(cluster_sizes, bins=bins, alpha=0.8, rwidth=0.9)
+
+    # x ticks at integer centers
+    ax.set_xticks(np.arange(1, max_size + 1, 1))
+
     ax.set_xlabel("Cluster size (#rows in cluster)")
     ax.set_ylabel("Count (#clusters)")
     ax.set_title(f"Pixel {pixel}: Cluster size distribution (Nclusters={len(cluster_sizes)})")
     ax.grid(True, alpha=0.2)
+
     fig1.tight_layout()
     fig1.savefig(os.path.join(outdir, f"{outprefix}cluster_size_hist_pixel{pixel}.png"))
     plt.close(fig1)
@@ -634,14 +644,45 @@ def plot_cluster_stats_for_pixel(
     plt.close(fig3)
 
     # ------------------------------------------------------------
-    # Figure 4: Simple composition summary (Lp/Ls, START/CONT)
+    # Figure 4: Consistency check (Lp/Ls vs START/CONT)
+    # Expectation: START_OK == Lp, CONT_OK == Ls for clustered rows
     # ------------------------------------------------------------
     total_lp = int(n_lp.sum())
     total_ls = int(n_ls.sum())
     total_start = int(n_start.sum())
     total_cont = int(n_cont.sum())
 
-    fig4 = plt.figure(figsize=(10, 4.5))
+    # --- Consistency checks (global totals) ---
+    ok_start = (total_lp == total_start)
+    ok_cont  = (total_ls == total_cont)
+    ok_all = ok_start and ok_cont
+
+    # --- Find irregular rows (within clustered rows only) ---
+    clustered_mask = (cluster_ids > 0)
+    itype_c = events["ITYPE"][clustered_mask].astype(np.int64)
+    reason_c = cl_reason[clustered_mask].astype(np.int64)
+
+    is_lp = (itype_c == 3)
+    is_ls = (itype_c == 4)
+
+    is_start = (((reason_c >> BIT_START_OK) & 1) == 1)
+    is_cont  = (((reason_c >> BIT_CONT_OK) & 1) == 1)
+
+    # Expected mapping:
+    #   START_OK -> Lp, CONT_OK -> Ls
+    # Irregular patterns:
+    #   (A) start on Ls
+    #   (B) cont  on Lp
+    #   (C) clustered row but neither start nor cont is set
+    #   (D) both start and cont set (should not happen)
+    n_start_on_ls = int(np.sum(is_start & is_ls))
+    n_cont_on_lp  = int(np.sum(is_cont  & is_lp))
+    n_neither     = int(np.sum(~is_start & ~is_cont))
+    n_both        = int(np.sum(is_start & is_cont))
+
+    n_irregular = n_start_on_ls + n_cont_on_lp + n_neither + n_both
+
+    fig4 = plt.figure(figsize=(11, 5.0))
     ax1 = fig4.add_subplot(1, 2, 1)
     ax1.bar(["Lp", "Ls"], [total_lp, total_ls])
     ax1.set_title(f"Pixel {pixel}: ITYPE composition (clustered rows)")
@@ -654,7 +695,46 @@ def plot_cluster_stats_for_pixel(
     ax2.set_ylabel("Count")
     ax2.grid(True, axis="y", alpha=0.2)
 
-    fig4.tight_layout()
+    # --- Add a big OK/NG banner + detailed diagnostics ---
+    if ok_all and (n_irregular == 0):
+        banner = "CONSISTENCY: OK"
+        detail = (
+            f"Lp ({total_lp}) == START_OK ({total_start})\n"
+            f"Ls ({total_ls}) == CONT_OK ({total_cont})\n"
+            f"Irregular rows: 0"
+        )
+    else:
+        banner = "CONSISTENCY: NG (CHECK!)"
+        detail = (
+            f"Lp ({total_lp}) vs START_OK ({total_start}) => {'OK' if ok_start else 'NG'}\n"
+            f"Ls ({total_ls}) vs CONT_OK ({total_cont}) => {'OK' if ok_cont else 'NG'}\n"
+            f"Irregular rows breakdown:\n"
+            f"  start on Ls : {n_start_on_ls}\n"
+            f"  cont  on Lp : {n_cont_on_lp}\n"
+            f"  neither bit : {n_neither}\n"
+            f"  both bits   : {n_both}\n"
+            f"  TOTAL irregular: {n_irregular}"
+        )
+
+    # Put banner at the top of the figure
+    fig4.suptitle(banner, fontsize=14)
+
+    # Put detail box on the right subplot (top-left corner inside axes)
+    ax2.text(
+        0.02, 0.98, detail,
+        transform=ax2.transAxes,
+        ha="left", va="top",
+        fontsize=9,
+        bbox=dict(facecolor="white", alpha=0.85, edgecolor="black", linewidth=2),
+    )
+
+    # If NG, emphasize the whole figure border by thickening spines
+    if not (ok_all and n_irregular == 0):
+        for ax in (ax1, ax2):
+            for sp in ax.spines.values():
+                sp.set_linewidth(3)
+
+    fig4.tight_layout(rect=[0, 0, 1, 0.92])
     fig4.savefig(os.path.join(outdir, f"{outprefix}cluster_composition_pixel{pixel}.png"))
     plt.close(fig4)
 
