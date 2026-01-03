@@ -1349,9 +1349,9 @@ def main():
         if args.plot_rate_vs_grade:
             print("----- plot_rate_vs_grade ----- ")
 
-            # plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
-            #     gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh, \
-            #                                 rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
+            plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
+                gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh, \
+                                            rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
 
             results, outcsv, outpng = estimate_lp_ls_from_hpmpms_profilelik(event_list=event_list,\
                 plotpixels=plotpixels, \
