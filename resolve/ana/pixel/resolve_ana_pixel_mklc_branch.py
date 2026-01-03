@@ -685,17 +685,13 @@ def main():
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time,\
                 gtiuse = args.gtiuse, debug= args.debug, show = args.show, nonstop = args.nonstop, lcthresh = args.lcthresh, \
                                             rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
-            print(f"出力ファイル rate_vs_grade.png が作成されました。")
-
     else:
         if args.plot_lightcurve:
             plot_lightcurve(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time)
-            print(f"出力ファイル {args.output}_lightcurve.png が作成されました。")
 
         if args.plot_rate_vs_grade:
             plot_rate_vs_grade(event_list, plotpixels, itypenames, args.timebinsize, args.output, ref_time, \
                 debug= args.debug, show = args.show, rate_max_ingratio = args.rate_max_ingratio, yscale_ingratio = args.yscale_ingratio)
-            print(f"出力ファイル rate_vs_grade.png が作成されました。")
 
 if __name__ == "__main__":
     main()
