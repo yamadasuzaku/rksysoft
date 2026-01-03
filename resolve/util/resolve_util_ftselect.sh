@@ -46,12 +46,11 @@ echo "Selection expression: $expr"
 echo "Output file: $outfile"
 echo "Extension: $extention"
 
-
 echo "which ftselect: $(command -v ftselect)"
 echo "HEADAS=$HEADAS"
-echo "PATH=$PATH"
+#echo "PATH=$PATH"
 echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
-echo "DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH"
+#echo "DYLD_FALLBACK_LIBRARY_PATH=$DYLD_FALLBACK_LIBRARY_PATH"
 
 # ftselectコマンドの実行
 ftselect \

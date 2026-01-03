@@ -17,7 +17,7 @@ check_file_exists() {
 
 # --- Check input argument ---
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <input_file_uf.evt>" >&2
+    echo "Usage: $0 <input_file_uf.evt> (cl.evt is also needed in resolve_ftools_add_prevnext.sh) " >&2
     exit 1
 fi
 
@@ -39,7 +39,7 @@ base_name="${input_file%.evt}_noBL_prevnext_cutclgti.evt"
 check_file_exists "$base_name"
 
 echo ">>> Running large cluster detection on $base_name"
-resolve_ftools_add_cluster.py "$base_name" \
+resolve_ftools_detect_pseudo_event_clusters.py "$base_name" \
     --mode large \
     --col_cluster ICLUSTERL \
     --col_member IMEMBERL \
@@ -47,7 +47,7 @@ resolve_ftools_add_cluster.py "$base_name" \
     -d
 
 echo ">>> Running small cluster detection on large_$base_name"
-resolve_ftools_add_cluster.py "large_$base_name" \
+resolve_ftools_detect_pseudo_event_clusters.py "large_$base_name" \
     --mode small \
     --col_cluster ICLUSTERS \
     --col_member IMEMBERS \

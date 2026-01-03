@@ -240,6 +240,7 @@ def plot_cluster(
     mjdref: int,
     show: bool = False,
     outname: str = "cluster",
+    input_fits: str = "input.fits"
 ):
     """
     Diagnostic plot per pixel:
@@ -322,6 +323,7 @@ def process_pixel_data(
     show: bool = False,
     debug: bool = False,
     outname: str = "cluster",
+    input_fits: str = "input.fits"
 ):
     """
     Run clustering for a specific pixel and return global-length arrays (aligned to 'data' rows).
@@ -361,6 +363,7 @@ def process_pixel_data(
             show=show,
             outname=outname,
             mjdref=params.mjdref,
+            input_fits=input_fits
         )
 
         # cluster stats + CL_REASON visualization
@@ -374,6 +377,7 @@ def process_pixel_data(
             outdir=output_dir,           # same figdir
             outprefix=f"{outname}",      # keep prefix consistent
             top_n_clusters=40,
+            input_fits=input_fits
         )
 
     if debug:
@@ -514,6 +518,7 @@ def plot_cluster_stats_for_pixel(
     outdir: str,
     outprefix: str,
     top_n_clusters: int = 40,
+    input_fits: str = "input.fits"    
 ):
     """
     Save per-pixel cluster statistics & CL_REASON visualization.
@@ -602,8 +607,31 @@ def plot_cluster_stats_for_pixel(
 
     ax.set_xlabel("Cluster size (#rows in cluster)")
     ax.set_ylabel("Count (#clusters)")
-    ax.set_title(f"Pixel {pixel}: Cluster size distribution (Nclusters={len(cluster_sizes)})")
+    ax.set_title(f"Pixel {pixel} prefix={outprefix}: Cluster size distribution (Nclusters={len(cluster_sizes)})")
     ax.grid(True, alpha=0.2)
+
+    # ------------------------------------------------------------
+    # Debug / provenance annotation (bottom-left, small & gray)
+    # ------------------------------------------------------------
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    meta_text = (
+        f"input_fits: {os.path.basename(input_fits)}\n"
+        f"pixel: {pixel}\n"
+        f"Nclusters: {len(cluster_sizes)}\n"
+        f"generated: {timestamp}"
+    )
+
+    fig1.text(
+        0.01, 0.01,
+        meta_text,
+        ha="left",
+        va="bottom",
+        fontsize=8,
+        color="gray",
+        family="monospace",
+    )
 
     fig1.tight_layout()
     fig1.savefig(os.path.join(outdir, f"{outprefix}cluster_size_hist_pixel{pixel}.png"))
@@ -619,8 +647,19 @@ def plot_cluster_stats_for_pixel(
     ax.set_xticks(x)
     ax.set_xticklabels(bit_labels, rotation=45, ha="right")
     ax.set_ylabel("Count (clustered rows)")
-    ax.set_title(f"Pixel {pixel}: CL_REASON bit frequencies (clustered rows only)")
+    ax.set_title(f"Pixel {pixel} prefix={outprefix}: CL_REASON bit frequencies (clustered rows only)")
     ax.grid(True, axis="y", alpha=0.2)
+
+    fig2.text(
+        0.01, 0.01,
+        meta_text,
+        ha="left",
+        va="bottom",
+        fontsize=7,
+        color="gray",
+        family="monospace",
+    )
+
     fig2.tight_layout()
     fig2.savefig(os.path.join(outdir, f"{outprefix}cl_reason_bitfreq_pixel{pixel}.png"))
     plt.close(fig2)
@@ -635,10 +674,21 @@ def plot_cluster_stats_for_pixel(
     ax.set_xticklabels([f"b{b}" for b in BITS_TO_PLOT], rotation=0)
     ax.set_yticks(np.arange(len(top)))
     ax.set_yticklabels([f"cid={int(cluster_unique[i])}\nsize={int(cluster_sizes[i])}" for i in top])
-    ax.set_title(f"Pixel {pixel}: Top-{len(top)} clusters × CL_REASON bits (fraction per cluster)")
+    ax.set_title(f"Pixel {pixel} prefix={outprefix}: Top-{len(top)} clusters × CL_REASON bits (fraction per cluster)")
     ax.set_xlabel("Bits")
     ax.set_ylabel("Clusters (sorted by size)")
     fig3.colorbar(im, ax=ax, label="Fraction of rows in cluster with bit")
+
+    fig3.text(
+        0.01, 0.01,
+        meta_text,
+        ha="left",
+        va="bottom",
+        fontsize=7,
+        color="gray",
+        family="monospace",
+    )
+
     fig3.tight_layout()
     fig3.savefig(os.path.join(outdir, f"{outprefix}cl_reason_heatmap_pixel{pixel}.png"))
     plt.close(fig3)
@@ -685,13 +735,13 @@ def plot_cluster_stats_for_pixel(
     fig4 = plt.figure(figsize=(11, 5.0))
     ax1 = fig4.add_subplot(1, 2, 1)
     ax1.bar(["Lp", "Ls"], [total_lp, total_ls])
-    ax1.set_title(f"Pixel {pixel}: ITYPE composition (clustered rows)")
+    ax1.set_title(f"Pixel {pixel} prefix={outprefix}: ITYPE composition (clustered rows)")
     ax1.set_ylabel("Count")
     ax1.grid(True, axis="y", alpha=0.2)
 
     ax2 = fig4.add_subplot(1, 2, 2)
     ax2.bar(["START_OK", "CONT_OK"], [total_start, total_cont])
-    ax2.set_title(f"Pixel {pixel}: START/CONT usage (clustered rows)")
+    ax2.set_title(f"Pixel {pixel} prefix={outprefix}: START/CONT usage (clustered rows)")
     ax2.set_ylabel("Count")
     ax2.grid(True, axis="y", alpha=0.2)
 
@@ -734,6 +784,16 @@ def plot_cluster_stats_for_pixel(
             for sp in ax.spines.values():
                 sp.set_linewidth(3)
 
+    fig4.text(
+        0.01, 0.01,
+        meta_text,
+        ha="left",
+        va="bottom",
+        fontsize=7,
+        color="gray",
+        family="monospace",
+    )
+    
     fig4.tight_layout(rect=[0, 0, 1, 0.92])
     fig4.savefig(os.path.join(outdir, f"{outprefix}cluster_composition_pixel{pixel}.png"))
     plt.close(fig4)
@@ -780,6 +840,7 @@ def main():
                 show=args.show,
                 debug=args.debug,
                 outname=args.outname,
+                input_fits = args.input_fits
             )
 
             # Overwrite by pixel rows (safe and future-proof)
