@@ -180,7 +180,7 @@ def plot_onecluster(cluster, icluster, usepixel, event_list, pixel_mask, pixel_m
     print(f"Plot saved to {filepath}")
 
 def process_event_list(event_list, usepixel, para1_start=TEMPLETE_LENGTH_MR, para1_continue=120, min_cluster_num=3, \
-                                                                                           debug=True, show=False):
+                                                                                           debug=True, show=False, output_dir="output_dir"):
 
     if debug: print(f"start process_event_list : {event_list[0]}, {usepixel}, {para1_start} {para1_continue} {min_cluster_num}")
     icluster_array, imember_array, bit14_array, bit15_array = [],[],[],[]
@@ -307,7 +307,7 @@ def main():
             pixel_mask = (pixel_data == pixel) # bool type with a length of n_rows 
             # Process the event list to find clusters
             clusters, icluster_array, imember_array, bit14_array, bit15_array = process_event_list(hdul[1].data, pixel, para1_start=para1_start,\
-                            para1_continue=para1_continue, min_cluster_num=min_cluster_num, debug=debug, show=show)
+                            para1_continue=para1_continue, min_cluster_num=min_cluster_num, debug=debug, show=show, output_dir = output_dir)
 
             if debug:
                 print(f"Cluster number is {len(clusters)}; check all the same length {np.sum(pixel_mask)}, {len(icluster_array)}, {len(imember_array)}, {len(bit14_array)}, {len(bit15_array)}")
