@@ -159,17 +159,6 @@ These tools are assumed to be part of the `rslcluster` / Resolve analysis utilit
 * Debug mode (`-d`) is enabled by default in clustering steps.
 * The pipeline is designed to be **fully sequential and fail-fast**.
 
-
-
-
-了解です。
-以下に、**既存 README にそのまま追記できる Appendix** を用意しました。
-
-* 物理的な意味は **過不足なく・名前付けの思想が分かる程度**
-* フローチャートは **README で可読な最小構成の Mermaid**
-
-にしています。
-
 ---
 
 ## Appendix A: Physical Interpretation of the Clustering Pipeline
@@ -263,7 +252,7 @@ This step serves as a **sanity check** before scientific interpretation.
 
 ---
 
-## Appendix B: Flow Chart of the Pipeline (Mermaid)
+## Appendix B: Flow Chart of the Pipeline
 
 The following Mermaid diagram summarizes the full pipeline flow.
 
