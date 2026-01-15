@@ -306,6 +306,12 @@ Anomalous events concentrated at **NEXT_INTERVAL == 105**.
 
 > Special combination of large amplitude and non-standard decay behavior
 
+--- 
+
+--- 
+
+
+
 ## Appendix A — Implementation Details (resolve_ftools_detect_pseudo_event_clusters.py)
 
 This appendix documents the implementation of the Resolve pseudo-event clustering tool:
