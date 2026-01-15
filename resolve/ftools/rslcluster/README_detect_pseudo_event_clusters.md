@@ -548,45 +548,45 @@ flowchart TD
   A[Start] --> B[Parse CLI arguments]
   B --> C[Build Params dataclass]
   C --> D[Ensure figdir exists]
-  D --> E[Open input FITS (HDU=1 EVENTS)]
-  E --> F[Allocate global output arrays\nICLUSTER, IMEMBER, CL_MODE, CL_REASON,\nPREV_LO_RES_PH, PREV_ITYPE]
+  D --> E[Open input FITS<br/>(HDU=1 EVENTS)]
+  E --> F[Allocate global output arrays<br/>ICLUSTER, IMEMBER, CL_MODE, CL_REASON,<br/>PREV_LO_RES_PH, PREV_ITYPE]
 
-  F --> G[Parse pixel list (--usepixels)]
+  F --> G[Parse pixel list<br/>(--usepixels)]
   G --> H{For each pixel}
 
-  H --> I[Filter rows: pixel_mask = (PIXEL == pixel)]
+  H --> I[Filter rows<br/>pixel_mask = (PIXEL == pixel)]
   I --> J[pixel_events = data[pixel_mask]]
 
   J --> K[identify_clusters(pixel_events, mode, params)]
-  K --> K1[Compute per-row diagnostic bits\n(ITYPE, LO, NEXT, RISE)]
+  K --> K1[Compute per-row diagnostic bits<br/>(ITYPE, LO_RES_PH, NEXT_INTERVAL, RISE_TIME)]
   K1 --> K2{Start condition met?}
 
-  K2 -- No --> K3[Mark cl_mode/cl_reason baseline\n(no clustering)]
+  K2 -- No --> K3[Store baseline diagnostics<br/>cl_mode/cl_reason (not clustered)]
   K3 --> K4[Advance i]
   K4 --> K1
 
-  K2 -- Yes --> L[Start cluster:\ncluster_id = i\nmember_id = 1\nset START_OK bit]
+  K2 -- Yes --> L[Start cluster<br/>cluster_id = i<br/>member_id = 1<br/>set START_OK bit]
   L --> M{Continuation condition holds?}
-  M -- Yes --> N[Assign same cluster_id\nmember_id++\nset CONT_OK bit\nadvance i]
+  M -- Yes --> N[Assign same cluster_id<br/>member_id++<br/>set CONT_OK bit<br/>advance i]
   N --> M
   M -- No --> O[Exit cluster loop]
 
-  O --> P[Compute PREV_LO_RES_PH / PREV_ITYPE arrays]
-  P --> Q[Return per-pixel arrays\n(cluster_ids, member_ids,\ncl_mode, cl_reason,\nprev_lo, prev_itype)]
+  O --> P[Compute previous-row diagnostics<br/>PREV_LO_RES_PH / PREV_ITYPE]
+  P --> Q[Return per-pixel arrays<br/>cluster_ids, member_ids,<br/>cl_mode, cl_reason,<br/>prev_lo, prev_itype]
 
-  Q --> R[Map per-pixel arrays into global arrays\n(only pixel_mask rows)]
+  Q --> R[Map per-pixel arrays into global arrays<br/>(only pixel_mask rows)]
   R --> S{figdir enabled?}
-  S -- Yes --> T[plot_cluster()\nTIME vs LO and NEXT vs LO]
-  T --> U[plot_cluster_stats_for_pixel()\nCSV + size hist + bit freq + heatmap + consistency]
+  S -- Yes --> T[plot_cluster()<br/>TIME vs LO_RES_PH & NEXT_INTERVAL vs LO_RES_PH]
+  T --> U[plot_cluster_stats_for_pixel()<br/>CSV + size hist + bit freq + heatmap + consistency]
   S -- No --> V[Skip plots]
 
   U --> W[Next pixel]
   V --> W
   W --> H
 
-  H -->|All pixels processed| X[Remove existing columns if name-collisions]
-  X --> Y[Append new columns\nICLUSTER/IMEMBER/CL_MODE/CL_REASON\nPREV_LO_RES_PH/PREV_ITYPE]
-  Y --> Z[Write output FITS (overwrite=True)]
+  H -->|All pixels processed| X[Remove existing columns<br/>(name collisions)]
+  X --> Y[Append new columns<br/>ICLUSTER/IMEMBER/CL_MODE/CL_REASON<br/>PREV_LO_RES_PH/PREV_ITYPE]
+  Y --> Z[Write output FITS<br/>(overwrite=True)]
   Z --> AA[End]
 ```
 
