@@ -268,26 +268,8 @@ Generated per event file:
 * Observed versus predicted counts for **all grades**
 * Bias versus pixel for Lp and Ls
 
-These plots are intended for **flight review and pipeline validation**, not publication.
+These plots are intended for validation, not publication.
 
----
-
-## Why This Matters
-
-Low-grade events (especially **Ls**) are the most numerous and the most vulnerable to:
-
-* cosmic-ray\UTF{2013}induced pseudo events
-* waveform subtraction residuals
-* clustering-based rejection
-
-If Lp/Ls are used naively to estimate exposure or rate:
-
-> **Ignoring pseudo-event contamination leads to systematically biased effective exposure and flux estimates.**
-
-By anchoring the rate inference to **Hp/Mp/Ms**, this method provides a **physics-based reference**
-against which Lp/Ls behavior can be validated.
-
----
 
 ## Status
 
