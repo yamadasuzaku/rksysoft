@@ -23,7 +23,7 @@ https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/res
 * `<input_file_uf.evt>`
   Resolve unfiltered event file with `_uf.evt` suffix.
 
-\CID{220} **Important**
+**Important**
 In addition to `<input_file_uf.evt>`, the corresponding
 
 ```text
@@ -96,7 +96,7 @@ resolve_ftools_detect_pseudo_event_clusters.py large_<base_file> \
   * `ICLUSTERS`
   * `IMEMBERS`
 
-\CID{1840} For algorithmic details, see:
+For algorithmic details, see:
 
 * **README_add_cluster.md**
   [XRISM Resolve Pseudo-Event Clustering Tool](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_add_cluster.md)
