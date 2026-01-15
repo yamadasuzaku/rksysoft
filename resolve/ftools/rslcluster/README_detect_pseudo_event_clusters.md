@@ -592,7 +592,7 @@ flowchart TD
 
 ---
 
-### Appendix C — Practical interpretation guide (quick)
+### Appendix C — Practical interpretation guide
 
 * Use `ICLUSTER > 0` to identify candidate pseudo-event groups.
 * Use `IMEMBER` to identify cluster structure (start vs subsequent members).
@@ -602,8 +602,6 @@ flowchart TD
   * short-interval chains (`NEXT<40` or `PREV<40`)
   * rise-time anomalies (`RISE<rt_min` or `RISE>rt_max`)
 * Use `CL_MODE` to distinguish large-mode vs small-mode tagging.
-
-
 
 ## Remark
 
