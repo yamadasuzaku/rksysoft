@@ -41,6 +41,7 @@ def parse_args():
     parser.add_argument('--timebinsize', '-t', type=float, help='光度曲線の時間ビンサイズ', default=100.0)
     parser.add_argument('--itypenames', '-y', type=str, help='カンマ区切りのitypeリスト', default='0,1,2,3,4')
     parser.add_argument('--plotpixels', '-p', type=str, help='プロットするピクセルのカンマ区切りリスト (calを除く場合は、0,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,25,26,27,28,29,30,31,32,33,34,35)', default=','.join(map(str, range(36))))
+    parser.add_argument('--exclude-pixels','-ex', type=str, default='', help='除外するピクセルのカンマ区切りリスト (例: 12 or 12,25 など)')
     parser.add_argument('--output', '-o', type=str, help='出力ファイル名のプレフィックス', default='mklc')
     parser.add_argument('--output_dir', '-odir', type=str, help='出力ディレクトリ名', default='output_mklc_branch')
     parser.add_argument('--plot_lightcurve', '-l', action='store_true', help='光度曲線をプロットする')
@@ -77,6 +78,17 @@ def parse_args():
     # どちらのプロットフラグも設定されていない場合はエラーを表示
     if (not args.plot_lightcurve) and (not args.plot_rate_vs_grade):
         parser.error("少なくとも--plot_lightcurveまたは--plot_rate_vs_gradeのどちらかを指定してください。")
+
+    # plotpixels を list[int] に変換
+    plotpixels = list(map(int, args.plotpixels.split(',')))
+
+    # exclude-pixels が指定されていれば除外
+    if args.exclude_pixels:
+        exclude = set(map(int, args.exclude_pixels.split(',')))
+        plotpixels = [p for p in plotpixels if p not in exclude]
+
+    # 上書きして返す（既存コードと整合）
+    args.plotpixels = plotpixels
     
     return args
 
@@ -1441,7 +1453,8 @@ def main():
     MJD_REFERENCE_DAY = 58484
     ref_time = Time(MJD_REFERENCE_DAY, format='mjd')
     
-    plotpixels = list(map(int, args.plotpixels.split(',')))
+    plotpixels = args.plotpixels
+#    plotpixels = list(map(int, args.plotpixels.split(',')))
     itypenames = list(map(int, args.itypenames.split(',')))
 
     with open(args.filelist, 'r') as file:
