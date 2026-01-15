@@ -84,7 +84,7 @@ resolve_ftools_detect_pseudo_event_clusters.py clean.evt \
   * **small**: detect **subtle pseudo events** consistent with waveform subtraction residuals and special forced-trigger populations (e.g., `NEXT_INTERVAL == 75` or `105`)
 
 * `--usepixels` / `-p`
-  Comma-separated pixel list (default: 0\UTF{2013}35)
+  Comma-separated pixel list (default: 0,...,35)
 
 ### Output column names
 
@@ -196,14 +196,14 @@ These categories are based on **timing structure, waveform behavior, and algorit
 
 ---
 
-## (1) Cosmic-ray\UTF{2013}induced pseudo Ls following a large pulse
+## (1) Cosmic-ray induced pseudo Ls following a large pulse
 
 **Description**
 Pseudo Ls events generated immediately after a **very large pulse**, typically caused by a cosmic-ray interaction.
 
 **Key signatures**
 
-* Very short `NEXT_INTERVAL` (typically \UTF{2248} 25 samples)
+* Very short `NEXT_INTERVAL` (typically 25 samples)
 * Often appears as a **single Lp + Ls pair**
 * In some pixels, **one Lp followed by multiple Ls** may occur
 
@@ -214,11 +214,11 @@ Pseudo Ls events generated immediately after a **very large pulse**, typically c
 
 **Interpretation**
 
-> Cosmic-ray\UTF{2013}induced clipped or semi-clipped events producing artificial secondary triggers
+> Cosmic-ray induced clipped or semi-clipped events producing artificial secondary triggers
 
 ---
 
-## (2) Frame-event\UTF{2013}induced small-amplitude pseudo Ls
+## (2) Frame-event induced small-amplitude pseudo Ls
 
 **Description**
 Pseudo Ls events induced by **charged-particle hits on the readout board or frame**, rather than the absorber.
@@ -240,7 +240,7 @@ Pseudo Ls events induced by **charged-particle hits on the readout board or fram
 
 ---
 
-## (3) High-rate\UTF{2013}induced abnormal Lp/Ls (waveform subtraction breakdown)
+## (3) High-rate induced abnormal Lp/Ls (waveform subtraction breakdown)
 
 **Description**
 Occurs under **high event-rate conditions**, independent of cosmic-ray hits.
@@ -293,7 +293,7 @@ Anomalous events concentrated at **NEXT_INTERVAL == 105**.
 **Key signatures**
 
 * Only appears for large-amplitude waveforms
-* Rise time \UTF{2248} 25\UTF{2013}26 samples
+* Rise time 25 -- 26 samples
 * Effectively **abnormally fast decay in the derivative waveform**
 * `slope_differ == 1`
 
