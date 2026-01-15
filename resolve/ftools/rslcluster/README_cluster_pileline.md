@@ -1,4 +1,6 @@
-# README: Clustering Pipeline Script (Updated 2026.1.15) 
+# README: Clustering Pipeline Script 
+
+- (Updated 2026.1.15) 
 
 This script automates a three-step clustering pipeline to identify and diagnose pseudo-event clusters in XRISM Resolve event files.
 
