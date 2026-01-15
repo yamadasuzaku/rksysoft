@@ -270,7 +270,6 @@ Generated per event file:
 
 These plots are intended for validation, not publication.
 
-
 ## Status
 
 * This tool is currently in **debug and validation phase**
