@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -1373,12 +1374,34 @@ def estimate_lp_ls_from_hpmpms_profilelik(
             ylo = np.array([r.get(f"biaspct_lo_{g}", np.nan) for r in results_sorted], dtype=float)
             yhi = np.array([r.get(f"biaspct_hi_{g}", np.nan) for r in results_sorted], dtype=float)
 
-            yerr_low = ys - ylo
-            yerr_high = yhi - ys
-            yerr = np.vstack([
-                np.where(np.isfinite(yerr_low), yerr_low, 0.0),
-                np.where(np.isfinite(yerr_high), yerr_high, 0.0),
-            ])
+
+            # --- ここから「落ちない」対処療法 ---
+            lower = np.minimum(ylo, yhi)
+            upper = np.maximum(ylo, yhi)
+
+            yerr_low  = np.maximum(0.0, ys - lower)
+            yerr_high = np.maximum(0.0, upper - ys)
+
+            bad = ~np.isfinite(xs) | ~np.isfinite(ys) | ~np.isfinite(yerr_low) | ~np.isfinite(yerr_high)
+            if np.any(bad):
+                warnings.warn(f"[WARN] NaN/inf found in errorbar inputs for grade={g}: {np.sum(bad)} points -> yerr set to 0")
+                yerr_low  = np.where(np.isfinite(yerr_low),  yerr_low,  0.0)
+                yerr_high = np.where(np.isfinite(yerr_high), yerr_high, 0.0)
+
+            # 「本来は負になっていた点」を検知して警告（任意）
+            nneg = int(np.sum(((ys - ylo) < 0.0) | ((yhi - ys) < 0.0)))
+            if nneg > 0:
+                warnings.warn(f"[WARN] yerr would be negative for grade={g}: {nneg} points -> forced non-negative yerr.")
+
+            yerr = np.vstack([yerr_low, yerr_high])
+            # --- ここまで ---
+
+            # yerr_low = ys - ylo
+            # yerr_high = yhi - ys
+            # yerr = np.vstack([
+            #     np.where(np.isfinite(yerr_low), yerr_low, 0.0),
+            #     np.where(np.isfinite(yerr_high), yerr_high, 0.0),
+            # ])
 
             ax.axhline(0.0, lw=1.0, alpha=0.8)
             for p in (10, 20, 50):
