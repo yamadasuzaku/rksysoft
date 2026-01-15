@@ -47,7 +47,7 @@ resolve_ftools_add_prevnext.sh <input_file_uf.evt>
 
 https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/resolve_ftools_add_prevnext.sh
 
-* Adds previous/next interval\UTF{2013}related columns to the event file.
+* Adds previous/next interval related columns to the event file.
 * Internally generates a GTI (`cl.gti`) based on `<input_file>_cl.evt`.
 * Produces an output file with suffix:
 
@@ -216,7 +216,7 @@ After removing / tagging large clusters, the remaining event stream is much clea
 Small clusters then capture:
 
 * slow or subtle detector correlations,
-* low-amplitude pile-up\UTF{2013}like structures,
+* low-amplitude pile-up like structures,
 * extended tails of physical or instrumental response.
 
 This separation avoids mixing **physically distinct phenomena** into a single clustering population.
