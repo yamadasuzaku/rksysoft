@@ -188,7 +188,7 @@ These are included to support local-context debugging and quick validation.
 
 ---
 
-# 7. Taxonomy of Pseudo Ls Events (Critical Section)
+# 7. Taxonomy of Pseudo Ls Events
 
 This section describes **five distinct classes of pseudo Ls events** that appear as Ls in Resolve data but are **not astrophysical X-ray photons**.
 
