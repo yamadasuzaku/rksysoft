@@ -2,11 +2,11 @@
 
 ## Overview
 
-This document describes the **branching\UTF{2013}ratio\UTF{2013}based inference of Lp/Ls events** implemented in
+This document describes the **branching-ratio-based inference of Lp/Ls events** implemented in
 
 ```
 
-resolve_ana_pixel_mklc_branch.py
+resolve_ana_pixel_mklc_branch.pyw
 
 ````
 

@@ -4,6 +4,8 @@
 
 This script automates a three-step clustering pipeline to identify and diagnose pseudo-event clusters in XRISM Resolve event files.
 
+Test procedure is described in [README_how_to_test_lstool_20260115.md](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_how_to_test_lstool_20260115.md). 
+
 ## Script Name
 
 ```bash
@@ -99,7 +101,7 @@ resolve_ftools_detect_pseudo_event_clusters.py large_<base_file> \
 For algorithmic details, see:
 
 * **README_add_cluster.md**
-  [XRISM Resolve Pseudo-Event Clustering Tool](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_add_cluster.md)
+  [XRISM Resolve Detect Pseudo Events and Clustering Tool](https://github.com/yamadasuzaku/rksysoft/blob/main/resolve/ftools/rslcluster/README_detect_pseudo_event_clusters.md)
 
 ---
 
