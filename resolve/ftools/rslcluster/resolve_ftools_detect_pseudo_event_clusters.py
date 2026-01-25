@@ -235,6 +235,7 @@ def identify_clusters(
 def plot_cluster(
     events,
     cluster_ids: np.ndarray,
+    member_ids: np.ndarray,
     pixel: int,
     output_dir: str,
     mjdref: int,
@@ -246,6 +247,7 @@ def plot_cluster(
     Diagnostic plot per pixel:
       (1) TIME vs LO_RES_PH
       (2) NEXT_INTERVAL vs LO_RES_PH
+      (3) DERIV_MAX vs Member index (1..N within cluster)
     Highlight clustered events (cluster_ids > 0).
     """
     # Separate Lp and Ls
@@ -264,6 +266,7 @@ def plot_cluster(
     times_cl_Lp = compute_datetime_array(mjdref, cl_Lp["TIME"])
     times_cl_Ls = compute_datetime_array(mjdref, cl_Ls["TIME"])
 
+    # -------------- Figure 1&2 (TIME / NEXT_INTERVAL vs LO_RES_PH) --------------
     fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 
     # (1) TIME vs LO_RES_PH
@@ -313,6 +316,56 @@ def plot_cluster(
         plt.show()
     plt.close(fig)
 
+    # -------------- Figure 3: DERIV_MAX vs Member index --------------
+    # events["DERIV_MAX"] vs member_ids (1..N) for clustered rows only
+    if np.any(clustered_mask) and "DERIV_MAX" in events.names:
+        deriv_vals = events["DERIV_MAX"][clustered_mask]
+        member_vals = member_ids[clustered_mask]
+        cid_vals = cluster_ids[clustered_mask]
+
+        fig2, ax2 = plt.subplots(figsize=(7, 5))
+        sc = ax2.scatter(
+            member_vals,
+            deriv_vals,
+            c=cid_vals,
+            s=8,
+            alpha=0.7,
+            cmap="tab20"
+        )
+        ax2.set_xlabel("Member index within cluster (IMEMBER)")
+        ax2.set_ylabel("DERIV_MAX")
+        ax2.set_title(f"{outname} : Pixel {pixel} - DERIV_MAX vs Member index")
+        ax2.grid(True, alpha=0.2)
+
+        cbar = fig2.colorbar(sc, ax=ax2)
+        cbar.set_label("cluster_id (start row index)", fontsize=9)
+
+        # 簡単なメタ情報を左下に
+        meta_text = (
+            f"input_fits: {os.path.basename(input_fits)}\n"
+            f"pixel: {pixel}\n"
+            f"Nclustered rows: {np.sum(clustered_mask)}"
+        )
+        fig2.text(
+            0.01, 0.01,
+            meta_text,
+            ha="left",
+            va="bottom",
+            fontsize=7,
+            color="gray",
+            family="monospace",
+        )
+
+        fig2.tight_layout()
+        out_path2 = os.path.join(
+            output_dir,
+            f"cluster_derivmax_vs_member_{outname}_pixel{pixel}.png"
+        )
+        fig2.savefig(out_path2)
+        if show:
+            plt.show()
+        plt.close(fig2)
+
 
 def process_pixel_data(
     data,
@@ -358,6 +411,7 @@ def process_pixel_data(
         plot_cluster(
             events=pixel_events,
             cluster_ids=cluster_ids,
+            member_ids=member_ids,
             pixel=pixel,
             output_dir=output_dir,
             show=show,
@@ -383,8 +437,6 @@ def process_pixel_data(
     if debug:
         n_clustered = int(np.sum(cluster_ids > 0))
         print(f"..... Finished pixel {pixel}: clustered_rows={n_clustered} / events={len(pixel_events)}")
-
-
 
     return cluster_array, member_array, mode_array, reason_array, prev_lo_array, prev_type_array
 
@@ -664,34 +716,35 @@ def plot_cluster_stats_for_pixel(
     fig2.savefig(os.path.join(outdir, f"{outprefix}cl_reason_bitfreq_pixel{pixel}.png"))
     plt.close(fig2)
 
-    # ------------------------------------------------------------
-    # Figure 3: Heatmap (top clusters x bits) as fraction
-    # ------------------------------------------------------------
-    fig3 = plt.figure(figsize=(12, 6))
-    ax = fig3.add_subplot(1, 1, 1)
-    im = ax.imshow(heat_frac, aspect="auto", interpolation="nearest")
-    ax.set_xticks(np.arange(len(BITS_TO_PLOT)))
-    ax.set_xticklabels([f"b{b}" for b in BITS_TO_PLOT], rotation=0)
-    ax.set_yticks(np.arange(len(top)))
-    ax.set_yticklabels([f"cid={int(cluster_unique[i])}\nsize={int(cluster_sizes[i])}" for i in top])
-    ax.set_title(f"Pixel {pixel} prefix={outprefix}: Top-{len(top)} clusters × CL_REASON bits (fraction per cluster)")
-    ax.set_xlabel("Bits")
-    ax.set_ylabel("Clusters (sorted by size)")
-    fig3.colorbar(im, ax=ax, label="Fraction of rows in cluster with bit")
+    # This is not so usuful.. so skip (2026.1.25)
+    # # ------------------------------------------------------------
+    # # Figure 3: Heatmap (top clusters x bits) as fraction
+    # # ------------------------------------------------------------
+    # fig3 = plt.figure(figsize=(12, 6))
+    # ax = fig3.add_subplot(1, 1, 1)
+    # im = ax.imshow(heat_frac, aspect="auto", interpolation="nearest")
+    # ax.set_xticks(np.arange(len(BITS_TO_PLOT)))
+    # ax.set_xticklabels([f"b{b}" for b in BITS_TO_PLOT], rotation=0)
+    # ax.set_yticks(np.arange(len(top)))
+    # ax.set_yticklabels([f"cid={int(cluster_unique[i])}\nsize={int(cluster_sizes[i])}" for i in top])
+    # ax.set_title(f"Pixel {pixel} prefix={outprefix}: Top-{len(top)} clusters × CL_REASON bits (fraction per cluster)")
+    # ax.set_xlabel("Bits")
+    # ax.set_ylabel("Clusters (sorted by size)")
+    # fig3.colorbar(im, ax=ax, label="Fraction of rows in cluster with bit")
 
-    fig3.text(
-        0.01, 0.01,
-        meta_text,
-        ha="left",
-        va="bottom",
-        fontsize=7,
-        color="gray",
-        family="monospace",
-    )
+    # fig3.text(
+    #     0.01, 0.01,
+    #     meta_text,
+    #     ha="left",
+    #     va="bottom",
+    #     fontsize=7,
+    #     color="gray",
+    #     family="monospace",
+    # )
 
-    fig3.tight_layout()
-    fig3.savefig(os.path.join(outdir, f"{outprefix}cl_reason_heatmap_pixel{pixel}.png"))
-    plt.close(fig3)
+    # fig3.tight_layout()
+    # fig3.savefig(os.path.join(outdir, f"{outprefix}cl_reason_heatmap_pixel{pixel}.png"))
+    # plt.close(fig3)
 
     # ------------------------------------------------------------
     # Figure 4: Consistency check (Lp/Ls vs START/CONT)
@@ -798,6 +851,290 @@ def plot_cluster_stats_for_pixel(
     fig4.savefig(os.path.join(outdir, f"{outprefix}cluster_composition_pixel{pixel}.png"))
     plt.close(fig4)
 
+# -------------------------
+# New: all-pixel cluster size summary (6x6 subplots)
+# -------------------------
+def plot_cluster_stats_for_all_pixels(
+    *,
+    data,
+    cluster_total: np.ndarray,
+    member_total: np.ndarray,
+    mode_total: np.ndarray,
+    reason_total: np.ndarray,
+    pixel_list: list[int],
+    outdir: str,
+    outprefix: str,
+    input_fits: str = "input.fits",
+):
+    """
+    Make figures summarizing cluster size distributions
+    over all pixels (expected 6x6=36 pixels).
+
+    (1) 6x6 grid of per-pixel histograms (pixel番号順), with a common y-axis max
+    (2) Single overlay figure with all pixels (36 colors) in one panel
+    (3) 6x6 pixel-map grid (電気回路事情に合わせた pixel 並び)
+    """
+    ensure_directory(outdir, verbose=False)
+
+    # Collect cluster_sizes per pixel
+    per_pixel_sizes: dict[int, np.ndarray] = {}
+    max_size_global = 0
+
+    for pix in pixel_list:
+        mask = (data["PIXEL"] == pix)
+        if not np.any(mask):
+            continue
+
+        events_pix = data[mask]
+        cluster_ids_pix = cluster_total[mask]
+        member_ids_pix = member_total[mask]
+        cl_mode_pix = mode_total[mask]
+        cl_reason_pix = reason_total[mask]
+
+        summary = summarize_clusters_for_pixel(
+            events=events_pix,
+            cluster_ids=cluster_ids_pix,
+            member_ids=member_ids_pix,
+            cl_mode=cl_mode_pix,
+            cl_reason=cl_reason_pix,
+        )
+        if summary is None:
+            # no clusters for this pixel
+            continue
+
+        (_, cluster_sizes, _, _, _, _, _) = summary
+        per_pixel_sizes[pix] = cluster_sizes
+        if cluster_sizes.size > 0:
+            max_size_global = max(max_size_global, int(np.max(cluster_sizes)))
+
+    if max_size_global == 0:
+        # No clusters at all; nothing to plot
+        return
+
+    # 共通の x-bin
+    bins = np.arange(0.5, max_size_global + 1.5, 1.0)
+
+    # --- 共通 y-max を決める ---
+    max_count_global = 0
+    for pix, sizes in per_pixel_sizes.items():
+        hist, _ = np.histogram(sizes, bins=bins)
+        if hist.size > 0:
+            max_count_global = max(max_count_global, int(hist.max()))
+
+    if max_count_global == 0:
+        return
+
+    # ============================================================
+    # (1) 6x6 layout: per-pixel histograms with shared y-limit
+    #     （pixel_list の順番で配置）
+    # ============================================================
+    nrows, ncols = 6, 6
+    fig = plt.figure(figsize=(12, 12))
+
+    for idx, pix in enumerate(pixel_list):
+        ax = fig.add_subplot(nrows, ncols, idx + 1)
+
+        if pix in per_pixel_sizes:
+            sizes = per_pixel_sizes[pix]
+            ax.hist(sizes, bins=bins, alpha=0.8, rwidth=0.9)
+            ax.set_ylim(0, max_count_global * 1.05)
+        else:
+            # No clusters / no events → 空欄
+            ax.text(
+                0.5, 0.5,
+                "no clusters",
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=7,
+                color="gray",
+            )
+            ax.set_ylim(0, max_count_global * 1.05)
+
+        ax.set_title(f"pix {pix}", fontsize=8)
+        ax.grid(True, alpha=0.2)
+
+        # 軸ラベルは最下段・最左列だけに付ける
+        if idx // ncols == nrows - 1:
+            ax.set_xlabel("Cluster size", fontsize=7)
+        else:
+            ax.set_xticklabels([])
+
+        if idx % ncols == 0:
+            ax.set_ylabel("#clusters", fontsize=7)
+        else:
+            ax.set_yticklabels([])
+
+    fig.suptitle(
+        f"Cluster size distributions for all pixels (input: {os.path.basename(input_fits)})",
+        fontsize=14
+    )
+
+    meta_text = (
+        f"input_fits: {os.path.basename(input_fits)}\n"
+        f"pixels: {pixel_list}\n"
+        f"max cluster size (global): {max_size_global}\n"
+        f"max #clusters per bin (global): {max_count_global}"
+    )
+    fig.text(
+        0.01, 0.01,
+        meta_text,
+        ha="left",
+        va="bottom",
+        fontsize=7,
+        color="gray",
+        family="monospace",
+    )
+
+    fig.tight_layout(rect=[0, 0.02, 1, 0.95])
+    out_path = os.path.join(outdir, f"{outprefix}cluster_size_hist_all_pixels.png")
+    fig.savefig(out_path)
+    plt.close(fig)
+
+    # ============================================================
+    # (2) 36色オーバーレイ: 全ピクセルを 1 枚に重ねた図
+    #     折れ線グラフ + 横方向の微小オフセットで重なりを回避
+    # ============================================================
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+
+    # bin中心（プロット用）: 1,2,3,... に相当
+    centers = 0.5 * (bins[:-1] + bins[1:])
+
+    # 36色用に、連続カラーマップから N 色取り出す
+    n_pix = len(pixel_list)
+    cmap_base = plt.colormaps["tab20"]
+    colors = cmap_base(np.linspace(0, 1, n_pix))
+
+    # 各 pixel に対して、整数位置のまわりに少しだけオフセットを振る
+    # 例: N=36 のとき、約 -0.4 ~ +0.4 の範囲に均等配置（bin 幅は1なので十分小さい）
+    offset_scale = 0.8  # 最大でも ±0.4 くらいに収まるように
+    offsets = np.linspace(-offset_scale / 2, offset_scale / 2, n_pix)
+
+    for idx, pix in enumerate(pixel_list):
+        if pix not in per_pixel_sizes:
+            continue
+
+        sizes = per_pixel_sizes[pix]
+        hist, _ = np.histogram(sizes, bins=bins)
+
+        # pixelごとのオフセットを付けた x 位置
+        x = centers + offsets[idx]
+
+        color = colors[idx]
+
+        # 折れ線グラフで描画（marker を付けてもよい）
+        ax2.plot(
+            x,
+            hist,
+            marker="o",
+            markersize=2,
+            linewidth=1.2,
+            color=color,
+            alpha=0.9,
+            label=f"pix {pix}",
+        )
+
+    ax2.set_xlim(bins[0], bins[-1])
+    ax2.set_ylim(-1, max_count_global * 1.05)
+    ax2.set_xlabel("Cluster size (#rows in cluster)")
+    ax2.set_ylabel("#clusters")
+    ax2.set_title(
+        f"Cluster size distributions (overlay of all pixels)\n"
+        f"input: {os.path.basename(input_fits)}"
+    )
+    ax2.grid(True, alpha=0.3)
+
+    # 凡例は小さめフォントで外側に
+    ax2.legend(
+        fontsize=7,
+        ncol=4,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        frameon=False,
+    )
+
+    fig2.tight_layout(rect=[0, 0.05, 1, 0.95])
+    out_path2 = os.path.join(outdir, f"{outprefix}cluster_size_hist_overlay_all_pixels.png")
+    fig2.savefig(out_path2)
+    plt.close(fig2)
+
+    # ============================================================
+    # (3) Pixel-map 版 6x6 layout
+    #     （resolve_ana_pixel_plot_6x6_energyspectrum_by_itype.py と同じ並び）
+    # ============================================================
+    # pixel_map[0,:] = DETY, pixel_map[1,:] = DETX, pixel_map[2,:] = PIXEL
+    pixel_map = np.array([
+        [1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6],  # DETY
+        [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6],  # DETX
+        [12, 11, 9, 19, 21, 23, 14, 13, 10, 20, 22, 24, 16, 15, 17, 18, 25, 26, 8, 7, 0, 35, 33, 34, 6, 4, 2, 28, 31, 32, 5, 3, 1, 27, 29, 30]  # PIXEL
+    ])
+
+    fig3 = plt.figure(figsize=(12, 12))
+    axes = fig3.subplots(6, 6)  # axes[dety, detx] でアクセス
+
+    # pixel_map の順に 0..35 を回して配置
+    for i in range(36):
+        dety_raw = pixel_map[0, i]  # 1..6
+        detx_raw = pixel_map[1, i]  # 1..6
+        pixel = int(pixel_map[2, i])
+
+        # DETY/DETX -> 配列インデックス変換（resolve_ana_pixel_plot_6x6_* と同じ）
+        dety = 6 - dety_raw         # 上下反転
+        detx = detx_raw - 1         # 0-indexed
+
+        ax = axes[dety, detx]
+
+        if pixel in per_pixel_sizes:
+            sizes = per_pixel_sizes[pixel]
+            ax.hist(sizes, bins=bins, alpha=0.8, rwidth=0.9)
+            ax.set_ylim(0, max_count_global * 1.05)
+        else:
+            ax.text(
+                0.5, 0.5,
+                "no clusters",
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=7,
+                color="gray",
+            )
+            ax.set_ylim(0, max_count_global * 1.05)
+
+        ax.set_title(f"PIXEL={pixel}", fontsize=8)
+        ax.grid(True, alpha=0.2)
+
+    # 軸ラベル（左列と下段だけ）
+    for row in range(6):
+        axes[row, 0].set_ylabel("#clusters", fontsize=7)
+        for col in range(1, 6):
+            axes[row, col].set_yticklabels([])
+
+    for col in range(6):
+        axes[5, col].set_xlabel("Cluster size", fontsize=7)
+        for row in range(5):
+            axes[row, col].set_xticklabels([])
+
+    fig3.suptitle(
+        f"Cluster size distributions (pixel-map layout)\n"
+        f"input: {os.path.basename(input_fits)}",
+        fontsize=14
+    )
+
+    fig3.text(
+        0.01, 0.01,
+        meta_text,
+        ha="left",
+        va="bottom",
+        fontsize=7,
+        color="gray",
+        family="monospace",
+    )
+
+    fig3.tight_layout(rect=[0, 0.02, 1, 0.95])
+    out_path3 = os.path.join(outdir, f"{outprefix}cluster_size_hist_all_pixels_pixelmap.png")
+    fig3.savefig(out_path3)
+    plt.close(fig3)
+
 
 def main():
     args = parse_args()
@@ -840,7 +1177,7 @@ def main():
                 show=args.show,
                 debug=args.debug,
                 outname=args.outname,
-                input_fits = args.input_fits
+                input_fits=args.input_fits
             )
 
             # Overwrite by pixel rows (safe and future-proof)
@@ -851,6 +1188,19 @@ def main():
             reason_total[m] = clreason[m]
             prev_lo_total[m] = prev_lo[m]
             prev_type_total[m] = prev_type[m]
+
+        # --- New: all-pixel summary figure ---
+        plot_cluster_stats_for_all_pixels(
+            data=data,
+            cluster_total=cluster_total,
+            member_total=member_total,
+            mode_total=mode_total,
+            reason_total=reason_total,
+            pixel_list=pixel_list,
+            outdir=args.figdir,
+            outprefix=args.outname,
+            input_fits=args.input_fits,
+        )
 
         # Avoid overwrite errors: remove pre-existing columns with the same name
         col_names_to_replace = [
