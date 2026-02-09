@@ -585,7 +585,7 @@ if [[ "$SUMMARY_ONLY" -eq 0 ]]; then
     echo
 
     echo "[3/5] Running resolve_ftools_cluster_pileline.sh ..."
-#    resolve_ftools_cluster_pileline.sh "$UF_EVT_BASENAME"
+    resolve_ftools_cluster_pileline.sh "$UF_EVT_BASENAME"
 
     echo "After clustering pipeline:"
     ls
@@ -608,7 +608,7 @@ if [[ "$SUMMARY_ONLY" -eq 0 ]]; then
         ln -s "${LSCHECK_DIR}/${CL_EVT_BASENAME}" .
     fi
 
-#    resolve_util_screen_for_lscluster.sh "$SMALL_LARGE_BASE" "$CL_EVT_BASENAME"
+    resolve_util_screen_for_lscluster.sh "$SMALL_LARGE_BASE" "$CL_EVT_BASENAME"
 
     echo "After resolve_util_screen_for_lscluster.sh:"
     ls
@@ -663,7 +663,7 @@ EOF
     elif [[ -n "$CLUSTERCUT_ARGS_OVERRIDE" ]]; then
         CLUSTERCUT_ARGS="$CLUSTERCUT_ARGS_OVERRIDE" ./run_mklc_branch.sh
     else
-#        ./run_mklc_branch.sh
+        ./run_mklc_branch.sh
         echo
     fi
 
