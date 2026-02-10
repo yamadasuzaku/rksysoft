@@ -6,55 +6,13 @@ from astropy.io import fits
 
 def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
     """
-    Calculate SAMPLECNTTRIG_WO_VERNIER from WFRB/trigger counters.
-
-    This function emulates the behavior of a 32-bit *unsigned* counter
-    implemented in an embedded OS / firmware environment.
-
-    Notes
-    -----
-    - All intermediate calculations are performed using Python's built-in
-      `int` type (arbitrary precision) to avoid overflow/underflow errors.
-    - The final result is explicitly masked to 32 bits to reproduce the
-      wrap-around behavior of a uint32 counter.
-    - The returned value is cast to `np.uint32`, which is suitable for
-      writing into FITS uint32 columns.
+    Calculate the trigger time (SAMPLECNTTRIG_WO_VERNIER) based on the input parameters.
     """
-
-    # Convert inputs to plain Python integers.
-    # This avoids accidental overflow when inputs originate from uint32 arrays.
-    wlp = int(WFRB_WRITE_LP)
-    wsp = int(WFRB_SAMPLE_CNT)
-    tlp = int(TRIG_LP)
-
-    # Compute lap difference using the upper 6 bits (bit[23:18]).
-    # The '& 0x3f' enforces modulo-64 behavior, consistent with firmware logic.
-    deltalap = (((wlp >> 18) & 0x3f) - ((tlp >> 18) & 0x3f)) & 0x3f
-
-    # In the firmware convention, a value of 63 represents -1 (one lap backward).
+    deltalap = (((WFRB_WRITE_LP >> 18) & 0x3f) - ((TRIG_LP >> 18) & 0x3f)) & 0x3f
     if deltalap == 63:
         deltalap = -1
-
-    # Perform the counter calculation using Python int.
-    # This step may temporarily produce negative values, which is acceptable here.
-    raw = wsp - deltalap * 0x40000 + (tlp & 0x3ffff)
-
-    # Explicitly apply 32-bit unsigned wrap-around
-    # to emulate the behavior of a uint32 register.
-    SAMPLECNTTRIG_WO_VERNIER = raw & 0xffffffff
-
-    # Return as uint32 for compatibility with FITS columns
-    return np.uint32(SAMPLECNTTRIG_WO_VERNIER)
-
-# def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
-#     """
-#     Calculate the trigger time (SAMPLECNTTRIG_WO_VERNIER) based on the input parameters.
-#     """
-#     deltalap = (((WFRB_WRITE_LP >> 18) & 0x3f) - ((TRIG_LP >> 18) & 0x3f)) & 0x3f
-#     if deltalap == 63:
-#         deltalap = -1
-#     SAMPLECNTTRIG_WO_VERNIER = ((WFRB_SAMPLE_CNT - deltalap * 0x40000) + (TRIG_LP & 0x3ffff)) & 0xffffffff
-#     return SAMPLECNTTRIG_WO_VERNIER
+    SAMPLECNTTRIG_WO_VERNIER = ((WFRB_SAMPLE_CNT - deltalap * 0x40000) + (TRIG_LP & 0x3ffff)) & 0xffffffff
+    return SAMPLECNTTRIG_WO_VERNIER
 
 def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
     """
