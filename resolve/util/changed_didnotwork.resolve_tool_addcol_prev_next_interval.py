@@ -8,24 +8,43 @@ def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
     """
     Calculate SAMPLECNTTRIG_WO_VERNIER from WFRB/trigger counters.
 
-    This implementation follows the original firmware-style computation
-    but casts inputs to plain Python integers to avoid numpy uint32
-    overflow/underflow issues.
+    This function emulates the behavior of a 32-bit *unsigned* counter
+    implemented in an embedded OS / firmware environment.
+
+    Notes
+    -----
+    - All intermediate calculations are performed using Python's built-in
+      `int` type (arbitrary precision) to avoid overflow/underflow errors.
+    - The final result is explicitly masked to 32 bits to reproduce the
+      wrap-around behavior of a uint32 counter.
+    - The returned value is cast to `np.uint32`, which is suitable for
+      writing into FITS uint32 columns.
     """
 
-    # Cast to Python int to avoid numpy uint32 underflow in subtraction
+    # Convert inputs to plain Python integers.
+    # This avoids accidental overflow when inputs originate from uint32 arrays.
     wlp = int(WFRB_WRITE_LP)
     wsp = int(WFRB_SAMPLE_CNT)
     tlp = int(TRIG_LP)
 
+    # Compute lap difference using the upper 6 bits (bit[23:18]).
+    # The '& 0x3f' enforces modulo-64 behavior, consistent with firmware logic.
     deltalap = (((wlp >> 18) & 0x3f) - ((tlp >> 18) & 0x3f)) & 0x3f
+
+    # In the firmware convention, a value of 63 represents -1 (one lap backward).
     if deltalap == 63:
         deltalap = -1
 
-    SAMPLECNTTRIG_WO_VERNIER = ((wsp - deltalap * 0x40000) + (tlp & 0x3ffff)) & 0xffffffff
+    # Perform the counter calculation using Python int.
+    # This step may temporarily produce negative values, which is acceptable here.
+    raw = wsp - deltalap * 0x40000 + (tlp & 0x3ffff)
 
-    # Return plain Python int (no np.uint32 here)
-    return SAMPLECNTTRIG_WO_VERNIER
+    # Explicitly apply 32-bit unsigned wrap-around
+    # to emulate the behavior of a uint32 register.
+    SAMPLECNTTRIG_WO_VERNIER = raw & 0xffffffff
+
+    # Return as uint32 for compatibility with FITS columns
+    return np.uint32(SAMPLECNTTRIG_WO_VERNIER)
 
 # def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
 #     """
@@ -39,39 +58,52 @@ def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
 
 def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
     """
-    Compute the differences between consecutive elements in counter_list,
-    considering an N-bit unsigned counter overflow.
+    Compute the differences between consecutive elements in `counter_list`,
+    taking into account an N-bit unsigned counter overflow.
 
-    This function follows the original implementation used in the
-    org.resolve_tool_addcol_prev_next_interval.py.
+    Parameters
+    ----------
+    counter_list : array-like
+        Sequence of counter values. Typically an array of uint32.
+    bit_width : int
+        Bit width of the hardware counter (e.g., 24 for a 24-bit counter).
+    reverse : bool, optional
+        If True, compute differences in the "reverse" direction, i.e.,
+        diff = prev - curr (used for NEXT_INTERVAL with reversed arrays).
+
+    Returns
+    -------
+    diffs : numpy.ndarray (dtype=uint32)
+        Array of positive differences with overflow correction applied.
     """
     max_value = (1 << bit_width) - 1
     diffs = []
-    minus_counter = 0  
+    minus_counter = 0
 
     for i in range(1, len(counter_list)):
-        # Cast to Python int to avoid numpy uint32 overflow/underflow
+        # Cast to Python int to avoid overflow/underflow in numpy uint32 arithmetic
         curr = int(counter_list[i])
         prev = int(counter_list[i - 1])
 
         if reverse:
-            diff = -1 * (curr - prev)   # same as prev - curr
+            # For reversed arrays, we want prev - curr
+            diff = prev - curr
         else:
             diff = curr - prev
 
+        # If negative, emulate unsigned wrap-around
         if diff < 0:
             diff += max_value + 1
 
-        # If diff is still negative here, it indicates an inconsistent counter jump
+        # If still negative here, something is inconsistent with the assumptions
         if diff < 0:
             minus_counter += 1
 
         diffs.append(diff)
 
     print(f"debug: def compute_diff_with_overflow, minus_counter = {minus_counter}")
-
-    # IMPORTANT: do NOT force uint32 here; keep Python ints (or default numpy int)
-    return np.array(diffs)
+    # Use uint32 so that the result is consistent with hardware / FITS column types
+    return np.array(diffs, dtype=np.uint32)
 
 
 # def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
