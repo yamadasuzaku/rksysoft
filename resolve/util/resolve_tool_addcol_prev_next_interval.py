@@ -58,23 +58,73 @@ def calc_trigtime(WFRB_WRITE_LP, WFRB_SAMPLE_CNT, TRIG_LP):
 
 def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
     """
-    Compute the differences between consecutive elements in counter_list, considering overflow.
+    Compute the differences between consecutive elements in `counter_list`,
+    taking into account an N-bit unsigned counter overflow.
+
+    Parameters
+    ----------
+    counter_list : array-like
+        Sequence of counter values. Typically an array of uint32.
+    bit_width : int
+        Bit width of the hardware counter (e.g., 24 for a 24-bit counter).
+    reverse : bool, optional
+        If True, compute differences in the "reverse" direction, i.e.,
+        diff = prev - curr (used for NEXT_INTERVAL with reversed arrays).
+
+    Returns
+    -------
+    diffs : numpy.ndarray (dtype=uint32)
+        Array of positive differences with overflow correction applied.
     """
     max_value = (1 << bit_width) - 1
     diffs = []
-    minus_counter = 0  
+    minus_counter = 0
+
     for i in range(1, len(counter_list)):
+        # Cast to Python int to avoid overflow/underflow in numpy uint32 arithmetic
+        curr = int(counter_list[i])
+        prev = int(counter_list[i - 1])
+
         if reverse:
-            diff = -1 * (counter_list[i] - counter_list[i - 1])
+            # For reversed arrays, we want prev - curr
+            diff = prev - curr
         else:
-            diff = counter_list[i] - counter_list[i - 1]
+            diff = curr - prev
+
+        # If negative, emulate unsigned wrap-around
         if diff < 0:
             diff += max_value + 1
-        if diff < 0: # something wrong when diff + (max_value + 1) < 0
-            minus_counter +=1 
+
+        # If still negative here, something is inconsistent with the assumptions
+        if diff < 0:
+            minus_counter += 1
+
         diffs.append(diff)
+
     print(f"debug: def compute_diff_with_overflow, minus_counter = {minus_counter}")
-    return np.array(diffs)
+    # Use uint32 so that the result is consistent with hardware / FITS column types
+    return np.array(diffs, dtype=np.uint32)
+
+
+# def compute_diff_with_overflow(counter_list, bit_width, reverse=False):
+#     """
+#     Compute the differences between consecutive elements in counter_list, considering overflow.
+#     """
+#     max_value = (1 << bit_width) - 1
+#     diffs = []
+#     minus_counter = 0  
+#     for i in range(1, len(counter_list)):
+#         if reverse:
+#             diff = -1 * (counter_list[i] - counter_list[i - 1])
+#         else:
+#             diff = counter_list[i] - counter_list[i - 1]
+#         if diff < 0:
+#             diff += max_value + 1
+#         if diff < 0: # something wrong when diff + (max_value + 1) < 0
+#             minus_counter +=1 
+#         diffs.append(diff)
+#     print(f"debug: def compute_diff_with_overflow, minus_counter = {minus_counter}")
+#     return np.array(diffs)
 
 def update_intervals(fits_file, output_file=None):
     """
