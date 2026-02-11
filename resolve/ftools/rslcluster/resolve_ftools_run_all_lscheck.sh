@@ -2,25 +2,22 @@
 #
 # run_all_lscheck.sh
 #
-# 使い方:
+# Usage:
 #   ./run_all_lscheck.sh targets.txt
 #
-# 環境変数:
-#   CAL_ROOT_DIR       : 天体ディレクトリが並んでいるルート
-#                        省略時は、このスクリプトのあるディレクトリをルートとみなす。
+# Input:
+#   targets.txt
 #
-#   LSCHECK_ROOT_DIR   : lscheck_* ディレクトリをまとめて置くルート
-#                        省略時は、「CAL_ROOT_DIR の 1 つ上のディレクトリ」配下に
-#                        lscheck_results/ を作成して使用する。
-#                        例: CAL_ROOT_DIR=/.../cal_database →
-#                            LSCHECK_ROOT_DIR=/.../lscheck_results
+# Output:
+#   targets_valid.txt    : entries with both uf.evt and cl.evt present
+#   targets_missing.txt  : entries with missing uf.evt and/or cl.evt
 #
-#   SKIP_EXISTING=1    : 既に lscheck_* ディレクトリがあればスキップ（デフォルト）
-#                        0 にすると強制的に再実行する。
-#
-#   MODE=full or summary
-#      full    : フルパイプライン (デフォルト)
-#      summary : --summary-only モードで summary_*.html のみ再生成
+# Environment variables:
+#   CAL_ROOT_DIR   : root directory containing object directories
+#                    default: directory where this script exists
+#   SKIP_EXISTING  : 1 (default) skip if lscheck dir exists
+#                    0 force re-run
+#   MODE           : full | summary
 #
 
 set -euo pipefail
@@ -35,83 +32,91 @@ if [[ ! -f "$LIST_FILE" ]]; then
     exit 1
 fi
 
-# スクリプトが置いてあるディレクトリ
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
-# CAL_ROOT_DIR（データのルート）
 CAL_ROOT_DIR="${CAL_ROOT_DIR:-$SCRIPT_DIR}"
-
-# ★ LSCHECK_ROOT_DIR（解析生成物のルート） ★
-# デフォルトは CAL_ROOT_DIR の 1 つ上に lscheck_results/ を作る
-if [[ -z "${LSCHECK_ROOT_DIR:-}" ]]; then
-    PARENT_DIR="$(cd "${CAL_ROOT_DIR}/.." && pwd)"
-    LSCHECK_ROOT_DIR="${PARENT_DIR}/lscheck_results"
-fi
 
 SKIP_EXISTING="${SKIP_EXISTING:-1}"
 MODE="${MODE:-full}"
 
-# ルートディレクトリの作成（無ければ）
-mkdir -p "${LSCHECK_ROOT_DIR}"
+VALID_LIST="targets_valid.txt"
+MISSING_LIST="targets_missing.txt"
 
-echo "CAL_ROOT_DIR     : $CAL_ROOT_DIR"
-echo "LSCHECK_ROOT_DIR : $LSCHECK_ROOT_DIR"
-echo "TARGET LIST      : $LIST_FILE"
-echo "SKIP_EXISTING    : $SKIP_EXISTING"
-echo "MODE             : $MODE"
+# initialize output files
+: > "$VALID_LIST"
+: > "$MISSING_LIST"
+
+echo "CAL_ROOT_DIR  : $CAL_ROOT_DIR"
+echo "TARGET LIST   : $LIST_FILE"
+echo "VALID LIST    : $VALID_LIST"
+echo "MISSING LIST  : $MISSING_LIST"
+echo "SKIP_EXISTING : $SKIP_EXISTING"
+echo "MODE          : $MODE"
 echo
 
 while read -r OBJ OBSID FILTER; do
-    # 空行・コメント行をスキップ
+    # skip empty or comment lines
     if [[ -z "${OBJ:-}" ]] || [[ "${OBJ:0:1}" == "#" ]]; then
         continue
     fi
 
-    echo "========================================"
-    echo "OBJECT = $OBJ, OBSID = $OBSID, FILTER = $FILTER"
-    echo "========================================"
-
     EVENT_UF_DIR="${CAL_ROOT_DIR}/${OBJ}/${OBSID}/resolve/event_uf"
-    if [[ ! -d "$EVENT_UF_DIR" ]]; then
-        echo "  [WARN] event_uf directory not found: $EVENT_UF_DIR"
-        continue
-    fi
+    EVENT_CL_DIR="${CAL_ROOT_DIR}/${OBJ}/${OBSID}/resolve/event_cl"
 
     UF_EVT="xa${OBSID}rsl_p0px${FILTER}_uf.evt"
-    if [[ ! -f "${EVENT_UF_DIR}/${UF_EVT}" ]]; then
-        echo "  [WARN] UF event file not found: ${EVENT_UF_DIR}/${UF_EVT}"
+    CL_EVT="xa${OBSID}rsl_p0px${FILTER}_cl.evt"
+
+    missing_reason=()
+
+    if [[ ! -d "$EVENT_UF_DIR" ]]; then
+        missing_reason+=("event_uf_dir_missing")
+    elif [[ ! -f "$EVENT_UF_DIR/$UF_EVT" ]]; then
+        missing_reason+=("uf_evt_missing")
+    fi
+
+    if [[ ! -d "$EVENT_CL_DIR" ]]; then
+        missing_reason+=("event_cl_dir_missing")
+    elif [[ ! -f "$EVENT_CL_DIR/$CL_EVT" ]]; then
+        missing_reason+=("cl_evt_missing")
+    fi
+
+    if [[ ${#missing_reason[@]} -ne 0 ]]; then
+        echo "[WARN] ${OBJ} ${OBSID} px${FILTER} : ${missing_reason[*]}"
+        printf "%-15s %-9s %s  # %s\n" \
+            "$OBJ" "$OBSID" "$FILTER" "$(IFS=','; echo "${missing_reason[*]}")" \
+            >> "$MISSING_LIST"
         continue
     fi
 
-    # lscheck_* ディレクトリ名（名前自体は今まで通り）
+    # valid target
+    printf "%-15s %-9s %s\n" "$OBJ" "$OBSID" "$FILTER" >> "$VALID_LIST"
+
+    echo "========================================"
+    echo "OBJECT=${OBJ} OBSID=${OBSID} FILTER=${FILTER}"
+    echo "========================================"
+
     LSCHECK_DIR_NAME="lscheck_${OBJ}_${OBSID}_px${FILTER}"
+    LSCHECK_DIR_FULL="${CAL_ROOT_DIR}/${LSCHECK_DIR_NAME}"
 
-    # ★ 生成物を置く実際のパスは LSCHECK_ROOT_DIR の下にする ★
-    LSCHECK_DIR_PATH="${LSCHECK_ROOT_DIR}/${LSCHECK_DIR_NAME}"
-
-    if [[ "$SKIP_EXISTING" -eq 1 && -d "${LSCHECK_DIR_PATH}" ]]; then
-        echo "  [INFO] ${LSCHECK_DIR_PATH} already exists -> skip (SKIP_EXISTING=1)"
+    if [[ "$SKIP_EXISTING" -eq 1 && -d "$LSCHECK_DIR_FULL" ]]; then
+        echo "[INFO] ${LSCHECK_DIR_FULL} exists, skip"
         continue
     fi
-
-    echo "  event_uf dir : $EVENT_UF_DIR"
-    echo "  UF_EVT       : $UF_EVT"
-    echo "  LSCHECK_DIR  : ${LSCHECK_DIR_PATH}"
 
     (
         cd "$EVENT_UF_DIR"
 
         if [[ "$MODE" == "summary" ]]; then
-            echo "  -> run summary-only mode"
-            # 第2引数: LSCHECK_DIR_NAME
-            # 第3引数: 生成物ルート (LSCHECK_ROOT_DIR) を渡す
-            run_resolve_ftools_cluster_pileline.sh --summary-only "$UF_EVT" "$LSCHECK_DIR_NAME" "$LSCHECK_ROOT_DIR"
+            run_resolve_ftools_cluster_pileline.sh --summary-only "$UF_EVT" "$LSCHECK_DIR_NAME" "$CAL_ROOT_DIR"
         else
-            echo "  -> run full pipeline"
-            run_resolve_ftools_cluster_pileline.sh "$UF_EVT" "$LSCHECK_DIR_NAME" "$LSCHECK_ROOT_DIR"
+            run_resolve_ftools_cluster_pileline.sh "$UF_EVT" "$LSCHECK_DIR_NAME" "$CAL_ROOT_DIR"
         fi
     )
+
     echo
 done < "$LIST_FILE"
 
-echo "All requested targets processed."
+echo "========================================"
+echo "Finished."
+echo "Valid targets   : $(wc -l < "$VALID_LIST")"
+echo "Missing targets : $(wc -l < "$MISSING_LIST")"
+echo "========================================"
