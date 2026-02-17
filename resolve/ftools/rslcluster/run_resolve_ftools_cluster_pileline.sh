@@ -639,8 +639,8 @@ if [[ "$SUMMARY_ONLY" -eq 0 ]]; then
 
     cat > run_mklc_branch.sh << 'EOF'
 #!/bin/sh
-: "${EVE_ARGS:="-t 2048 -odir output_eve -g -rmax 0.5 -yscaleing log -u --exclude-pixels 12"}"
-: "${CLUSTERCUT_ARGS:="-t 2048 -odir output_clustercut -g -rmax 0.5 -yscaleing log -u --exclude-pixels 12"}"
+: "${EVE_ARGS:="-t 2048 -odir output_eve -g -rmax 30.0 -yscaleing log -u --exclude-pixels 12"}"
+: "${CLUSTERCUT_ARGS:="-t 2048 -odir output_clustercut -g -rmax 30.0 -yscaleing log -u --exclude-pixels 12"}"
 
 echo "[run_mklc_branch] EVE_ARGS=${EVE_ARGS}"
 echo "[run_mklc_branch] CLUSTERCUT_ARGS=${CLUSTERCUT_ARGS}"
