@@ -69,7 +69,7 @@ Usage:
   EVE_ARGS, CLUSTERCUT_ARGS
       mklc_branch 実行用のオプションを上書き指定できる。
       例:
-        export EVE_ARGS="-t 2048 -odir output_eve -g -rmax 0.5 -yscaleing log -u --exclude-pixels 12"
+        export EVE_ARGS="-t 2048 -odir output_eve -g -rmax 30.0 -yscaleing log -u --exclude-pixels 12"
 
 必要なコマンド:
   resolve_ftools_cluster_pileline.sh
@@ -521,7 +521,7 @@ if [[ -n "$EVE_ARGS_OVERRIDE" ]]; then
 elif [[ -n "${EVE_ARGS:-}" ]]; then
     EVE_ARGS_USED="$EVE_ARGS"
 else
-    EVE_ARGS_USED="-t 2048 -odir output_eve -g -rmax 0.5 -yscaleing log -u --exclude-pixels 12"
+    EVE_ARGS_USED="-t 2048 -odir output_eve -g -rmax 30.0 -yscaleing log -u --exclude-pixels 12"
 fi
 
 if [[ -n "$CLUSTERCUT_ARGS_OVERRIDE" ]]; then
@@ -529,7 +529,7 @@ if [[ -n "$CLUSTERCUT_ARGS_OVERRIDE" ]]; then
 elif [[ -n "${CLUSTERCUT_ARGS:-}" ]]; then
     CLUSTERCUT_ARGS_USED="$CLUSTERCUT_ARGS"
 else
-    CLUSTERCUT_ARGS_USED="-t 2048 -odir output_clustercut -g -rmax 0.5 -yscaleing log -u --exclude-pixels 12"
+    CLUSTERCUT_ARGS_USED="-t 2048 -odir output_clustercut -g -rmax 30.0 -yscaleing log -u --exclude-pixels 12"
 fi
 
 echo "Mode             : $([[ $SUMMARY_ONLY -eq 1 ]] && echo 'SUMMARY ONLY' || echo 'FULL PIPELINE')"
