@@ -21,9 +21,6 @@ pixel ごとに
     - 2パターン目: stdcut / no_stdcut ごとにファイルを分け、
       その中で OBS_ID ごとに色を変え、OBS_ID + object 名を同色のテキストで表示
     - 3パターン目: 2 と同様だが pixel ごとにファイルを分けてプロット
-    - 4パターン目: 2 の「テキスト無し版」（OBSID テキスト表示なし）
-    - 5パターン目: 3 種類の y を 1×3 パネルで並べて
-      x, y 軸を共通にした比較用 scatter（linear / log-log 両方）
 
 を行う。
 
@@ -82,19 +79,13 @@ def parse_args():
         "--scatter-xscale",
         choices=["linear", "log"],
         default="linear",
-        help=(
-            "scatter 図の基本セットの x 軸スケール（linear / log, デフォルト: linear）。"
-            "これとは別に log-log 版も自動で出力される。"
-        ),
+        help="scatter 図の x 軸スケール（linear / log, デフォルト: linear）",
     )
     parser.add_argument(
         "--scatter-yscale",
         choices=["linear", "log"],
         default="linear",
-        help=(
-            "scatter 図の基本セットの y 軸スケール（linear / log, デフォルト: linear）。"
-            "これとは別に log-log 版も自動で出力される。"
-        ),
+        help="scatter 図の y 軸スケール（linear / log, デフォルト: linear）",
     )
     return parser.parse_args()
 
@@ -281,13 +272,11 @@ def _apply_log_mask(sub, x_col, y_col, xscale, yscale):
     return sub[mask]
 
 
-def scatter_rateall_vs_others_by_stdcut(df, outdir, xscale="linear", yscale="linear", suffix=""):
+def scatter_rateall_vs_others_by_stdcut(df, outdir, xscale="linear", yscale="linear"):
     """
     全 pixel・全 OBS をまとめて、
     x=rate_all, y=rate_both_pass / rate_large_only / rate_small_only
     を stdcut_flag ごとに色分けした scatter plot を生成する。
-
-    suffix: ファイル名に付ける短いタグ（例: '_loglog'）。
     """
     rate_pairs = [
         ("rate_both_pass", "both_pass"),
@@ -322,9 +311,7 @@ def scatter_rateall_vs_others_by_stdcut(df, outdir, xscale="linear", yscale="lin
         ax.set_yscale(yscale)
 
         fig.tight_layout()
-        # suffix が空なら従来と同じ名前になる
-        outname = f"scatter_rateall_vs_{tag}_by_stdcut{suffix}.png"
-        outpath = os.path.join(outdir, outname)
+        outpath = os.path.join(outdir, f"scatter_rateall_vs_{tag}_by_stdcut.png")
         fig.savefig(outpath, dpi=200)
         plt.close(fig)
         print(f"[INFO] saved {outpath}")
@@ -409,73 +396,6 @@ def scatter_rateall_vs_others_by_obsid_with_labels_global(
             fig.tight_layout()
             outname = (
                 f"scatter_rateall_vs_{tag}_stdcut-{stdcut_flag}_by_obsid.png"
-            )
-            outpath = os.path.join(outdir, outname)
-            fig.savefig(outpath, dpi=200)
-            plt.close(fig)
-            print(f"[INFO] saved {outpath}")
-
-
-def scatter_rateall_vs_others_by_obsid_global_nolabels(
-    df, outdir, xscale="linear", yscale="linear"
-):
-    """
-    stdcut / no_stdcut ごとにファイルを分けて、
-    OBS_ID+object ごとに色だけ変え、テキストラベルは付けない scatter（全 pixel）。
-    「OBSID の text 無し」の版。
-    """
-    rate_pairs = [
-        ("rate_both_pass", "both_pass"),
-        ("rate_large_only", "large_only"),
-        ("rate_small_only", "small_only"),
-    ]
-
-    for stdcut_flag, df_flag in df.groupby("stdcut_flag"):
-
-        groups = list(df_flag.groupby(["obs_id", "object"]))
-        if not groups:
-            print(f"[WARN] stdcut_flag={stdcut_flag}: no data, skip (nolabels)")
-            continue
-
-        n_grp = len(groups)
-        cmap = plt.get_cmap("tab20")
-        colors = [cmap(i / max(1, n_grp - 1)) for i in range(n_grp)]
-
-        for y_col, tag in rate_pairs:
-            fig, ax = plt.subplots(figsize=(7.5, 6))
-
-            for idx, ((obs_id, obj), sub) in enumerate(groups):
-                sub = sub[["rate_all", y_col]].dropna()
-                if sub.empty:
-                    continue
-
-                sub = _apply_log_mask(sub, "rate_all", y_col, xscale, yscale)
-                if sub.empty:
-                    continue
-
-                col = colors[idx]
-                ax.scatter(
-                    sub["rate_all"].values,
-                    sub[y_col].values,
-                    color=col,
-                    alpha=0.7,
-                    s=20,
-                )
-                # テキストは書かない
-
-            ax.set_xlabel("rate_all [count/s]")
-            ax.set_ylabel(f"{y_col} [count/s]")
-            ax.set_title(
-                f"rate_all vs {y_col} "
-                f"(stdcut_flag={stdcut_flag}, color: OBS_ID+object, nolabels)"
-            )
-            ax.grid(alpha=0.3)
-            ax.set_xscale(xscale)
-            ax.set_yscale(yscale)
-
-            fig.tight_layout()
-            outname = (
-                f"scatter_rateall_vs_{tag}_stdcut-{stdcut_flag}_by_obsid_nolabels.png"
             )
             outpath = os.path.join(outdir, outname)
             fig.savefig(outpath, dpi=200)
@@ -572,73 +492,6 @@ def scatter_rateall_vs_others_by_obsid_with_labels_per_pixel(
                 print(f"[INFO] saved {outpath}")
 
 
-def scatter_triplet_rateall_vs_others_by_stdcut_shared_axes(
-    df, outdir, xscale="linear", yscale="linear", tag="linear"
-):
-    """
-    rate_all vs (rate_both_pass, rate_large_only, rate_small_only) を
-    1×3 のパネルに並べ、x, y 軸を共通にした scatter 図を生成する。
-
-    - 各パネルで stdcut / no_stdcut を色分け
-    - xscale / yscale は全パネル共通
-    - tag: ファイル名に付けるタグ（例: 'linear', 'loglog'）
-    """
-    rate_info = [
-        ("rate_both_pass", "both_pass"),
-        ("rate_large_only", "large_only"),
-        ("rate_small_only", "small_only"),
-    ]
-
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharex=True, sharey=True)
-
-    if not isinstance(axes, np.ndarray):
-        axes = np.array([axes])
-
-    for ax, (y_col, tag_y) in zip(axes, rate_info):
-        for stdcut_flag, sub in df.groupby("stdcut_flag"):
-            sub = sub[["rate_all", y_col]].dropna()
-            if sub.empty:
-                continue
-
-            sub = _apply_log_mask(sub, "rate_all", y_col, xscale, yscale)
-            if sub.empty:
-                continue
-
-            ax.scatter(
-                sub["rate_all"].values,
-                sub[y_col].values,
-                alpha=0.5,
-                s=15,
-                label=stdcut_flag,
-            )
-
-        ax.set_title(f"{y_col}")
-        ax.grid(alpha=0.3)
-        ax.set_xscale(xscale)
-        ax.set_yscale(yscale)
-
-    # 左パネルに軸ラベル
-    axes[0].set_xlabel("rate_all [count/s]")
-    axes[0].set_ylabel("rate [count/s]")
-
-    # 真ん中のパネルに凡例を集約
-    handles, labels = axes[1].get_legend_handles_labels()
-    axes[1].legend(handles, labels, loc="best", fontsize=9)
-
-    fig.suptitle(
-        f"rate_all vs (both_pass, large_only, small_only) "
-        f"(color: stdcut_flag, xscale={xscale}, yscale={yscale})",
-        fontsize=13,
-    )
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
-
-    outname = f"scatter_rateall_vs_allrates_by_stdcut_sharedaxes_{tag}.png"
-    outpath = os.path.join(outdir, outname)
-    fig.savefig(outpath, dpi=200)
-    plt.close(fig)
-    print(f"[INFO] saved {outpath}")
-
-
 # ============================================================
 # main
 # ============================================================
@@ -672,64 +525,22 @@ def main():
         make_pixel_plot(df_pix, pix, args.outdir)
 
     # 2) 全体で rate_all vs 他の rate の scatter（stdcut 色分け）
-    #    基本セット（ユーザー指定の軸スケール）
     scatter_rateall_vs_others_by_stdcut(
-        df_all,
-        args.outdir,
-        xscale=args.scatter_xscale,
-        yscale=args.scatter_yscale,
-        suffix="",
-    )
-
-    # 2b) 追加: log-log 版を必ず生成
-    scatter_rateall_vs_others_by_stdcut(
-        df_all,
-        args.outdir,
-        xscale="log",
-        yscale="log",
-        suffix="_loglog",
+        df_all, args.outdir, xscale=args.scatter_xscale, yscale=args.scatter_yscale
     )
 
     # 3) stdcut ごとに分け、OBS_ID+object ごとに色 + ラベル付き scatter（全 pixel）
     scatter_rateall_vs_others_by_obsid_with_labels_global(
-        df_all,
-        args.outdir,
-        xscale=args.scatter_xscale,
-        yscale=args.scatter_yscale,
+        df_all, args.outdir, xscale=args.scatter_xscale, yscale=args.scatter_yscale
     )
 
-    # 3b) 追加: OBSID テキスト無し版（全 pixel）
-    scatter_rateall_vs_others_by_obsid_global_nolabels(
-        df_all,
-        args.outdir,
-        xscale=args.scatter_xscale,
-        yscale=args.scatter_yscale,
-    )
-
-    # 4) pixel ごとにファイルを分けた scatter（ラベル付き）
+    # 4) pixel ごとにファイルを分けた scatter
     scatter_rateall_vs_others_by_obsid_with_labels_per_pixel(
         df_all,
         args.outdir,
         pixels=pixels,
         xscale=args.scatter_xscale,
         yscale=args.scatter_yscale,
-    )
-
-    # 5) 追加: 3 種類の y を 1×3 パネルにして
-    #    横軸・縦軸を共通にした比較用 scatter（linear / log-log）
-    scatter_triplet_rateall_vs_others_by_stdcut_shared_axes(
-        df_all,
-        args.outdir,
-        xscale="linear",
-        yscale="linear",
-        tag="linear",
-    )
-    scatter_triplet_rateall_vs_others_by_stdcut_shared_axes(
-        df_all,
-        args.outdir,
-        xscale="log",
-        yscale="log",
-        tag="loglog",
     )
 
     print("[INFO] done.")
