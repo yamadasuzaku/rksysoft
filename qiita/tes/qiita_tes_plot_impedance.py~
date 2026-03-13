@@ -1,0 +1,78 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -----------------------------------
+# パラメータ設定
+# -----------------------------------
+A = 0.020   # high-frequency limit [ohm]
+B = -0.015  # low-frequency contribution [ohm]
+tau = 1e-3  # time constant [s]
+
+# 周波数配列 [Hz]
+freq_array = np.logspace(0, 5, 2000)   # 1 Hz -- 100 kHz
+omega_array = 2 * np.pi * freq_array
+
+# -----------------------------------
+# インピーダンスの計算
+# -----------------------------------
+z_array = A + B / (1 + 1j * omega_array * tau)
+
+z_real_array = np.real(z_array)
+z_imag_array = np.imag(z_array)
+z_abs_array = np.abs(z_array)
+z_phase_array = np.angle(z_array, deg=True)
+
+# -----------------------------------
+# 実部・虚部 vs 周波数
+# -----------------------------------
+plt.figure(figsize=(7, 5))
+plt.semilogx(freq_array, z_real_array, label="Re[Z]")
+plt.semilogx(freq_array, z_imag_array, label="Im[Z]")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Impedance [ohm]")
+plt.title("Real and Imaginary Parts of TES Impedance")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig("tes_impedance_1.png")
+plt.show()
+
+# -----------------------------------
+# 振幅 vs 周波数
+# -----------------------------------
+plt.figure(figsize=(7, 5))
+plt.semilogx(freq_array, z_abs_array)
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("|Z| [ohh]")
+plt.title("Magnitude of TES Impedance")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("tes_impedance_2.png")
+plt.show()
+
+# -----------------------------------
+# 位相 vs 周波数
+# -----------------------------------
+plt.figure(figsize=(7, 5))
+plt.semilogx(freq_array, z_phase_array)
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Phase [deg]")
+plt.title("Phase of TES Impedance")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("tes_impedance_3.png")
+plt.show()
+
+# -----------------------------------
+# Nyquist plot
+# -----------------------------------
+plt.figure(figsize=(6, 6))
+plt.plot(z_real_array, z_imag_array)
+plt.xlabel("Re[Z] [ohm]")
+plt.ylabel("Im[Z] [ohm]")
+plt.title("Nyquist Plot of TES Impedance")
+plt.grid(True)
+plt.axis("equal")
+plt.tight_layout()
+plt.savefig("tes_impedance_4.png")
+plt.show()1;95;0c
