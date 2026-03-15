@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-scan_hdf5_to_root.py
+heates_scan_hdf5_to_root.py
 
 Purpose
 -------
@@ -13,12 +13,20 @@ Purpose
 - If not, convert each HDF5 file into a ROOT TTree.
 - Optionally keep watching the directory tree at a fixed interval.
 
+Important update
+----------------
+- The ROOT branch schema is no longer determined from the first channel group.
+- Instead, the script inspects all valid channel groups and computes the
+  intersection of usable dataset keys.
+- This avoids schema corruption when the first channel (for example chan0)
+  is missing datasets such as 'dt_us' or 'beam'.
+
 Typical usage
 -------------
-    python scan_hdf5_to_root.py
-    python scan_hdf5_to_root.py --watch
-    python scan_hdf5_to_root.py --watch --interval 60
-    python scan_hdf5_to_root.py --attrs timestamp energy rise_time postpeak_deriv
+    python heates_scan_hdf5_to_root.py
+    python heates_scan_hdf5_to_root.py --watch
+    python heates_scan_hdf5_to_root.py --watch --interval 60
+    python heates_scan_hdf5_to_root.py --attrs timestamp energy rise_time postpeak_deriv
 """
 
 from __future__ import print_function
@@ -77,7 +85,10 @@ def ensure_root_environment():
         return
 
     if not os.path.exists(ROOT_ENV_PYTHON):
-        print("[ERROR] root_env Python was not found: {0}".format(ROOT_ENV_PYTHON), file=sys.stderr)
+        print(
+            "[ERROR] root_env Python was not found: {0}".format(ROOT_ENV_PYTHON),
+            file=sys.stderr
+        )
         sys.exit(1)
 
     print("[INFO] Not running inside root_env; relaunching with ROOT-capable Python.")
@@ -124,48 +135,110 @@ def import_runtime_modules():
 
 
 # ----------------------------------------------------------------------
-# HDF5 -> ROOT conversion
+# Helper functions for HDF5 -> ROOT conversion
 # ----------------------------------------------------------------------
-def mktree(hf, attrs=None):
+def get_root_tag_from_dtype(dtype):
     """
-    Build a ROOT TTree from an opened HDF5 file object.
+    Convert a NumPy dtype into a ROOT leaf tag.
 
-    Notes
-    -----
-    - The implementation largely follows the original logic.
-    - 'channum' is stored as int32 to match ROOT branch type '/I'.
-    - Empty datasets are skipped safely.
-    - Some additional warning messages are included for debugging.
+    Supported mappings
+    ------------------
+    int16   -> /S
+    uint16  -> /s
+    int32   -> /I
+    int64   -> /L
+    float32 -> /F
+    float64 -> /D
+    bool    -> /O
     """
-    print("[INFO] start making tree for attrs = {0}".format(attrs))
-    tree = ROOT.TTree("tree", "tree")
+    dtype = np.dtype(dtype)
 
-    remove_names = ["cuts", "calibration", "filters"]
-    vals = {}
+    if dtype == np.dtype(np.int16):
+        return "/S"
+    if dtype == np.dtype(np.uint16):
+        return "/s"
+    if dtype == np.dtype(np.int32):
+        return "/I"
+    if dtype == np.dtype(np.int64):
+        return "/L"
+    if dtype == np.dtype(np.float32):
+        return "/F"
+    if dtype == np.dtype(np.float64):
+        return "/D"
+    if dtype == np.dtype(np.bool_):
+        return "/O"
 
-    for i, (group_name, ds) in enumerate(hf.items()):
-        print("[INFO] processing group: {0}".format(group_name), flush=True)
+    return None
 
+
+def get_channel_number_from_group_name(group_name):
+    """
+    Extract channel number from a group name like 'chan37'.
+
+    Returns
+    -------
+    int
+        Extracted channel number, or -1 if not found.
+    """
+    if re.search(r"\d", group_name):
+        return int(re.sub(r"\D", "", group_name))
+    return -1
+
+
+def collect_common_dataset_schema(hf, attrs=None):
+    """
+    Inspect all channel groups and determine the common dataset schema.
+
+    Policy
+    ------
+    - Use only groups that contain a non-empty 'timestamp' dataset.
+    - Ignore metadata-like keys such as 'cuts', 'calibration', 'filters'.
+    - Compute the intersection of usable dataset names across valid groups.
+    - Keep only 1D datasets whose size matches timestamp size in each group.
+    - Keep only datasets whose dtype is supported by ROOT leaf tags.
+    - If attrs is specified, restrict the final intersection to attrs.
+
+    Returns
+    -------
+    common_keys : list[str]
+        Sorted list of dataset names common to all valid groups.
+    dtype_map : dict[str, np.dtype]
+        Representative dtype for each common key.
+    valid_groups : list[str]
+        Group names used in the schema decision.
+    """
+    remove_names = set(["cuts", "calibration", "filters"])
+    common_keys = None
+    dtype_map = {}
+    incompatible_keys = set()
+    valid_groups = []
+
+    for group_name, ds in hf.items():
         if "timestamp" not in ds:
-            print("[WARN] group '{0}' does not contain 'timestamp'; skipping.".format(group_name))
+            print(
+                "[WARN] group '{0}' does not contain 'timestamp'; excluded from schema."
+                .format(group_name)
+            )
             continue
 
-        ref_array = ds["timestamp"][:]
+        try:
+            ref_array = ds["timestamp"][:]
+        except Exception as exc:
+            print(
+                "[WARN] failed to read timestamp in group '{0}': {1}"
+                .format(group_name, exc)
+            )
+            continue
+
+        if ref_array.size == 0:
+            print(
+                "[WARN] group '{0}' has empty timestamp; excluded from schema."
+                .format(group_name)
+            )
+            continue
+
         refsize = ref_array.size
-        reftype = type(ref_array)
-
-        if refsize == 0:
-            print("[WARN] group '{0}' has an empty 'timestamp' dataset; skipping.".format(group_name))
-            continue
-
-        data = {}
-
-        if re.search(r"\d", group_name):
-            channum = int(re.sub(r"\D", "", group_name))
-        else:
-            channum = -1
-
-        data["channum"] = channum * np.ones(refsize, dtype=np.int32)
+        usable_keys = set()
 
         for leaf_name, leaf in ds.items():
             if leaf_name in remove_names:
@@ -177,10 +250,16 @@ def mktree(hf, attrs=None):
             try:
                 arr = leaf[:]
             except Exception as exc:
-                print("[WARN] failed to read dataset {0}/{1}: {2}".format(group_name, leaf_name, exc))
+                print(
+                    "[WARN] failed to read dataset {0}/{1}: {2}"
+                    .format(group_name, leaf_name, exc)
+                )
                 continue
 
-            if not isinstance(arr, reftype):
+            if not hasattr(arr, "shape"):
+                continue
+
+            if len(arr.shape) != 1:
                 continue
 
             if arr.size != refsize:
@@ -189,39 +268,188 @@ def mktree(hf, attrs=None):
             if arr.size == 0:
                 continue
 
-            registered = False
-            for t, tag in zip(TYPELIST, TAGLIST):
-                if isinstance(arr[0], t):
-                    if i == 0 and leaf_name not in vals:
-                        vals[leaf_name] = np.zeros(1, dtype=t)
-                        tree.Branch(leaf_name, vals[leaf_name], leaf_name + tag)
-                    data[leaf_name] = arr
-                    registered = True
-                    break
+            tag = get_root_tag_from_dtype(arr.dtype)
+            if tag is None:
+                print(
+                    "[WARN] unsupported dtype in schema scan: {0}/{1}, dtype={2}"
+                    .format(group_name, leaf_name, arr.dtype)
+                )
+                continue
 
-            if not registered:
-                print("[WARN] unsupported type: {0}, type={1}".format(leaf_name, type(arr[0])))
+            if leaf_name in incompatible_keys:
+                continue
 
-        if i == 0 and "channum" not in vals:
-            vals["channum"] = np.zeros(1, dtype=np.int32)
-            tree.Branch("channum", vals["channum"], "channum/I")
+            usable_keys.add(leaf_name)
 
-        if "timestamp" not in data:
-            print("[WARN] group '{0}' did not produce a usable 'timestamp'; skipping.".format(group_name))
+            if leaf_name not in dtype_map:
+                dtype_map[leaf_name] = np.dtype(arr.dtype)
+            else:
+                if np.dtype(dtype_map[leaf_name]) != np.dtype(arr.dtype):
+                    print(
+                        "[WARN] dtype mismatch for key '{0}': existing={1}, "
+                        "group '{2}' has {3}. Excluding this key from schema."
+                        .format(leaf_name, dtype_map[leaf_name], group_name, arr.dtype)
+                    )
+                    incompatible_keys.add(leaf_name)
+                    if leaf_name in usable_keys:
+                        usable_keys.discard(leaf_name)
+                    if leaf_name in dtype_map:
+                        del dtype_map[leaf_name]
+
+        if common_keys is None:
+            common_keys = usable_keys
+        else:
+            common_keys &= usable_keys
+
+        valid_groups.append(group_name)
+
+    if common_keys is None:
+        common_keys = set()
+
+    common_keys -= incompatible_keys
+    common_keys = sorted(common_keys)
+
+    # Keep dtype_map only for the final common schema
+    dtype_map = dict(
+        (key, np.dtype(dtype_map[key]))
+        for key in common_keys
+        if key in dtype_map
+    )
+
+    print("[INFO] valid groups used for schema = {0}".format(valid_groups))
+    print("[INFO] common dataset keys         = {0}".format(common_keys))
+
+    return common_keys, dtype_map, valid_groups
+
+
+# ----------------------------------------------------------------------
+# HDF5 -> ROOT conversion
+# ----------------------------------------------------------------------
+def mktree(hf, attrs=None):
+    """
+    Build a ROOT TTree from an opened HDF5 file object.
+
+    New policy
+    ----------
+    - The ROOT schema is NOT determined by the first channel.
+    - Instead, it is determined from the intersection of usable dataset keys
+      across all valid channel groups.
+    - This avoids the problem that an unstable chan0 can remove branches
+      such as 'dt_us' or 'beam' from the whole TTree.
+    """
+    print("[INFO] start making tree for attrs = {0}".format(attrs))
+    tree = ROOT.TTree("tree", "tree")
+
+    common_keys, dtype_map, valid_groups = collect_common_dataset_schema(
+        hf,
+        attrs=attrs
+    )
+
+    if len(valid_groups) == 0:
+        raise RuntimeError("No valid groups were found in the HDF5 file.")
+
+    vals = {}
+
+    # Always create channum
+    vals["channum"] = np.zeros(1, dtype=np.int32)
+    tree.Branch("channum", vals["channum"], "channum/I")
+
+    # Create branches only from the common schema
+    for leaf_name in common_keys:
+        dtype = dtype_map[leaf_name]
+        tag = get_root_tag_from_dtype(dtype)
+        if tag is None:
+            print(
+                "[WARN] skip unsupported common key '{0}', dtype={1}"
+                .format(leaf_name, dtype)
+            )
             continue
 
-        for j in range(data["timestamp"].size):
-            for name, aaa in vals.items():
-                if name in data:
-                    aaa[0] = data[name][j]
-                else:
-                    if aaa.dtype == np.bool_:
-                        aaa[0] = False
-                    else:
-                        aaa[0] = -1
+        vals[leaf_name] = np.zeros(1, dtype=dtype)
+        tree.Branch(leaf_name, vals[leaf_name], leaf_name + tag)
+
+    # Fill events group by group
+    for group_name in valid_groups:
+        ds = hf[group_name]
+        print("[INFO] processing group: {0}".format(group_name), flush=True)
+
+        ref_array = ds["timestamp"][:]
+        refsize = ref_array.size
+
+        if refsize == 0:
+            print(
+                "[WARN] group '{0}' became empty during fill; skipping."
+                .format(group_name)
+            )
+            continue
+
+        data = {}
+        data["channum"] = np.full(
+            refsize,
+            get_channel_number_from_group_name(group_name),
+            dtype=np.int32
+        )
+
+        fillable = True
+        for leaf_name in common_keys:
+            if leaf_name not in ds:
+                print(
+                    "[WARN] common key '{0}' missing in group '{1}' during fill; "
+                    "skipping group."
+                    .format(leaf_name, group_name)
+                )
+                fillable = False
+                break
+
+            try:
+                arr = ds[leaf_name][:]
+            except Exception as exc:
+                print(
+                    "[WARN] failed to read dataset {0}/{1} during fill: {2}"
+                    .format(group_name, leaf_name, exc)
+                )
+                fillable = False
+                break
+
+            if not hasattr(arr, "shape") or len(arr.shape) != 1:
+                print(
+                    "[WARN] dataset {0}/{1} is not 1D during fill; skipping group."
+                    .format(group_name, leaf_name)
+                )
+                fillable = False
+                break
+
+            if arr.size != refsize:
+                print(
+                    "[WARN] dataset {0}/{1} size mismatch during fill: {2} != {3}; "
+                    "skipping group."
+                    .format(group_name, leaf_name, arr.size, refsize)
+                )
+                fillable = False
+                break
+
+            if np.dtype(arr.dtype) != np.dtype(dtype_map[leaf_name]):
+                print(
+                    "[WARN] dataset {0}/{1} dtype mismatch during fill: {2} != {3}; "
+                    "skipping group."
+                    .format(group_name, leaf_name, arr.dtype, dtype_map[leaf_name])
+                )
+                fillable = False
+                break
+
+            data[leaf_name] = arr
+
+        if not fillable:
+            continue
+
+        for j in range(refsize):
+            vals["channum"][0] = data["channum"][j]
+            for leaf_name in common_keys:
+                vals[leaf_name][0] = data[leaf_name][j]
             tree.Fill()
 
     print("[INFO] mktree done")
+    print("[INFO] tree entries = {0}".format(tree.GetEntries()))
     return tree
 
 
@@ -410,19 +638,28 @@ def main():
             force=args.force,
             stable_check=(not args.no_stable_check),
         )
-        print("[INFO] done: found={0}, converted={1}, skipped={2}".format(found, converted, skipped))
+        print(
+            "[INFO] done: found={0}, converted={1}, skipped={2}"
+            .format(found, converted, skipped)
+        )
         return
 
     while True:
         print("")
-        print("[INFO] watch scan started at {0}".format(time.strftime("%Y-%m-%d %H:%M:%S")))
+        print(
+            "[INFO] watch scan started at {0}"
+            .format(time.strftime("%Y-%m-%d %H:%M:%S"))
+        )
         found, converted, skipped = scan_and_convert(
             search_glob=args.glob,
             attrs=args.attrs,
             force=args.force,
             stable_check=(not args.no_stable_check),
         )
-        print("[INFO] watch cycle done: found={0}, converted={1}, skipped={2}".format(found, converted, skipped))
+        print(
+            "[INFO] watch cycle done: found={0}, converted={1}, skipped={2}"
+            .format(found, converted, skipped)
+        )
         print("[INFO] sleep {0} sec".format(args.interval))
         time.sleep(args.interval)
 
