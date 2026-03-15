@@ -352,7 +352,7 @@ beam cut なし
 energy cut なし
 
 ```
-python plot_hdf5_spectra_and_grouptrigger.py data.h5
+python heates_make_grouptrigger_from_hdf5.py data.h5
 ```
 
 ---
@@ -360,7 +360,7 @@ python plot_hdf5_spectra_and_grouptrigger.py data.h5
 ## beam ON
 
 ```
-python plot_hdf5_spectra_and_grouptrigger.py data.h5 --beam-on
+python heates_make_grouptrigger_from_hdf5.py data.h5 --beam-on
 ```
 
 ---
@@ -368,7 +368,7 @@ python plot_hdf5_spectra_and_grouptrigger.py data.h5 --beam-on
 ## beam OFF
 
 ```
-python plot_hdf5_spectra_and_grouptrigger.py data.h5 --beam-off
+python heates_make_grouptrigger_from_hdf5.py data.h5 --beam-off
 ```
 
 ---
@@ -376,7 +376,7 @@ python plot_hdf5_spectra_and_grouptrigger.py data.h5 --beam-off
 ## energy cut
 
 ```
-python plot_hdf5_spectra_and_grouptrigger.py data.h5 \
+python heates_make_grouptrigger_from_hdf5.py data.h5 \
 --emin 5000 \
 --emax 9000
 ```
@@ -386,7 +386,7 @@ python plot_hdf5_spectra_and_grouptrigger.py data.h5 \
 ## beam + energy
 
 ```
-python plot_hdf5_spectra_and_grouptrigger.py data.h5 \
+python heates_make_grouptrigger_from_hdf5.py data.h5 \
 --beam-on \
 --emin 5000 \
 --emax 9000
