@@ -13,13 +13,14 @@ Purpose
 - If not, convert each HDF5 file into a ROOT TTree.
 - Optionally keep watching the directory tree at a fixed interval.
 
-Important update
-----------------
-- The ROOT branch schema is no longer determined from the first channel group.
-- Instead, the script inspects all valid channel groups and computes the
-  intersection of usable dataset keys.
-- This avoids schema corruption when the first channel (for example chan0)
-  is missing datasets such as 'dt_us' or 'beam'.
+Updated schema policy
+---------------------
+- The ROOT branch schema is no longer determined by the first channel group.
+- Instead, the script inspects all valid channel groups and finds the group(s)
+  with the largest number of usable event-wise dataset keys.
+- That "max-key schema" is treated as the correct schema.
+- If a bad pixel group is missing some datasets, those branches are filled with
+  dtype-dependent default values instead of removing the branches globally.
 
 Typical usage
 -------------
@@ -41,7 +42,6 @@ import time
 try:
     from typing import Tuple, Optional, List
 except ImportError:
-    # Fallback for very old Python environments
     Tuple = tuple
     Optional = object
     List = list
@@ -71,9 +71,6 @@ def ensure_root_environment():
     """
     Relaunch this script with the Python interpreter inside root_env
     unless it is already running there.
-
-    This is more reliable than trying to run 'conda activate' inside
-    a Python process.
     """
     current_prefix = os.environ.get("CONDA_DEFAULT_ENV", "")
     current_python = sys.executable
@@ -140,16 +137,6 @@ def import_runtime_modules():
 def get_root_tag_from_dtype(dtype):
     """
     Convert a NumPy dtype into a ROOT leaf tag.
-
-    Supported mappings
-    ------------------
-    int16   -> /S
-    uint16  -> /s
-    int32   -> /I
-    int64   -> /L
-    float32 -> /F
-    float64 -> /D
-    bool    -> /O
     """
     dtype = np.dtype(dtype)
 
@@ -174,152 +161,213 @@ def get_root_tag_from_dtype(dtype):
 def get_channel_number_from_group_name(group_name):
     """
     Extract channel number from a group name like 'chan37'.
-
-    Returns
-    -------
-    int
-        Extracted channel number, or -1 if not found.
     """
     if re.search(r"\d", group_name):
         return int(re.sub(r"\D", "", group_name))
     return -1
 
 
-def collect_common_dataset_schema(hf, attrs=None):
+def get_default_value_for_dtype(dtype):
     """
-    Inspect all channel groups and determine the common dataset schema.
+    Return a dtype-compatible default scalar value.
+    """
+    dtype = np.dtype(dtype)
 
-    Policy
-    ------
-    - Use only groups that contain a non-empty 'timestamp' dataset.
-    - Ignore metadata-like keys such as 'cuts', 'calibration', 'filters'.
-    - Compute the intersection of usable dataset names across valid groups.
-    - Keep only 1D datasets whose size matches timestamp size in each group.
-    - Keep only datasets whose dtype is supported by ROOT leaf tags.
-    - If attrs is specified, restrict the final intersection to attrs.
+    if dtype == np.dtype(np.bool_):
+        return False
+    if np.issubdtype(dtype, np.integer):
+        return 0
+    if np.issubdtype(dtype, np.floating):
+        return 0.0
+
+    return 0
+
+
+def is_usable_event_dataset(ds, leaf_name, leaf_obj, attrs=None):
+    """
+    Determine whether a dataset is a usable event-wise 1D dataset.
+
+    Conditions
+    ----------
+    - Exclude metadata-like names
+    - If attrs is specified, keep only names in attrs
+    - Must be readable
+    - Must be 1D
+    - Must have the same length as timestamp
+    - Must have a dtype supported by ROOT leaf tags
+    """
+    remove_names = set(["cuts", "calibration", "filters"])
+
+    if leaf_name in remove_names:
+        return False, None, None
+
+    if attrs is not None and leaf_name not in attrs:
+        return False, None, None
+
+    if "timestamp" not in ds:
+        return False, None, None
+
+    try:
+        ref_array = ds["timestamp"][:]
+    except Exception:
+        return False, None, None
+
+    if ref_array.size == 0:
+        return False, None, None
+
+    try:
+        arr = leaf_obj[:]
+    except Exception:
+        return False, None, None
+
+    if not hasattr(arr, "shape"):
+        return False, None, None
+
+    if len(arr.shape) != 1:
+        return False, None, None
+
+    if arr.size != ref_array.size:
+        return False, None, None
+
+    if arr.size == 0:
+        return False, None, None
+
+    tag = get_root_tag_from_dtype(arr.dtype)
+    if tag is None:
+        return False, None, None
+
+    return True, np.dtype(arr.dtype), arr.size
+
+
+def collect_group_usable_schema(ds, attrs=None):
+    """
+    Collect usable dataset keys for one HDF5 group.
 
     Returns
     -------
-    common_keys : list[str]
-        Sorted list of dataset names common to all valid groups.
+    usable_keys : set[str]
     dtype_map : dict[str, np.dtype]
-        Representative dtype for each common key.
-    valid_groups : list[str]
-        Group names used in the schema decision.
+    refsize : int or None
     """
-    remove_names = set(["cuts", "calibration", "filters"])
-    common_keys = None
+    usable_keys = set()
     dtype_map = {}
-    incompatible_keys = set()
+
+    if "timestamp" not in ds:
+        return usable_keys, dtype_map, None
+
+    try:
+        ref_array = ds["timestamp"][:]
+    except Exception:
+        return usable_keys, dtype_map, None
+
+    if ref_array.size == 0:
+        return usable_keys, dtype_map, None
+
+    refsize = ref_array.size
+
+    for leaf_name, leaf_obj in ds.items():
+        ok, dtype, _ = is_usable_event_dataset(ds, leaf_name, leaf_obj, attrs=attrs)
+        if not ok:
+            continue
+        usable_keys.add(leaf_name)
+        dtype_map[leaf_name] = dtype
+
+    return usable_keys, dtype_map, refsize
+
+
+def collect_max_schema(hf, attrs=None):
+    """
+    Determine the schema from the group(s) with the maximum number of usable keys.
+
+    Policy
+    ------
+    - Inspect all channel groups
+    - Count usable event-wise keys for each group
+    - Find the maximum count
+    - Use the union of keys among the max-count groups as the schema
+    - Require dtype consistency across the selected max-count groups
+    - Later, groups missing some schema keys are still filled, using defaults
+
+    Returns
+    -------
+    schema_keys : list[str]
+        Sorted list of schema keys
+    dtype_map : dict[str, np.dtype]
+        Dtype for each schema key
+    valid_groups : list[str]
+        All groups with non-empty timestamp
+    template_groups : list[str]
+        Groups that had the maximum number of usable keys
+    """
     valid_groups = []
+    group_key_map = {}
+    group_dtype_map = {}
+    key_count_map = {}
 
     for group_name, ds in hf.items():
-        if "timestamp" not in ds:
+        usable_keys, dtype_map, refsize = collect_group_usable_schema(ds, attrs=attrs)
+
+        if refsize is None:
             print(
-                "[WARN] group '{0}' does not contain 'timestamp'; excluded from schema."
+                "[WARN] group '{0}' does not have a valid non-empty timestamp; excluded."
                 .format(group_name)
             )
             continue
-
-        try:
-            ref_array = ds["timestamp"][:]
-        except Exception as exc:
-            print(
-                "[WARN] failed to read timestamp in group '{0}': {1}"
-                .format(group_name, exc)
-            )
-            continue
-
-        if ref_array.size == 0:
-            print(
-                "[WARN] group '{0}' has empty timestamp; excluded from schema."
-                .format(group_name)
-            )
-            continue
-
-        refsize = ref_array.size
-        usable_keys = set()
-
-        for leaf_name, leaf in ds.items():
-            if leaf_name in remove_names:
-                continue
-
-            if attrs is not None and leaf_name not in attrs:
-                continue
-
-            try:
-                arr = leaf[:]
-            except Exception as exc:
-                print(
-                    "[WARN] failed to read dataset {0}/{1}: {2}"
-                    .format(group_name, leaf_name, exc)
-                )
-                continue
-
-            if not hasattr(arr, "shape"):
-                continue
-
-            if len(arr.shape) != 1:
-                continue
-
-            if arr.size != refsize:
-                continue
-
-            if arr.size == 0:
-                continue
-
-            tag = get_root_tag_from_dtype(arr.dtype)
-            if tag is None:
-                print(
-                    "[WARN] unsupported dtype in schema scan: {0}/{1}, dtype={2}"
-                    .format(group_name, leaf_name, arr.dtype)
-                )
-                continue
-
-            if leaf_name in incompatible_keys:
-                continue
-
-            usable_keys.add(leaf_name)
-
-            if leaf_name not in dtype_map:
-                dtype_map[leaf_name] = np.dtype(arr.dtype)
-            else:
-                if np.dtype(dtype_map[leaf_name]) != np.dtype(arr.dtype):
-                    print(
-                        "[WARN] dtype mismatch for key '{0}': existing={1}, "
-                        "group '{2}' has {3}. Excluding this key from schema."
-                        .format(leaf_name, dtype_map[leaf_name], group_name, arr.dtype)
-                    )
-                    incompatible_keys.add(leaf_name)
-                    if leaf_name in usable_keys:
-                        usable_keys.discard(leaf_name)
-                    if leaf_name in dtype_map:
-                        del dtype_map[leaf_name]
-
-        if common_keys is None:
-            common_keys = usable_keys
-        else:
-            common_keys &= usable_keys
 
         valid_groups.append(group_name)
+        group_key_map[group_name] = usable_keys
+        group_dtype_map[group_name] = dtype_map
+        key_count_map[group_name] = len(usable_keys)
 
-    if common_keys is None:
-        common_keys = set()
+        print(
+            "[INFO] group '{0}' usable key count = {1}"
+            .format(group_name, len(usable_keys))
+        )
 
-    common_keys -= incompatible_keys
-    common_keys = sorted(common_keys)
+    if len(valid_groups) == 0:
+        raise RuntimeError("No valid groups were found in the HDF5 file.")
 
-    # Keep dtype_map only for the final common schema
-    dtype_map = dict(
-        (key, np.dtype(dtype_map[key]))
-        for key in common_keys
-        if key in dtype_map
-    )
+    max_count = max(key_count_map.values())
+    template_groups = [
+        group_name for group_name in valid_groups
+        if key_count_map[group_name] == max_count
+    ]
 
-    print("[INFO] valid groups used for schema = {0}".format(valid_groups))
-    print("[INFO] common dataset keys         = {0}".format(common_keys))
+    print("[INFO] maximum usable key count = {0}".format(max_count))
+    print("[INFO] template groups         = {0}".format(template_groups))
 
-    return common_keys, dtype_map, valid_groups
+    # Use union across max-count groups
+    schema_key_set = set()
+    for group_name in template_groups:
+        schema_key_set |= group_key_map[group_name]
+
+    # Resolve dtype consistency across template groups
+    dtype_map = {}
+    final_schema_keys = []
+
+    for key_name in sorted(schema_key_set):
+        seen_dtypes = []
+        for group_name in template_groups:
+            if key_name in group_dtype_map[group_name]:
+                seen_dtypes.append(np.dtype(group_dtype_map[group_name][key_name]))
+
+        if len(seen_dtypes) == 0:
+            continue
+
+        first_dtype = seen_dtypes[0]
+        if all(np.dtype(dt) == first_dtype for dt in seen_dtypes):
+            dtype_map[key_name] = first_dtype
+            final_schema_keys.append(key_name)
+        else:
+            print(
+                "[WARN] dtype mismatch for key '{0}' across template groups; "
+                "excluding from schema. dtypes={1}"
+                .format(key_name, seen_dtypes)
+            )
+
+    print("[INFO] final schema keys       = {0}".format(final_schema_keys))
+
+    return final_schema_keys, dtype_map, valid_groups, template_groups
 
 
 # ----------------------------------------------------------------------
@@ -331,22 +379,18 @@ def mktree(hf, attrs=None):
 
     New policy
     ----------
-    - The ROOT schema is NOT determined by the first channel.
-    - Instead, it is determined from the intersection of usable dataset keys
-      across all valid channel groups.
-    - This avoids the problem that an unstable chan0 can remove branches
-      such as 'dt_us' or 'beam' from the whole TTree.
+    - The schema is determined from the group(s) with the largest number of
+      usable event-wise dataset keys.
+    - Missing datasets in incomplete groups are filled with dtype-dependent
+      default values instead of removing the branch from the whole TTree.
     """
     print("[INFO] start making tree for attrs = {0}".format(attrs))
     tree = ROOT.TTree("tree", "tree")
 
-    common_keys, dtype_map, valid_groups = collect_common_dataset_schema(
+    schema_keys, dtype_map, valid_groups, template_groups = collect_max_schema(
         hf,
         attrs=attrs
     )
-
-    if len(valid_groups) == 0:
-        raise RuntimeError("No valid groups were found in the HDF5 file.")
 
     vals = {}
 
@@ -354,13 +398,13 @@ def mktree(hf, attrs=None):
     vals["channum"] = np.zeros(1, dtype=np.int32)
     tree.Branch("channum", vals["channum"], "channum/I")
 
-    # Create branches only from the common schema
-    for leaf_name in common_keys:
+    # Create branches from the max-key schema
+    for leaf_name in schema_keys:
         dtype = dtype_map[leaf_name]
         tag = get_root_tag_from_dtype(dtype)
         if tag is None:
             print(
-                "[WARN] skip unsupported common key '{0}', dtype={1}"
+                "[WARN] skip unsupported schema key '{0}', dtype={1}"
                 .format(leaf_name, dtype)
             )
             continue
@@ -368,17 +412,24 @@ def mktree(hf, attrs=None):
         vals[leaf_name] = np.zeros(1, dtype=dtype)
         tree.Branch(leaf_name, vals[leaf_name], leaf_name + tag)
 
-    # Fill events group by group
+    # Fill event data for every valid group
     for group_name in valid_groups:
         ds = hf[group_name]
         print("[INFO] processing group: {0}".format(group_name), flush=True)
 
-        ref_array = ds["timestamp"][:]
-        refsize = ref_array.size
+        try:
+            timestamp = ds["timestamp"][:]
+        except Exception as exc:
+            print(
+                "[WARN] failed to read timestamp for group '{0}': {1}; skipping."
+                .format(group_name, exc)
+            )
+            continue
 
+        refsize = timestamp.size
         if refsize == 0:
             print(
-                "[WARN] group '{0}' became empty during fill; skipping."
+                "[WARN] group '{0}' has empty timestamp during fill; skipping."
                 .format(group_name)
             )
             continue
@@ -390,61 +441,65 @@ def mktree(hf, attrs=None):
             dtype=np.int32
         )
 
-        fillable = True
-        for leaf_name in common_keys:
+        # Read schema keys when available; otherwise fill with defaults
+        for leaf_name in schema_keys:
+            expected_dtype = np.dtype(dtype_map[leaf_name])
+            default_value = get_default_value_for_dtype(expected_dtype)
+
             if leaf_name not in ds:
                 print(
-                    "[WARN] common key '{0}' missing in group '{1}' during fill; "
-                    "skipping group."
-                    .format(leaf_name, group_name)
+                    "[WARN] group '{0}' missing '{1}'; filling default value {2}."
+                    .format(group_name, leaf_name, default_value)
                 )
-                fillable = False
-                break
+                data[leaf_name] = np.full(refsize, default_value, dtype=expected_dtype)
+                continue
 
             try:
                 arr = ds[leaf_name][:]
             except Exception as exc:
                 print(
-                    "[WARN] failed to read dataset {0}/{1} during fill: {2}"
+                    "[WARN] failed to read {0}/{1}: {2}; filling defaults."
                     .format(group_name, leaf_name, exc)
                 )
-                fillable = False
-                break
+                data[leaf_name] = np.full(refsize, default_value, dtype=expected_dtype)
+                continue
 
             if not hasattr(arr, "shape") or len(arr.shape) != 1:
                 print(
-                    "[WARN] dataset {0}/{1} is not 1D during fill; skipping group."
+                    "[WARN] dataset {0}/{1} is not 1D; filling defaults."
                     .format(group_name, leaf_name)
                 )
-                fillable = False
-                break
+                data[leaf_name] = np.full(refsize, default_value, dtype=expected_dtype)
+                continue
 
             if arr.size != refsize:
                 print(
-                    "[WARN] dataset {0}/{1} size mismatch during fill: {2} != {3}; "
-                    "skipping group."
+                    "[WARN] dataset {0}/{1} size mismatch ({2} != {3}); filling defaults."
                     .format(group_name, leaf_name, arr.size, refsize)
                 )
-                fillable = False
-                break
+                data[leaf_name] = np.full(refsize, default_value, dtype=expected_dtype)
+                continue
 
-            if np.dtype(arr.dtype) != np.dtype(dtype_map[leaf_name]):
+            if np.dtype(arr.dtype) != expected_dtype:
                 print(
-                    "[WARN] dataset {0}/{1} dtype mismatch during fill: {2} != {3}; "
-                    "skipping group."
-                    .format(group_name, leaf_name, arr.dtype, dtype_map[leaf_name])
+                    "[WARN] dataset {0}/{1} dtype mismatch ({2} != {3}); casting if possible."
+                    .format(group_name, leaf_name, arr.dtype, expected_dtype)
                 )
-                fillable = False
-                break
+                try:
+                    arr = arr.astype(expected_dtype)
+                except Exception:
+                    print(
+                        "[WARN] cast failed for {0}/{1}; filling defaults."
+                        .format(group_name, leaf_name)
+                    )
+                    arr = np.full(refsize, default_value, dtype=expected_dtype)
 
             data[leaf_name] = arr
 
-        if not fillable:
-            continue
-
+        # Fill TTree
         for j in range(refsize):
             vals["channum"][0] = data["channum"][j]
-            for leaf_name in common_keys:
+            for leaf_name in schema_keys:
                 vals[leaf_name][0] = data[leaf_name][j]
             tree.Fill()
 
@@ -514,8 +569,6 @@ def root_filename_from_hdf5(hdf5_path):
 def is_file_stable(filepath, wait_seconds=3):
     """
     Check whether the file size remains unchanged for a short period.
-
-    This helps avoid converting a file that is still being written.
     """
     try:
         size1 = os.path.getsize(filepath)
@@ -609,7 +662,7 @@ def parse_args():
         "--attrs",
         nargs="*",
         default=None,
-        help="Branch names to keep (default: keep all supported datasets).",
+        help="Branch names to keep (default: keep all supported event-wise datasets).",
     )
     return parser.parse_args()
 
