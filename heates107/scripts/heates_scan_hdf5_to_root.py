@@ -46,13 +46,12 @@ except ImportError:
     Optional = object
     List = list
 
-
 # ----------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------
 ROOT_ENV_NAME = "root_env"
 ROOT_ENV_PYTHON = "/home/heates107/miniforge3/envs/root_env/bin/python"
-DEFAULT_SEARCH_GLOB = "/home/heates107/output/umux/202603*_run*/202603*_run*_mass.hdf5"
+DEFAULT_SEARCH_GLOB = "/home/heates107/output/umux/202603*_run*/202603*_run*_mass*.hdf5"
 ROOT_OUTPUT_DIR = "/home/heates107/output/umux/root"
 
 # These modules are imported only after relaunching inside root_env.
