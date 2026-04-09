@@ -233,7 +233,7 @@ class Fits:
             vmax = np.amax(self.hdu.data)
         color_print(f"     vmin = {vmin}, vmax = {vmax}", ConsoleColors.OKCYAN)
 
-        pix_coords = np.array([[x_center, y_center]], np.float_)
+        pix_coords = np.array([[x_center, y_center]], np.float64)
         world_coords = self.wcs.all_pix2world(pix_coords, 1)
         ra, dec = world_coords[0]
 
@@ -272,7 +272,7 @@ class Fits:
             vmax = np.amax(self.hdu.data)
         color_print(f"     vmin = {vmin}, vmax = {vmax}", ConsoleColors.OKCYAN)
 
-        pix_coords = np.array([[x_center, y_center]], np.float_)
+        pix_coords = np.array([[x_center, y_center]], np.float64)
         world_coords = self.wcs.all_pix2world(pix_coords, 1)
         ra, dec = world_coords[0]
 
