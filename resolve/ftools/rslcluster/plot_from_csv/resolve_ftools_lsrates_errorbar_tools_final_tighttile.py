@@ -2065,6 +2065,179 @@ def export_plot_table(
     return outfile
 
 
+def get_matplotlib_plotted_rows(
+    df: pd.DataFrame,
+    y_col: str,
+    compare_stdcut: bool,
+    cut_type: str,
+    x_rate_col: str,
+    xscale: str,
+    yscale: str,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] | None = None,
+) -> pd.DataFrame:
+    """Return the rows that are actually passed to matplotlib errorbar.
+
+    This mirrors the final mask used in plot_paper_tile_errorbar() and
+    plot_paper_overlay_errorbar(): finite x/y values, finite x/y errors, and
+    positive values for log axes.  In addition, when xlim/ylim are specified,
+    this helper keeps only points inside the displayed matplotlib range, so the
+    exported target list corresponds to the points visible in the final paper
+    plot.
+    """
+    x_col = f"{x_rate_col}_no_stdcut"
+    x_err_col = f"{x_rate_col}_no_stdcut_err"
+    y_err_col = f"{y_col}_err"
+
+    required = {x_col, x_err_col, y_col, y_err_col, "pixel", "cut_type"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Required columns are missing for plotted-row export: {sorted(missing)}")
+
+    work = df.copy()
+    plot_cut_types = [CUT_NO_STDCUT, CUT_STDCUT] if compare_stdcut else [cut_type]
+    work = work[work["cut_type"].isin(plot_cut_types)].copy()
+    work = work[work["pixel"].isin(ALL_PIXELS)].copy()
+
+    x = pd.to_numeric(work[x_col], errors="coerce")
+    y = pd.to_numeric(work[y_col], errors="coerce")
+    xerr = pd.to_numeric(work[x_err_col], errors="coerce")
+    yerr = pd.to_numeric(work[y_err_col], errors="coerce")
+
+    mask = np.isfinite(x) & np.isfinite(y) & np.isfinite(xerr) & np.isfinite(yerr)
+    if xscale == "log":
+        mask &= x > 0
+    if yscale == "log":
+        mask &= y > 0
+    if xlim is not None:
+        xmin, xmax = xlim
+        mask &= (x >= xmin) & (x <= xmax)
+    if ylim is not None:
+        ymin, ymax = ylim
+        mask &= (y >= ymin) & (y <= ymax)
+
+    return work[mask].copy()
+
+
+def export_matplotlib_plotted_target_list(
+    df: pd.DataFrame,
+    outdir: Path,
+    filename: str,
+    y_col: str,
+    compare_stdcut: bool,
+    cut_type: str,
+    x_rate_col: str,
+    xscale: str,
+    yscale: str,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] | None = None,
+    time_col: str = DEFAULT_TIME_COL,
+) -> Path:
+    """Write one CSV row per plotted observation/target.
+
+    The sum count rate is calculated from the x-axis no_stdcut reference rate
+    after de-duplicating repeated cut-type rows.  This avoids double-counting in
+    --compare-stdcut mode, where the same pixel can appear once for no_stdcut
+    and once for stdcut.
+    """
+    plotted = get_matplotlib_plotted_rows(
+        df=df,
+        y_col=y_col,
+        compare_stdcut=compare_stdcut,
+        cut_type=cut_type,
+        x_rate_col=x_rate_col,
+        xscale=xscale,
+        yscale=yscale,
+        xlim=xlim,
+        ylim=ylim,
+    )
+
+    x_col = f"{x_rate_col}_no_stdcut"
+    target_col = "object" if "object" in plotted.columns else None
+
+    out_columns = [
+        "ObsDate",
+        "OBSID",
+        "targetname",
+        "exposure_s",
+        "exposure_ks",
+        "sum_rate_all_pixels_count_s",
+        "n_plotted_pixels",
+        "plotted_cut_types",
+    ]
+    outfile = outdir / filename
+
+    if len(plotted) == 0:
+        pd.DataFrame(columns=out_columns).to_csv(outfile, index=False)
+        print(f"[WRITE] {outfile}")
+        return outfile
+
+    if target_col is None:
+        plotted["object"] = ""
+
+    # One x-axis rate per observation/pixel is enough for the all-pixel sum.
+    # Keep the first row after sorting so compare_stdcut does not double count.
+    unique_pix = (
+        plotted.sort_values(["obs_id_str", "object", "pixel", "cut_type"])
+        .drop_duplicates(["obs_id_str", "object", "pixel"], keep="first")
+        .copy()
+    )
+
+    time_available = time_col in unique_pix.columns
+    if time_available:
+        unique_pix[time_col] = pd.to_numeric(unique_pix[time_col], errors="coerce")
+    unique_pix[x_col] = pd.to_numeric(unique_pix[x_col], errors="coerce")
+
+    def join_cut_types(series: pd.Series) -> str:
+        return ";".join(sorted(series.dropna().astype(str).unique().tolist()))
+
+    cut_type_table = (
+        plotted.groupby(["obs_id_str", "object"], dropna=False)["cut_type"]
+        .apply(join_cut_types)
+        .reset_index(name="plotted_cut_types")
+    )
+
+    agg_dict = {
+        "ObsDate": "min" if "ObsDate" in unique_pix.columns else (lambda s: ""),
+        x_col: "sum",
+        "pixel": "nunique",
+    }
+    if time_available:
+        agg_dict[time_col] = "median"
+
+    summary = (
+        unique_pix.groupby(["obs_id_str", "object"], dropna=False)
+        .agg(agg_dict)
+        .reset_index()
+        .rename(
+            columns={
+                "obs_id_str": "OBSID",
+                "object": "targetname",
+                x_col: "sum_rate_all_pixels_count_s",
+                "pixel": "n_plotted_pixels",
+            }
+        )
+    )
+
+    if time_available:
+        summary = summary.rename(columns={time_col: "exposure_s"})
+        summary["exposure_ks"] = summary["exposure_s"] / 1000.0
+    else:
+        summary["exposure_s"] = np.nan
+        summary["exposure_ks"] = np.nan
+
+    summary = summary.merge(cut_type_table, left_on=["OBSID", "targetname"], right_on=["obs_id_str", "object"], how="left")
+    summary = summary.drop(columns=[col for col in ["obs_id_str", "object"] if col in summary.columns])
+
+    for col in out_columns:
+        if col not in summary.columns:
+            summary[col] = ""
+
+    summary[out_columns].sort_values(["ObsDate", "OBSID", "targetname"]).to_csv(outfile, index=False)
+    print(f"[WRITE] {outfile}")
+    return outfile
+
+
 # =============================================================================
 # CLI and workflow
 # =============================================================================
@@ -2208,6 +2381,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-buttons", action="store_true", help="Do not add Show all / Hide all buttons to Plotly output.")
 
     parser.add_argument("--write-csv", action="store_true", help="Write the table used for plotting to CSV.")
+    parser.add_argument(
+        "--no-write-plotted-target-list",
+        action="store_true",
+        help=(
+            "Do not write the CSV summary of observations/targets that are actually "
+            "shown in the final matplotlib plot."
+        ),
+    )
     parser.add_argument("--output-prefix", default="resolve_ftools_lsrates", help="Prefix for output files.")
 
     parser.add_argument(
@@ -2346,6 +2527,29 @@ def run(args: argparse.Namespace) -> list[Path]:
                 filename=csv_name,
                 x_rate_col=args.x_rate_col,
                 y_col=args.y_col,
+            )
+        )
+
+    if not args.no_write_plotted_target_list:
+        if args.compare_stdcut:
+            target_list_csv_name = f"{args.output_prefix}_matplotlib_plotted_targets_compare_stdcut_{args.y_col}.csv"
+        else:
+            target_list_csv_name = f"{args.output_prefix}_matplotlib_plotted_targets_{args.y_col}_{args.cut_type}.csv"
+
+        output_files.append(
+            export_matplotlib_plotted_target_list(
+                plot_df,
+                outdir=outdir,
+                filename=target_list_csv_name,
+                y_col=args.y_col,
+                compare_stdcut=args.compare_stdcut,
+                cut_type=args.cut_type,
+                x_rate_col=args.x_rate_col,
+                xscale=args.paper_xscale,
+                yscale=args.paper_yscale,
+                xlim=tuple(args.paper_xlim) if args.paper_xlim is not None else None,
+                ylim=tuple(args.paper_ylim) if args.paper_ylim is not None else None,
+                time_col=args.time_col,
             )
         )
 
