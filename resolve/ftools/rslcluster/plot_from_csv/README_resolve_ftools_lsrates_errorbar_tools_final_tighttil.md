@@ -1,71 +1,31 @@
-# resolve_ftools_lsrates_errorbar_tools_final_tighttile.py
+# Resolve FTOOLS lsrates Errorbar Plot Tools
 
-Resolve の `lsrates` CSV から、paircheck 済みの論文向け matplotlib 図と Plotly debug plot を生成するスクリプトである。
+`resolve_ftools_lsrates_errorbar_tools_final_tighttile.py` は、XRISM/Resolve の `lsrates` CSV ファイルを読み込み、`no_stdcut` と `stdcut` の整合性を確認したうえで、誤差棒付きの論文用プロットとデバッグ用 interactive プロットを生成する Python ツールです。
 
-この版では、matplotlib の 6x6 tile plot に対して、論文向けの tight-packed 表示を option で追加した。
+主な用途は、Resolve 各 pixel におけるイベントレート、standard cut 前後の変化、small/large pseudo event 関連レートなどを、観測ごと・pixel ごとに比較することです。
 
-## 今回の変更点
+## Features
 
-### tight-packed tile plot
+- `no_stdcut` / `stdcut` ファイルペアの事前チェック
+- `(obs_id, pixel)` 単位での行ペア整合性チェック
+- 問題のある OBSID/pixel をデフォルトで plot から除外
+- Poisson 誤差付き rate plot の生成
+- `t_exp_s` を用いた rate error 計算
+- 短すぎる露光時間の観測を screening
+- `object` 名による include / exclude selection
+- `obs_id` による include / exclude selection
+- Resolve 6x6 physical layout に対応した tile plot
+- 論文向け tight-packed tile plot
+- 全 pixel overlay plot
+- Plotly による interactive debug plot
+- Plotly hover 情報に `ObsDate`, `obs_id`, `pixel`, `object`, `t_exp_s` などを表示
+- 各種チェック・フィルタ結果を CSV log として保存
 
-以下の option を追加した。
+## Requirements
 
-```bash
---paper-tight-tile
-```
+Python 3.9 以上を推奨します。
 
-これを指定すると、matplotlib の 6x6 tile plot が次のような見た目になる。
-
-- panel 間の隙間を **ゼロ**
-- 6x6 を **tight packing**
-- 各 panel の pixel 表示は、**左上の数字だけ**
-- 既存の `pix 0` のような panel title は出さない
-- 共有軸を使い、外周だけ tick label を残す
-- 共通の x / y label は figure 全体に付ける
-
-この tight-packed 版の出力ファイル名には `_tightpacked` が付く。
-
-例：
-
-```text
-resolve_ftools_lsrates_paper_tile_errorbar_compare_stdcut_rate_small_only_tightpacked.png
-```
-
-## 使い方
-
-通常の tile plot と同じ条件で、tight-packed 版を作る例：
+必要な Python package は以下です。
 
 ```bash
-python resolve_ftools_lsrates_errorbar_tools_final_tighttile.py "p0px1000/*lsrates.csv"     --outdir paper_outputs     --compare-stdcut     --y-col rate_small_only     --paper-xlim 0.05 20     --paper-ylim 1e-6 1     --paper-tight-tile     --all-pixels     --write-csv
-```
-
-従来どおりの pixel 色分けを使いたい場合は、併用できる。
-
-```bash
-python resolve_ftools_lsrates_errorbar_tools_final_tighttile.py "p0px1000/*lsrates.csv"     --outdir paper_outputs_pixel_color     --compare-stdcut     --y-col rate_small_only     --paper-tight-tile     --paper-color-by-pixel     --paper-xlim 0.05 20     --paper-ylim 1e-6 1     --all-pixels     --write-csv
-```
-
-この場合でも、デフォルトの推奨は
-
-- no_stdcut: black
-- stdcut: blue
-
-である。
-
-## 既存機能
-
-以下は維持している。
-
-- デフォルトの tile plot 色: no_stdcut=black, stdcut=blue
-- `--paper-color-by-pixel` による従来の pixel 色分け
-- all-pixel matplotlib overlay plot
-- `t_exp_s` を用いた Poisson 誤差計算
-- `ObsDate` の出力
-- no_stdcut / stdcut paircheck
-- `t_exp_s <= --min-exposure-ks` の短露光 screening
-- `--object-include`
-- `--object-exclude`
-- `--obsid-include`
-- `--obsid-exclude`
-- `--debug-xlim` / `--debug-ylim`
-- `--paper-xlim` / `--paper-ylim` の Plotly への流用
+pip install numpy pandas matplotlib plotly
