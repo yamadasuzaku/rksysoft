@@ -3,7 +3,7 @@
 # run_lscheck_pipeline.sh
 #
 # 通常モード:
-#   ./run_lscheck_pipeline.sh [--interval_limit INTERVAL_LIMIT] xa000154000rsl_p0px1000_uf.evt [lscheck_dir_name] [CAL_ROOT_DIR] [EVE_ARGS] [CLUSTERCUT_ARGS]
+#   ./run_lscheck_pipeline.sh xa000154000rsl_p0px1000_uf.evt [lscheck_dir_name] [CAL_ROOT_DIR] [EVE_ARGS] [CLUSTERCUT_ARGS]
 #
 # Summary のみ再生成モード:
 #   ./run_lscheck_pipeline.sh --summary-only xa000154000rsl_p0px1000_uf.evt [lscheck_dir_name] [CAL_ROOT_DIR]
@@ -33,7 +33,7 @@ run_lscheck_pipeline.sh : LS-cluster 解析 + mklc_branch + summary HTML のワ�
 
 Usage:
   フルパイプライン:
-    $(basename "$0") [--interval_limit INTERVAL_LIMIT] <uf_event_file> [lscheck_dir_name] [CAL_ROOT_DIR] [EVE_ARGS] [CLUSTERCUT_ARGS]
+    $(basename "$0") <uf_event_file> [lscheck_dir_name] [CAL_ROOT_DIR] [EVE_ARGS] [CLUSTERCUT_ARGS]
 
   Summary のみ再生成:
     $(basename "$0") --summary-only <uf_event_file> [lscheck_dir_name] [CAL_ROOT_DIR]
@@ -50,10 +50,6 @@ Usage:
   CAL_ROOT_DIR (任意)
       LS 解析結果をまとめて置くルートディレクトリ。
       省略時は、event_uf から見て "../../.." (天体名ディレクトリ) が使われる想定。
-
-  --interval_limit INTERVAL_LIMIT (任意; フルパイプライン時のみ有効)
-      resolve_ftools_detect_pseudo_event_clusters.py に渡す NEXT/PREV_INTERVAL の閾値。
-      指定しない場合は下位スクリプトのデフォルト値が使われる。
 
   EVE_ARGS / CLUSTERCUT_ARGS (任意; フルパイプライン時のみ有効)
       resolve_ana_pixel_mklc_branch.py に渡すオプション。
@@ -314,11 +310,6 @@ generate_summary_html() {
         echo '  <h2>mklc_branch settings</h2>'
         echo '  <p><strong>eve.list:</strong> resolve_ana_pixel_mklc_branch.py eve.list '"$EVE_ARGS_USED"'</p>'
         echo '  <p><strong>clustercut.list:</strong> resolve_ana_pixel_mklc_branch.py clustercut.list '"$CLUSTERCUT_ARGS_USED"'</p>'
-        if [[ -n "${INTERVAL_LIMIT:-}" ]]; then
-            echo "  <p><strong>cluster detection:</strong> --interval_limit ${INTERVAL_LIMIT}</p>"
-        else
-            echo '  <p><strong>cluster detection:</strong> --interval_limit not specified; detector default is used.</p>'
-        fi
     } > "$SUMMARY_HTML"
 
     # Statistics section
@@ -455,47 +446,18 @@ generate_summary_html() {
 # ========================================
 
 SUMMARY_ONLY=0
-INTERVAL_LIMIT=""
 
-# ここで -h / --help / --summary-only / --interval_limit を処理
-while [[ $# -gt 0 ]]; do
-    case "${1:-}" in
-        -h|--help)
-            print_help
-            exit 0
-            ;;
-        --summary-only)
-            SUMMARY_ONLY=1
-            shift
-            ;;
-        --interval_limit)
-            if [[ $# -lt 2 ]]; then
-                echo "Error: --interval_limit requires an integer value." >&2
-                print_help
-                exit 1
-            fi
-            INTERVAL_LIMIT="$2"
-            shift 2
-            ;;
-        --)
-            shift
-            break
-            ;;
-        -*)
-            echo "Error: unknown option '$1'." >&2
-            print_help
-            exit 1
-            ;;
-        *)
-            break
-            ;;
-    esac
-done
-
-if [[ -n "$INTERVAL_LIMIT" && ! "$INTERVAL_LIMIT" =~ ^[0-9]+$ ]]; then
-    echo "Error: --interval_limit must be a non-negative integer: '$INTERVAL_LIMIT'" >&2
-    exit 1
-fi
+# ここで -h / --help を処理
+case "${1:-}" in
+    -h|--help)
+        print_help
+        exit 0
+        ;;
+    --summary-only)
+        SUMMARY_ONLY=1
+        shift
+        ;;
+esac
 
 if [[ $# -lt 1 ]]; then
     echo "Usage:" >&2
@@ -580,11 +542,6 @@ echo "Using CL event   : $CL_EVT_BASENAME"
 echo "lscheck dir name : $LSCHECK_DIR_NAME"
 echo "EVE_ARGS used        : $EVE_ARGS_USED"
 echo "CLUSTERCUT_ARGS used : $CLUSTERCUT_ARGS_USED"
-if [[ -n "$INTERVAL_LIMIT" ]]; then
-    echo "interval_limit    : $INTERVAL_LIMIT"
-else
-    echo "interval_limit    : detector default"
-fi
 echo
 
 LSCHECK_DIR="${CAL_ROOT_DIR}/${LSCHECK_DIR_NAME}"
@@ -628,11 +585,7 @@ if [[ "$SUMMARY_ONLY" -eq 0 ]]; then
     echo
 
     echo "[3/5] Running resolve_ftools_cluster_pileline.sh ..."
-    if [[ -n "$INTERVAL_LIMIT" ]]; then
-        resolve_ftools_cluster_pileline.sh --interval_limit "$INTERVAL_LIMIT" "$UF_EVT_BASENAME"
-    else
-        resolve_ftools_cluster_pileline.sh "$UF_EVT_BASENAME"
-    fi
+    resolve_ftools_cluster_pileline.sh "$UF_EVT_BASENAME"
 
     echo "After clustering pipeline:"
     ls
