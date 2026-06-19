@@ -12,13 +12,25 @@ History:
 import os
 import sys
 import argparse
+from scipy.signal import convolve
+import pandas as pd
 import numpy as np
+
+if not hasattr(np, "in1d"):
+    def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
+        return np.isin(
+            ar1,
+            ar2,
+            assume_unique=assume_unique,
+            invert=invert,
+            kind=kind,
+        ).ravel()
+    np.in1d = _in1d
+
 import matplotlib.pyplot as plt
 import matplotlib.colors as cr
 from astropy.io import fits
 from astropy.wcs import WCS
-from scipy.signal import convolve
-import pandas as pd
 
 params = {'xtick.labelsize': 10, 'ytick.labelsize': 10, 'legend.fontsize': 8}
 plt.rcParams['font.family'] = 'serif'
