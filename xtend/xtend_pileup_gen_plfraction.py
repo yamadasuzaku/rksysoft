@@ -12,6 +12,14 @@ History:
 import os
 import sys
 import argparse
+
+# ----------------------------------------------------------------------
+# Use a non-GUI backend for batch/server execution.
+# This avoids Qt/xcb errors on headless Linux machines.
+# Must be set before importing matplotlib.pyplot.
+# ----------------------------------------------------------------------
+os.environ.setdefault("MPLBACKEND", "Agg")
+
 from scipy.signal import convolve
 import pandas as pd
 import numpy as np
